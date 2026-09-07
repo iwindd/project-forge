@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: project_forge
+      POSTGRES_USER: project_forge
+      POSTGRES_PASSWORD: project_forge
+    ports:
+      - "55432:5432"
+    volumes:
+      - project-forge-postgres:/var/lib/postgresql/data
+
+volumes:
+  project-forge-postgres:

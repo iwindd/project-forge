@@ -1,0 +1,75 @@
+name: Project Forge
+version: 1
+status: draft
+owner: product
+architecture: nestjs-nextjs
+deployment: self-hosted
+audience: private-internal
+scope:
+  exclude:
+    - discord
+    - automatic_merge
+    - model_selector
+
+vision: >
+  A self-hosted web workspace where users connect GitHub, create project conversations,
+  and delegate work to Hermes agents through durable, observable workflows.
+
+principles:
+  - The NestJS API owns users, projects, conversations, runs, sandboxes, and approvals.
+  - The Next.js web app is an API client and does not access the database directly.
+  - Hermes is an agent runtime accessed through an adapter; the application never changes Hermes global configuration.
+  - Every background run is durable and continues when the browser is closed.
+  - GitHub writes use a GitHub App installation identity, not an interactive local login.
+  - Data required after refresh is persisted in the database, not only in URL parameters or React state.
+  - Agents and profiles are discovered dynamically; names such as default, Lyla, or Manager are not hardcoded.
+  - A pre-issue or pre-pull-request is an application record and requires explicit authorization before publication.
+
+phases:
+  - id: phase_1
+    name: Foundation, access, projects, and user administration
+    status: implemented-local
+    document: phase_1.md
+    outcome: An internal user can request access, an approved user can sign in with GitHub, create a project record, and an owner can manage users and access requests.
+  - id: phase_2
+    name: Hermes conversations and sandbox lifecycle
+    status: planned
+    outcome: Approved users can chat with Hermes through the web and create isolated project sandboxes on demand.
+  - id: phase_3
+    name: Durable conversations and agent orchestration
+    status: planned
+    outcome: Conversations, agent participants, stream events, reconnect, cancellation, and run recovery are production-shaped.
+  - id: phase_4
+    name: Review workflow and pre-issues
+    status: planned
+    outcome: Find Issue and Ultra Review produce persisted findings and a pre-issue queue.
+  - id: phase_5
+    name: Feature/fix workflow and pre-pull-requests
+    status: planned
+    outcome: Agents implement changes in branches, run validation, and produce reviewable pre-PRs.
+  - id: phase_6
+    name: GitHub App publication and synchronization
+    status: planned
+    outcome: Approved issues and PRs are published through the GitHub App and synchronized back to the web.
+  - id: phase_7
+    name: Sharing, operations, security, and self-host release
+    status: planned
+    outcome: Multiple users can share projects safely and operate the platform without Vercel or Discord.
+
+cross_phase_definition_of_done:
+  - Backend and frontend contracts are versioned and type checked.
+  - Authorization is enforced in NestJS for every project, conversation, run, file, and publication resource.
+  - Loading, empty, error, retry, and refresh states are implemented in the web UI.
+  - Background work has a persisted state, event history, and an idempotency key.
+  - Secrets never enter browser payloads, prompts, logs, or repository artifacts.
+  - A failure at a later stage can retry that stage without silently rerunning an expensive agent task.
+  - Each phase has passed its own acceptance tests and has a migration/rollback note.
+
+phase_dependencies:
+  phase_1: []
+  phase_2: [phase_1]
+  phase_3: [phase_1, phase_2]
+  phase_4: [phase_2, phase_3]
+  phase_5: [phase_2, phase_3]
+  phase_6: [phase_1, phase_2, phase_5]
+  phase_7: [phase_1, phase_2, phase_3, phase_4, phase_5, phase_6]
