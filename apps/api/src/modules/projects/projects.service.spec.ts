@@ -27,8 +27,12 @@ describe('ProjectsService', () => {
     const auth = { writeAudit: vi.fn() };
     const service = new ProjectsService(em as never, auth as never);
 
-    await expect(service.create('owner-id', { githubUrl: 'https://git.example.com/acme/demo' })).rejects.toThrow('Only GitHub HTTPS repository URLs are supported');
-    await expect(service.create('owner-id', { githubUrl: 'https://user:secret@github.com/acme/demo' })).rejects.toThrow('Only GitHub HTTPS repository URLs are supported');
+    await expect(service.create('owner-id', { githubUrl: 'https://git.example.com/acme/demo' })).rejects.toThrow(
+      'Only GitHub HTTPS repository URLs are supported',
+    );
+    await expect(service.create('owner-id', { githubUrl: 'https://user:secret@github.com/acme/demo' })).rejects.toThrow(
+      'Only GitHub HTTPS repository URLs are supported',
+    );
     expect(em.create).not.toHaveBeenCalled();
   });
 });

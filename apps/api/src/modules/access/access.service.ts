@@ -9,7 +9,10 @@ const requestSchema = z.object({ reason: z.string().trim().max(1000).optional().
 
 @Injectable()
 export class AccessService {
-  constructor(private readonly em: EntityManager, private readonly auth: AuthService) {}
+  constructor(
+    private readonly em: EntityManager,
+    private readonly auth: AuthService,
+  ) {}
 
   async getMine(userId: string) {
     return this.em.find(AccessRequest, { userId }, { orderBy: { createdAt: 'desc' } });
@@ -44,7 +47,16 @@ export class AccessService {
     request.reviewedBy = actorId;
     request.reviewedAt = new Date();
     request.reviewNote = note?.trim() || null;
-    await this.auth.writeAudit({ actorId, targetUserId: user.id, action: 'ACCESS_APPROVED', resourceType: 'ACCESS_REQUEST', resourceId: request.id, before, after: { accessStatus: user.accessStatus, requestStatus: request.status }, reason: note });
+    await this.auth.writeAudit({
+      actorId,
+      targetUserId: user.id,
+      action: 'ACCESS_APPROVED',
+      resourceType: 'ACCESS_REQUEST',
+      resourceId: request.id,
+      before,
+      after: { accessStatus: user.accessStatus, requestStatus: request.status },
+      reason: note,
+    });
     await this.em.flush();
     return { request, user: this.safeUser(user) };
   }
@@ -60,13 +72,33 @@ export class AccessService {
     request.reviewedBy = actorId;
     request.reviewedAt = new Date();
     request.reviewNote = note?.trim() || null;
-    await this.auth.writeAudit({ actorId, targetUserId: user.id, action: 'ACCESS_REJECTED', resourceType: 'ACCESS_REQUEST', resourceId: request.id, before, after: { accessStatus: user.accessStatus, requestStatus: request.status }, reason: note });
+    await this.auth.writeAudit({
+      actorId,
+      targetUserId: user.id,
+      action: 'ACCESS_REJECTED',
+      resourceType: 'ACCESS_REQUEST',
+      resourceId: request.id,
+      before,
+      after: { accessStatus: user.accessStatus, requestStatus: request.status },
+      reason: note,
+    });
     await this.em.flush();
     return { request, user: this.safeUser(user) };
   }
 
   private safeUser(user: User | undefined) {
     if (!user) return null;
-    return { id: user.id, githubUserId: user.githubUserId, githubLogin: user.githubLogin, name: user.name, avatarUrl: user.avatarUrl, role: user.role, accessStatus: user.accessStatus, isActive: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt };
+    return {
+      id: user.id,
+      githubUserId: user.githubUserId,
+      githubLogin: user.githubLogin,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      accessStatus: user.accessStatus,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

@@ -1,131 +1,93 @@
-'use client'
+'use client';
 
-import {
-  ApiError,
-  decideAccess,
-  getAccessRequests,
-  type AccessRequest
-} from '@/lib/api'
-import { useEffect, useState } from 'react'
+import { Alert, Badge, Button, Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
+import { IconInfoCircle } from '@tabler/icons-react';
+import { useDecideAccessMutation, useGetAccessRequestsQuery } from '@/store/api';
+
+function errorMessage(error: unknown) {
+  const message = (error as { data?: { message?: string | string[] } } | undefined)?.data?.message;
+  return Array.isArray(message) ? message.join(', ') : message || 'บันทึกผลไม่สำเร็จ';
+}
 
 export function AccessRequestsPage() {
-  const [requests, setRequests] = useState<AccessRequest[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState('')
-  async function load() {
-    setLoading(true)
-    try {
-      setRequests((await getAccessRequests()).requests)
-      setError('')
-    } catch (cause: unknown) {
-      setError(
-        cause instanceof ApiError
-          ? cause.message
-          : 'โหลด access requests ไม่สำเร็จ'
-      )
-    } finally {
-      setLoading(false)
-    }
+  const { data, isLoading, error } = useGetAccessRequestsQuery();
+  const [decideAccess, mutation] = useDecideAccessMutation();
+  const requests = data?.requests ?? [];
+
+  async function decide(id: string, decision: 'approve' | 'reject', login: string) {
+    if (!window.confirm(`${decision === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ'} access ของ ${login} หรือไม่?`)) return;
+    await decideAccess({ id, decision });
   }
-  useEffect(() => {
-    void load()
-  }, [])
-  async function decide(
-    request: AccessRequest,
-    decision: 'approve' | 'reject'
-  ) {
-    if (
-      !window.confirm(
-        `${decision === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ'} access ของ ${request.user?.githubLogin || request.userId} หรือไม่?`
-      )
-    )
-      return
-    setBusy(request.id)
-    try {
-      await decideAccess(request.id, decision)
-      await load()
-    } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : 'บันทึกผลไม่สำเร็จ')
-    } finally {
-      setBusy('')
-    }
-  }
+
   return (
-    <div className='content'>
-      <div className='page-heading'>
-        <div>
-          <span className='eyebrow'>Admission queue</span>
-          <h2>Access requests</h2>
-          <p className='muted'>ตรวจคำขอเข้าใช้งานก่อนให้ผู้ใช้เข้าระบบ</p>
-        </div>
-      </div>
-      {error ? <div className='error spacing-top'>{error}</div> : null}
-      {loading ? (
-        <div className='card spacing-top'>
-          <p className='muted'>กำลังโหลดคำขอ…</p>
-        </div>
+    <Stack gap='xl'>
+      <Stack className='forge-page-header' gap={4}>
+        <Text size='sm' c='brandBlue' fw={700} tt='uppercase' lts={1.5}>
+          Admission queue
+        </Text>
+        <Title order={1}>Access requests</Title>
+        <Text c='dimmed'>ตรวจคำขอเข้าใช้งานก่อนให้ผู้ใช้เข้าระบบ</Text>
+      </Stack>
+      {error || mutation.error ? (
+        <Alert color='red' icon={<IconInfoCircle size={18} />}>
+          {errorMessage(error || mutation.error)}
+        </Alert>
+      ) : null}
+      {isLoading ? (
+        <Card className='forge-empty'>
+          <Loader size='sm' color='brandBlue' />
+        </Card>
       ) : requests.length === 0 ? (
-        <div className='card empty spacing-top'>
-          <h3>ไม่มี access request</h3>
-          <p className='muted'>คำขอใหม่จาก GitHub login จะแสดงที่นี่</p>
-        </div>
+        <Card className='forge-empty'>
+          <Text c='dimmed'>ไม่มี access request</Text>
+        </Card>
       ) : (
-        <div className='request-list spacing-top'>
-          {requests.map(request => (
-            <article className='card request-card' key={request.id}>
-              <div>
-                <span
-                  className={`badge ${request.status === 'PENDING' ? 'warn' : request.status === 'APPROVED' ? 'good' : 'bad'}`}
-                >
-                  {request.status}
-                </span>
-                <h3>
-                  {request.user?.name ||
-                    request.user?.githubLogin ||
-                    request.userId}
-                </h3>
-                <p className='muted'>
-                  @{request.user?.githubLogin || 'unknown'} ·{' '}
-                  {new Date(request.createdAt).toLocaleString('th-TH')}
-                </p>
-                {request.reason ? (
-                  <p>{request.reason}</p>
-                ) : (
-                  <p className='muted'>ไม่ได้ระบุเหตุผล</p>
-                )}
-              </div>
-              {request.status === 'PENDING' ? (
-                <div className='actions'>
-                  <button
-                    className='button'
-                    disabled={busy === request.id}
-                    type='button'
-                    onClick={() => void decide(request, 'approve')}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className='button danger'
-                    disabled={busy === request.id}
-                    type='button'
-                    onClick={() => void decide(request, 'reject')}
-                  >
-                    Reject
-                  </button>
-                </div>
-              ) : (
-                <span className='muted'>
-                  Reviewed{' '}
-                  {request.reviewedAt
-                    ? new Date(request.reviewedAt).toLocaleString('th-TH')
-                    : ''}
-                </span>
-              )}
-            </article>
-          ))}
-        </div>
+        <Stack gap='md'>
+          {requests.map((request) => {
+            const login = request.user?.githubLogin || request.userId;
+            return (
+              <Card key={request.id} padding='lg' radius='lg'>
+                <Group justify='space-between' align='flex-start' wrap='wrap'>
+                  <Stack gap={5}>
+                    <Group gap='sm'>
+                      <Badge
+                        color={request.status === 'PENDING' ? 'yellow' : request.status === 'APPROVED' ? 'teal' : 'red'}
+                        variant='light'
+                      >
+                        {request.status}
+                      </Badge>
+                      <Text fw={700}>{request.user?.name || login}</Text>
+                    </Group>
+                    <Text size='sm' c='dimmed'>
+                      @{login} · {new Date(request.createdAt).toLocaleString('th-TH')}
+                    </Text>
+                    <Text>{request.reason || 'ไม่ได้ระบุเหตุผล'}</Text>
+                  </Stack>
+                  {request.status === 'PENDING' ? (
+                    <Group>
+                      <Button loading={mutation.isLoading} onClick={() => void decide(request.id, 'approve', login)}>
+                        Approve
+                      </Button>
+                      <Button
+                        color='red'
+                        variant='light'
+                        loading={mutation.isLoading}
+                        onClick={() => void decide(request.id, 'reject', login)}
+                      >
+                        Reject
+                      </Button>
+                    </Group>
+                  ) : (
+                    <Text size='sm' c='dimmed'>
+                      Reviewed {request.reviewedAt ? new Date(request.reviewedAt).toLocaleString('th-TH') : ''}
+                    </Text>
+                  )}
+                </Group>
+              </Card>
+            );
+          })}
+        </Stack>
       )}
-    </div>
-  )
+    </Stack>
+  );
 }

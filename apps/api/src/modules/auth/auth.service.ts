@@ -49,21 +49,33 @@ export class AuthService {
       }),
     });
     const tokenBody = (await tokenResponse.json()) as { access_token?: string; scope?: string; error?: string };
-    if (!tokenResponse.ok || !tokenBody.access_token) throw new Error(tokenBody.error || 'GitHub token exchange failed');
+    if (!tokenResponse.ok || !tokenBody.access_token)
+      throw new Error(tokenBody.error || 'GitHub token exchange failed');
 
     const profileResponse = await fetch('https://api.github.com/user', {
-      headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${tokenBody.access_token}`, 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'Project-Forge' },
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${tokenBody.access_token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'Project-Forge',
+      },
     });
     if (!profileResponse.ok) throw new Error('GitHub profile lookup failed');
     const profile = (await profileResponse.json()) as GithubProfile;
-    const adminIds = new Set((this.config.get<string>('ADMIN_GITHUB_IDS') || '').split(',').map((id) => id.trim()).filter(Boolean));
+    const adminIds = new Set(
+      (this.config.get<string>('ADMIN_GITHUB_IDS') || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean),
+    );
 
     const user = await this.em.findOne(User, { githubUserId: String(profile.id) });
-    const nextStatus = user?.accessStatus === AccessStatus.APPROVED
-      ? AccessStatus.APPROVED
-      : adminIds.has(String(profile.id))
+    const nextStatus =
+      user?.accessStatus === AccessStatus.APPROVED
         ? AccessStatus.APPROVED
-        : user?.accessStatus || AccessStatus.PENDING;
+        : adminIds.has(String(profile.id))
+          ? AccessStatus.APPROVED
+          : user?.accessStatus || AccessStatus.PENDING;
     const nextRole = adminIds.has(String(profile.id)) ? UserRole.ADMIN : user?.role || UserRole.USER;
     const current = user || this.em.create(User, { githubUserId: String(profile.id), githubLogin: profile.login });
     current.githubLogin = profile.login;
@@ -92,7 +104,9 @@ export class AuthService {
   async createSession(userId: string): Promise<string> {
     const token = randomBytes(32).toString('base64url');
     const ttl = Number(this.config.get<string>('SESSION_TTL_SECONDS') || 604800);
-    this.em.persist(this.em.create(Session, { userId, tokenHash: this.hash(token), expiresAt: new Date(Date.now() + ttl * 1000) }));
+    this.em.persist(
+      this.em.create(Session, { userId, tokenHash: this.hash(token), expiresAt: new Date(Date.now() + ttl * 1000) }),
+    );
     await this.em.flush();
     return token;
   }
@@ -121,22 +135,43 @@ export class AuthService {
     await this.em.nativeUpdate(Session, { userId, revokedAt: null }, { revokedAt: new Date() });
   }
 
-  async writeAudit(input: { actorId?: string | null; targetUserId?: string | null; action: string; resourceType: string; resourceId?: string; before?: Record<string, unknown>; after?: Record<string, unknown>; reason?: string; requestId?: string }) {
-    this.em.persist(this.em.create(AuditLog, {
-      actorId: input.actorId ?? null,
-      targetUserId: input.targetUserId ?? null,
-      action: input.action,
-      resourceType: input.resourceType,
-      resourceId: input.resourceId ?? null,
-      beforeJson: input.before ?? null,
-      afterJson: input.after ?? null,
-      reason: input.reason ?? null,
-      requestId: input.requestId ?? null,
-    }));
+  async writeAudit(input: {
+    actorId?: string | null;
+    targetUserId?: string | null;
+    action: string;
+    resourceType: string;
+    resourceId?: string;
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+    reason?: string;
+    requestId?: string;
+  }) {
+    this.em.persist(
+      this.em.create(AuditLog, {
+        actorId: input.actorId ?? null,
+        targetUserId: input.targetUserId ?? null,
+        action: input.action,
+        resourceType: input.resourceType,
+        resourceId: input.resourceId ?? null,
+        beforeJson: input.before ?? null,
+        afterJson: input.after ?? null,
+        reason: input.reason ?? null,
+        requestId: input.requestId ?? null,
+      }),
+    );
   }
 
   toPrincipal(user: User): AuthenticatedPrincipal {
-    return { id: user.id, githubUserId: user.githubUserId, githubLogin: user.githubLogin, name: user.name, avatarUrl: user.avatarUrl, role: user.role, accessStatus: user.accessStatus, isActive: user.isActive };
+    return {
+      id: user.id,
+      githubUserId: user.githubUserId,
+      githubLogin: user.githubLogin,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      accessStatus: user.accessStatus,
+      isActive: user.isActive,
+    };
   }
 
   private required(key: string): string {

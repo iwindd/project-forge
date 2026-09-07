@@ -19,7 +19,10 @@ const updateSchema = projectSchema.partial();
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly em: EntityManager, private readonly auth: AuthService) {}
+  constructor(
+    private readonly em: EntityManager,
+    private readonly auth: AuthService,
+  ) {}
 
   async list(ownerId: string) {
     return this.em.find(Project, { ownerId }, { orderBy: { updatedAt: 'desc' } });
@@ -44,11 +47,22 @@ export class ProjectsService {
       sourceBranch: input.sourceBranch,
       targetBranch: input.targetBranch,
       nodeVersion: input.nodeVersion || null,
-      environmentMetadata: Object.keys(input.environmentMetadata).length ? maskMetadata(input.environmentMetadata) : null,
+      environmentMetadata: Object.keys(input.environmentMetadata).length
+        ? maskMetadata(input.environmentMetadata)
+        : null,
     });
     this.em.persist(project);
-    this.em.persist(this.em.create(ProjectMember, { projectId: project.id, userId: ownerId, role: ProjectMemberRole.OWNER }));
-    await this.auth.writeAudit({ actorId: ownerId, targetUserId: ownerId, action: 'PROJECT_CREATED', resourceType: 'PROJECT', resourceId: project.id, after: { name: project.name, githubUrl: project.githubUrl } });
+    this.em.persist(
+      this.em.create(ProjectMember, { projectId: project.id, userId: ownerId, role: ProjectMemberRole.OWNER }),
+    );
+    await this.auth.writeAudit({
+      actorId: ownerId,
+      targetUserId: ownerId,
+      action: 'PROJECT_CREATED',
+      resourceType: 'PROJECT',
+      resourceId: project.id,
+      after: { name: project.name, githubUrl: project.githubUrl },
+    });
     await this.em.flush();
     return project;
   }
@@ -56,7 +70,12 @@ export class ProjectsService {
   async update(ownerId: string, id: string, body: unknown) {
     const input = updateSchema.parse(body);
     const project = await this.get(ownerId, id);
-    const before = { name: project.name, sourceBranch: project.sourceBranch, targetBranch: project.targetBranch, nodeVersion: project.nodeVersion };
+    const before = {
+      name: project.name,
+      sourceBranch: project.sourceBranch,
+      targetBranch: project.targetBranch,
+      nodeVersion: project.nodeVersion,
+    };
     if (input.githubUrl) {
       const repository = parseGithubUrl(input.githubUrl);
       if (!repository) throw new Error('Only GitHub HTTPS repository URLs are supported');
@@ -69,7 +88,20 @@ export class ProjectsService {
     if (input.targetBranch !== undefined) project.targetBranch = input.targetBranch;
     if (input.nodeVersion !== undefined) project.nodeVersion = input.nodeVersion || null;
     if (input.environmentMetadata !== undefined) project.environmentMetadata = maskMetadata(input.environmentMetadata);
-    await this.auth.writeAudit({ actorId: ownerId, targetUserId: ownerId, action: 'PROJECT_UPDATED', resourceType: 'PROJECT', resourceId: project.id, before, after: { name: project.name, sourceBranch: project.sourceBranch, targetBranch: project.targetBranch, nodeVersion: project.nodeVersion } });
+    await this.auth.writeAudit({
+      actorId: ownerId,
+      targetUserId: ownerId,
+      action: 'PROJECT_UPDATED',
+      resourceType: 'PROJECT',
+      resourceId: project.id,
+      before,
+      after: {
+        name: project.name,
+        sourceBranch: project.sourceBranch,
+        targetBranch: project.targetBranch,
+        nodeVersion: project.nodeVersion,
+      },
+    });
     await this.em.flush();
     return project;
   }
@@ -78,7 +110,15 @@ export class ProjectsService {
     const project = await this.get(ownerId, id);
     project.status = ProjectStatus.ARCHIVED;
     project.archivedAt = new Date();
-    await this.auth.writeAudit({ actorId: ownerId, targetUserId: ownerId, action: 'PROJECT_ARCHIVED', resourceType: 'PROJECT', resourceId: project.id, before: { status: ProjectStatus.ACTIVE }, after: { status: project.status } });
+    await this.auth.writeAudit({
+      actorId: ownerId,
+      targetUserId: ownerId,
+      action: 'PROJECT_ARCHIVED',
+      resourceType: 'PROJECT',
+      resourceId: project.id,
+      before: { status: ProjectStatus.ACTIVE },
+      after: { status: project.status },
+    });
     await this.em.flush();
     return project;
   }
@@ -87,7 +127,15 @@ export class ProjectsService {
 function parseGithubUrl(value: string) {
   try {
     const url = new URL(value);
-    if (url.protocol !== 'https:' || url.hostname.toLowerCase() !== 'github.com' || url.username || url.password || url.search || url.hash) return null;
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname.toLowerCase() !== 'github.com' ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    )
+      return null;
     const parts = url.pathname.split('/').filter(Boolean);
     if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
     const name = parts[1].replace(/\.git$/, '');

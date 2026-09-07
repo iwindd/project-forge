@@ -8,9 +8,15 @@
     "dev:web": "pnpm --filter @project-forge/web dev",
     "build": "pnpm --recursive build",
     "check-types": "pnpm --recursive check-types",
-    "lint": "pnpm --recursive lint",
+    "format": "biome format --write apps",
+    "format:check": "biome format apps",
+    "lint": "biome lint apps",
+    "check": "biome check apps && pnpm check-types",
     "test": "pnpm --filter @project-forge/api test",
     "db:migrate": "pnpm --filter @project-forge/api db:migrate",
     "db:generate": "pnpm --filter @project-forge/api db:generate"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.12"
   }
 }

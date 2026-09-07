@@ -29,13 +29,21 @@ export class AccessController {
 
   @Post(':id/approve')
   @UseGuards(AdminGuard)
-  async approve(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal, @Body() body: { note?: string }) {
+  async approve(
+    @Param('id') id: string,
+    @Principal() principal: AuthenticatedPrincipal,
+    @Body() body: { note?: string },
+  ) {
     return this.access.approve(principal.id, id, body?.note);
   }
 
   @Post(':id/reject')
   @UseGuards(AdminGuard)
-  async reject(@Param('id') id: string, @Principal() principal: AuthenticatedPrincipal, @Body() body: { note?: string }) {
+  async reject(
+    @Param('id') id: string,
+    @Principal() principal: AuthenticatedPrincipal,
+    @Body() body: { note?: string },
+  ) {
     return this.access.reject(principal.id, id, body?.note);
   }
 }

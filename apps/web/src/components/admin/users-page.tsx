@@ -1,218 +1,171 @@
-'use client'
+'use client';
 
+import { Alert, Avatar, Badge, Button, Card, Group, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { IconInfoCircle, IconRefresh } from '@tabler/icons-react';
+import { useState } from 'react';
+import type { User } from '@/lib/api';
 import {
-  ApiError,
-  getUsers,
-  revokeUserSessions,
-  updateUserRole,
-  updateUserStatus,
-  type User
-} from '@/lib/api'
-import { useEffect, useState } from 'react'
+  useGetUsersQuery,
+  useRevokeUserSessionsMutation,
+  useUpdateUserRoleMutation,
+  useUpdateUserStatusMutation,
+} from '@/store/api';
 
-const statuses: User['accessStatus'][] = ['APPROVED', 'REJECTED', 'SUSPENDED']
+const statuses: User['accessStatus'][] = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'];
+
+function errorMessage(error: unknown) {
+  const message = (error as { data?: { message?: string | string[] } } | undefined)?.data?.message;
+  return Array.isArray(message) ? message.join(', ') : message || 'จัดการ users ไม่สำเร็จ';
+}
 
 export function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState('')
+  const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [status, setStatus] = useState<string | null>(null);
+  const query = useGetUsersQuery({ search: appliedSearch, status: status || '' });
+  const [updateStatus, statusState] = useUpdateUserStatusMutation();
+  const [updateRole, roleState] = useUpdateUserRoleMutation();
+  const [revoke, revokeState] = useRevokeUserSessionsMutation();
+  const busy = statusState.isLoading || roleState.isLoading || revokeState.isLoading;
+  const error = query.error || statusState.error || roleState.error || revokeState.error;
 
-  async function load() {
-    setLoading(true)
-    try {
-      setUsers((await getUsers(search, status)).data)
-      setError('')
-    } catch (cause: unknown) {
-      setError(
-        cause instanceof ApiError ? cause.message : 'โหลด users ไม่สำเร็จ'
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
-  useEffect(() => {
-    void load()
-  }, [status])
-
-  async function changeStatus(user: User, next: User['accessStatus']) {
-    if (
-      next === user.accessStatus ||
-      !window.confirm(`เปลี่ยนสถานะ ${user.githubLogin} เป็น ${next} หรือไม่?`)
-    )
-      return
-    setBusy(user.id)
-    try {
-      await updateUserStatus(user.id, next)
-      await load()
-    } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : 'เปลี่ยนสถานะไม่สำเร็จ')
-    } finally {
-      setBusy('')
-    }
+  async function changeStatus(user: User, next: string | null) {
+    if (!next || next === user.accessStatus || !window.confirm(`เปลี่ยนสถานะ ${user.githubLogin} เป็น ${next} หรือไม่?`))
+      return;
+    await updateStatus({ id: user.id, status: next as User['accessStatus'] });
   }
 
-  async function changeRole(user: User, next: User['role']) {
-    if (
-      next === user.role ||
-      !window.confirm(
-        `เปลี่ยน role ของ ${user.githubLogin} เป็น ${next} หรือไม่?`
-      )
-    )
-      return
-    setBusy(user.id)
-    try {
-      await updateUserRole(user.id, next)
-      await load()
-    } catch (cause: unknown) {
-      setError(
-        cause instanceof Error ? cause.message : 'เปลี่ยน role ไม่สำเร็จ'
-      )
-    } finally {
-      setBusy('')
-    }
+  async function changeRole(user: User, next: string | null) {
+    if (!next || next === user.role || !window.confirm(`เปลี่ยน role ของ ${user.githubLogin} เป็น ${next} หรือไม่?`)) return;
+    await updateRole({ id: user.id, role: next as User['role'] });
   }
 
-  async function revoke(user: User) {
-    if (!window.confirm(`Revoke ทุก session ของ ${user.githubLogin} หรือไม่?`))
-      return
-    setBusy(user.id)
-    try {
-      await revokeUserSessions(user.id)
-      setError('Revoked sessions แล้ว')
-    } catch (cause: unknown) {
-      setError(
-        cause instanceof Error ? cause.message : 'Revoke sessions ไม่สำเร็จ'
-      )
-    } finally {
-      setBusy('')
-    }
+  async function revokeSessions(user: User) {
+    if (!window.confirm(`Revoke ทุก session ของ ${user.githubLogin} หรือไม่?`)) return;
+    await revoke(user.id);
   }
 
   return (
-    <div className='content'>
-      <div className='page-heading'>
-        <div>
-          <span className='eyebrow'>Access control</span>
-          <h2>Users</h2>
-          <p className='muted'>
-            ค้นหาและจัดการ access status กับ role ของผู้ใช้
-          </p>
-        </div>
-      </div>
-      <div className='toolbar'>
-        <div className='filters'>
-          <input
-            aria-label='Search users'
+    <Stack gap='xl'>
+      <Stack className='forge-page-header' gap={4}>
+        <Text size='sm' c='brandBlue' fw={700} tt='uppercase' lts={1.5}>
+          Access control
+        </Text>
+        <Title order={1}>Users</Title>
+        <Text c='dimmed'>ค้นหาและจัดการ access status กับ role ของผู้ใช้</Text>
+      </Stack>
+      <Card padding='md' radius='lg'>
+        <Group align='flex-end' wrap='wrap'>
+          <TextInput
+            label='GitHub login'
+            placeholder='Search users'
             value={search}
-            onChange={event => setSearch(event.target.value)}
-            onKeyDown={event => {
-              if (event.key === 'Enter') void load()
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') setAppliedSearch(search);
             }}
-            placeholder='Search GitHub login'
           />
-          <select
-            aria-label='Filter status'
+          <Select
+            label='Status'
+            placeholder='All statuses'
+            clearable
             value={status}
-            onChange={event => setStatus(event.target.value)}
-          >
-            <option value=''>All statuses</option>
-            {statuses.map(item => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <button
-            className='button secondary'
-            type='button'
-            onClick={() => void load()}
-          >
+            onChange={setStatus}
+            data={statuses}
+          />
+          <Button leftSection={<IconRefresh size={17} />} onClick={() => setAppliedSearch(search)}>
             Search
-          </button>
-        </div>
-        <span className='muted'>{users.length} users shown</span>
-      </div>
-      {error ? <div className='error spacing-top'>{error}</div> : null}
-      {loading ? (
-        <div className='card'>
-          <p className='muted'>กำลังโหลด users…</p>
-        </div>
-      ) : (
-        <div className='table-wrap'>
-          <table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Access</th>
-                <th>Role</th>
-                <th>Joined</th>
-                <th>Security</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user.id}>
-                  <td>
-                    <strong>{user.name || user.githubLogin}</strong>
-                    <br />
-                    <span className='muted'>@{user.githubLogin}</span>
-                  </td>
-                  <td>
-                    <select
-                      disabled={busy === user.id}
+          </Button>
+          <Text size='sm' c='dimmed' ml='auto'>
+            {query.data?.data.length ?? 0} users shown
+          </Text>
+        </Group>
+      </Card>
+      {error ? (
+        <Alert color='red' icon={<IconInfoCircle size={18} />}>
+          {errorMessage(error)}
+        </Alert>
+      ) : null}
+      <Card padding={0} radius='lg' className='forge-table-wrap'>
+        <Table.ScrollContainer minWidth={760}>
+          <Table verticalSpacing='md' highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>User</Table.Th>
+                <Table.Th>Access</Table.Th>
+                <Table.Th>Role</Table.Th>
+                <Table.Th>Joined</Table.Th>
+                <Table.Th>Security</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {query.isLoading ? (
+                <Table.Tr>
+                  <Table.Td colSpan={5}>
+                    <Text c='dimmed' ta='center' py='xl'>
+                      กำลังโหลด users…
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              ) : null}
+              {query.data?.data.map((user) => (
+                <Table.Tr key={user.id}>
+                  <Table.Td>
+                    <Group gap='sm' wrap='nowrap'>
+                      <Avatar src={user.avatarUrl} color='brandBlue' radius='xl'>
+                        {(user.name || user.githubLogin).slice(0, 1).toUpperCase()}
+                      </Avatar>
+                      <Stack gap={0}>
+                        <Text fw={600}>{user.name || user.githubLogin}</Text>
+                        <Text size='xs' c='dimmed'>
+                          @{user.githubLogin}
+                        </Text>
+                      </Stack>
+                    </Group>
+                  </Table.Td>
+                  <Table.Td>
+                    <Select
+                      disabled={busy}
                       value={user.accessStatus}
-                      onChange={event =>
-                        void changeStatus(
-                          user,
-                          event.target.value as User['accessStatus']
-                        )
-                      }
-                    >
-                      <option value='PENDING'>PENDING</option>
-                      <option value='APPROVED'>APPROVED</option>
-                      <option value='REJECTED'>REJECTED</option>
-                      <option value='SUSPENDED'>SUSPENDED</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select
-                      disabled={busy === user.id}
+                      onChange={(next) => void changeStatus(user, next)}
+                      data={statuses}
+                      allowDeselect={false}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    <Select
+                      disabled={busy}
                       value={user.role}
-                      onChange={event =>
-                        void changeRole(
-                          user,
-                          event.target.value as User['role']
-                        )
-                      }
-                    >
-                      <option value='USER'>USER</option>
-                      <option value='ADMIN'>ADMIN</option>
-                    </select>
-                  </td>
-                  <td className='muted'>
-                    {user.createdAt
-                      ? new Date(user.createdAt).toLocaleDateString('th-TH')
-                      : '—'}
-                  </td>
-                  <td>
-                    <button
-                      className='button secondary'
-                      disabled={busy === user.id}
-                      type='button'
-                      onClick={() => void revoke(user)}
-                    >
+                      onChange={(next) => void changeRole(user, next)}
+                      data={['USER', 'ADMIN']}
+                      allowDeselect={false}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    <Badge variant='light' color={user.isActive ? 'teal' : 'gray'}>
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH') : '—'}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Button variant='default' size='xs' disabled={busy} onClick={() => void revokeSessions(user)}>
                       Revoke sessions
-                    </button>
-                  </td>
-                </tr>
+                    </Button>
+                  </Table.Td>
+                </Table.Tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  )
+              {!query.isLoading && !query.data?.data.length ? (
+                <Table.Tr>
+                  <Table.Td colSpan={5}>
+                    <Text c='dimmed' ta='center' py='xl'>
+                      ไม่พบ users
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              ) : null}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      </Card>
+    </Stack>
+  );
 }

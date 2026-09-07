@@ -1,33 +1,58 @@
-'use client'
+'use client';
 
-import { githubLoginUrl } from '@/lib/api'
-import { useEffect, useState } from 'react'
+import { Alert, Anchor, Button, Card, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconBrandGithub, IconGitBranch, IconInfoCircle } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { githubLoginUrl } from '@/lib/api';
 
 export function LoginCard() {
-  const [error, setError] = useState('')
+  const [error, setError] = useState('');
+
   useEffect(() => {
-    const message = new URLSearchParams(window.location.search).get('error')
-    if (message) setError(message)
-  }, [])
+    const message = new URLSearchParams(window.location.search).get('error');
+    if (message) setError(message);
+  }, []);
+
   return (
-    <div className='auth-page'>
-      <div className='card auth-card'>
-        <span className='eyebrow'>Private developer workspace</span>
-        <h1>Project Forge</h1>
-        <p className='muted'>
-          ระบบภายในสำหรับจัดการ project ของทีม โดย Phase 1 เปิดให้เข้าใช้งานผ่าน
-          GitHub เท่านั้น
-        </p>
-        {error ? (
-          <div className='error spacing-top'>เข้าสู่ระบบไม่สำเร็จ: {error}</div>
-        ) : null}
-        <a className='button github-button spacing-top' href={githubLoginUrl()}>
-          Continue with GitHub
-        </a>
-        <p className='muted small spacing-top'>
-          ผู้ใช้ใหม่จะเข้าได้หลัง admin อนุมัติ access request
-        </p>
-      </div>
-    </div>
-  )
+    <main className='forge-auth-page'>
+      <Card className='forge-auth-card' padding='xl' radius='lg'>
+        <Stack gap='xl'>
+          <Group gap='sm'>
+            <ThemeIcon size={48} radius='md' variant='light' color='brandBlue'>
+              <IconGitBranch size={27} stroke={1.8} />
+            </ThemeIcon>
+            <div>
+              <Text fw={700} size='xl' lh={1.1} style={{ fontFamily: 'var(--font-prompt), sans-serif' }}>
+                PROJECT FORGE
+              </Text>
+              <Text size='xs' c='dimmed'>
+                private project workspace
+              </Text>
+            </div>
+          </Group>
+          <Stack gap='xs'>
+            <Text size='sm' c='brandBlue' fw={700} tt='uppercase' lts={1.5}>
+              GitHub-only access
+            </Text>
+            <Title order={1}>ยินดีต้อนรับ</Title>
+            <Text c='dimmed'>เข้าสู่ระบบเพื่อจัดการโปรเจคส่วนตัวและเตรียม workspace สำหรับขั้นตอนถัดไป</Text>
+          </Stack>
+          {error ? (
+            <Alert color='red' title='เข้าสู่ระบบไม่สำเร็จ' icon={<IconInfoCircle size={18} />}>
+              {error}
+            </Alert>
+          ) : null}
+          <Button component='a' href={githubLoginUrl()} size='lg' leftSection={<IconBrandGithub size={21} />} fullWidth>
+            Continue with GitHub
+          </Button>
+          <Text size='sm' c='dimmed' ta='center'>
+            ผู้ใช้ใหม่จะรอการอนุมัติจาก admin ก่อนเข้าใช้งาน
+          </Text>
+          <Anchor href='https://github.com' target='_blank' rel='noreferrer' size='xs' c='dimmed' ta='center'>
+            ระบบใช้ GitHub เป็นช่องทางยืนยันตัวตนเท่านั้น
+          </Anchor>
+        </Stack>
+      </Card>
+    </main>
+  );
 }

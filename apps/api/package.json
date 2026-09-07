@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/src/main.js",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "pnpm -w exec biome lint apps/api/src",
     "test": "vitest run",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:generate": "mikro-orm migration:create",
@@ -36,10 +36,8 @@
     "@types/express": "^5.0.1",
     "@types/node": "^24.0.0",
     "@types/supertest": "^6.0.3",
-    "eslint": "^9.0.0",
     "tsx": "^4.23.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.0.0",
     "vitest": "^4.1.2"
   }
 }

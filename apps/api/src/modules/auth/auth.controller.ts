@@ -13,19 +13,36 @@ export class AuthController {
   @Get('github/start')
   start(@Res() response: Response) {
     const result = this.auth.githubStartUrl();
-    response.cookie('pf_oauth_state', result.state, { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true', maxAge: 10 * 60 * 1000, path: '/' });
+    response.cookie('pf_oauth_state', result.state, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.COOKIE_SECURE === 'true',
+      maxAge: 10 * 60 * 1000,
+      path: '/',
+    });
     return response.redirect(result.url);
   }
 
   @Get('github/callback')
-  async callback(@Query('code') code: string | undefined, @Query('state') state: string | undefined, @Req() request: Request, @Res() response: Response) {
+  async callback(
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
     const expected = getCookie(request, 'pf_oauth_state');
     const webOrigin = process.env.WEB_ORIGIN || 'http://localhost:3006';
     if (!code || !state || state !== expected) return response.redirect(`${webOrigin}/login?error=invalid_oauth_state`);
     try {
       const result = await this.auth.completeGithubLogin(code);
       response.clearCookie('pf_oauth_state', { path: '/' });
-      response.cookie('pf_session', result.sessionToken, { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true', maxAge: Number(process.env.SESSION_TTL_SECONDS || 604800) * 1000, path: '/' });
+      response.cookie('pf_session', result.sessionToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.COOKIE_SECURE === 'true',
+        maxAge: Number(process.env.SESSION_TTL_SECONDS || 604800) * 1000,
+        path: '/',
+      });
       const destination = result.principal.accessStatus === 'APPROVED' ? '/' : '/access-pending';
       return response.redirect(`${webOrigin}${destination}`);
     } catch (error) {

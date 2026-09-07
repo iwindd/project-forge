@@ -1,5 +1,5 @@
-import { AccessRequestsPage } from '@/components/admin/access-requests-page'
+import { AccessRequestsPage } from '@/components/admin/access-requests-page';
 
 export default function AdminAccessRequestsPage() {
-  return <AccessRequestsPage />
+  return <AccessRequestsPage />;
 }

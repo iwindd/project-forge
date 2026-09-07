@@ -10,7 +10,16 @@ export enum ProjectStatus {
 @Index({ properties: ['ownerId', 'status'] })
 @Unique({ properties: ['ownerId', 'githubUrl'] })
 export class Project {
-  [OptionalProps]?: 'id' | 'sourceBranch' | 'targetBranch' | 'nodeVersion' | 'environmentMetadata' | 'status' | 'createdAt' | 'updatedAt' | 'archivedAt';
+  [OptionalProps]?:
+    | 'id'
+    | 'sourceBranch'
+    | 'targetBranch'
+    | 'nodeVersion'
+    | 'environmentMetadata'
+    | 'status'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'archivedAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();

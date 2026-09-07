@@ -1,8 +1,6 @@
 {
   "name": "public",
-  "namespaces": [
-    "public"
-  ],
+  "namespaces": ["public"],
   "tables": [
     {
       "name": "access_requests",
@@ -124,12 +122,7 @@
           "default": "'PENDING'",
           "comment": null,
           "collation": null,
-          "enumItems": [
-            "PENDING",
-            "APPROVED",
-            "REJECTED",
-            "CANCELLED"
-          ],
+          "enumItems": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"],
           "mappedType": "enum"
         },
         "updated_at": {
@@ -169,9 +162,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "access_requests_pkey",
@@ -179,10 +170,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "user_id",
-            "status"
-          ],
+          "columnNames": ["user_id", "status"],
           "composite": true,
           "constraint": false,
           "keyName": "access_requests_user_id_status_index",
@@ -396,9 +384,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
           "constraint": false,
           "keyName": "audit_logs_created_at_index",
@@ -406,9 +392,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "audit_logs_pkey",
@@ -416,9 +400,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "target_user_id"
-          ],
+          "columnNames": ["target_user_id"],
           "composite": false,
           "constraint": false,
           "keyName": "audit_logs_target_user_id_index",
@@ -591,9 +573,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "oauth_accounts_pkey",
@@ -601,10 +581,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "provider",
-            "provider_account_id"
-          ],
+          "columnNames": ["provider", "provider_account_id"],
           "composite": true,
           "constraint": true,
           "keyName": "oauth_accounts_provider_provider_account_id_unique",
@@ -686,11 +663,7 @@
           "default": "'OWNER'",
           "comment": null,
           "collation": null,
-          "enumItems": [
-            "OWNER",
-            "CONTRIBUTOR",
-            "VIEWER"
-          ],
+          "enumItems": ["OWNER", "CONTRIBUTOR", "VIEWER"],
           "mappedType": "enum"
         },
         "updated_at": {
@@ -730,9 +703,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "project_members_pkey",
@@ -740,10 +711,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "project_id",
-            "user_id"
-          ],
+          "columnNames": ["project_id", "user_id"],
           "composite": true,
           "constraint": true,
           "keyName": "project_members_project_id_user_id_unique",
@@ -968,10 +936,7 @@
           "default": "'ACTIVE'",
           "comment": null,
           "collation": null,
-          "enumItems": [
-            "ACTIVE",
-            "ARCHIVED"
-          ],
+          "enumItems": ["ACTIVE", "ARCHIVED"],
           "mappedType": "enum"
         },
         "target_branch": {
@@ -1011,10 +976,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "owner_id",
-            "github_url"
-          ],
+          "columnNames": ["owner_id", "github_url"],
           "composite": true,
           "constraint": true,
           "keyName": "projects_owner_id_github_url_unique",
@@ -1022,10 +984,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "owner_id",
-            "status"
-          ],
+          "columnNames": ["owner_id", "status"],
           "composite": true,
           "constraint": false,
           "keyName": "projects_owner_id_status_index",
@@ -1033,9 +992,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "projects_pkey",
@@ -1181,9 +1138,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "sessions_pkey",
@@ -1191,9 +1146,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "token_hash"
-          ],
+          "columnNames": ["token_hash"],
           "composite": false,
           "constraint": false,
           "keyName": "sessions_token_hash_index",
@@ -1201,9 +1154,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "token_hash"
-          ],
+          "columnNames": ["token_hash"],
           "composite": false,
           "constraint": true,
           "keyName": "sessions_token_hash_unique",
@@ -1234,12 +1185,7 @@
           "default": "'PENDING'",
           "comment": null,
           "collation": null,
-          "enumItems": [
-            "PENDING",
-            "APPROVED",
-            "REJECTED",
-            "SUSPENDED"
-          ],
+          "enumItems": ["PENDING", "APPROVED", "REJECTED", "SUSPENDED"],
           "mappedType": "enum"
         },
         "avatar_url": {
@@ -1375,10 +1321,7 @@
           "default": "'USER'",
           "comment": null,
           "collation": null,
-          "enumItems": [
-            "USER",
-            "ADMIN"
-          ],
+          "enumItems": ["USER", "ADMIN"],
           "mappedType": "enum"
         },
         "updated_at": {
@@ -1401,9 +1344,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "github_user_id"
-          ],
+          "columnNames": ["github_user_id"],
           "composite": false,
           "constraint": true,
           "keyName": "users_github_user_id_unique",
@@ -1411,9 +1352,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "users_pkey",

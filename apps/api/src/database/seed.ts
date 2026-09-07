@@ -15,14 +15,16 @@ if (user) {
   user.accessStatus = AccessStatus.APPROVED;
   user.isActive = true;
 } else {
-  em.persist(em.create(User, {
-    githubUserId,
-    githubLogin: process.env.SEED_ADMIN_GITHUB_LOGIN?.trim() || 'admin',
-    name: process.env.SEED_ADMIN_NAME?.trim() || 'Project Forge Admin',
-    role: UserRole.ADMIN,
-    accessStatus: AccessStatus.APPROVED,
-    isActive: true,
-  }));
+  em.persist(
+    em.create(User, {
+      githubUserId,
+      githubLogin: process.env.SEED_ADMIN_GITHUB_LOGIN?.trim() || 'admin',
+      name: process.env.SEED_ADMIN_NAME?.trim() || 'Project Forge Admin',
+      role: UserRole.ADMIN,
+      accessStatus: AccessStatus.APPROVED,
+      isActive: true,
+    }),
+  );
 }
 await em.flush();
 await orm.close(true);
