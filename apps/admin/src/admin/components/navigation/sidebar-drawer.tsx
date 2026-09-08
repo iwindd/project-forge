@@ -6,18 +6,21 @@ import { OrganizationSwitcher } from "../../features/organization/organization-s
 import NavigationScrollControls from "./navigation-scroll-controls";
 import type { SidebarNavigationMode } from "./navigation-utils";
 import classes from "./sidebar-drawer.module.css";
+import { SidebarBackButton } from "./sidebar-back-button";
 import SidebarNavContent from "./sidebar-nav-content";
 import { useScrollbarVisibility } from "./use-scrollbar-visibility";
 
 type SidebarDrawerProps = {
   opened: boolean;
   onCloseAction: () => void;
+  organizationSlug: string;
   navigationMode?: SidebarNavigationMode;
 };
 
 export default function SidebarDrawer({
   opened,
   onCloseAction,
+  organizationSlug,
   navigationMode = "admin",
 }: SidebarDrawerProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -31,7 +34,13 @@ export default function SidebarDrawer({
       padding={0}
       position="left"
       size={300}
-      title={<OrganizationSwitcher />}
+      title={
+        navigationMode === "account" ? (
+          <SidebarBackButton organizationSlug={organizationSlug} />
+        ) : (
+          <OrganizationSwitcher />
+        )
+      }
       hiddenFrom="sm"
       withCloseButton={false}
       overlayProps={{ backgroundOpacity: 0.45, blur: 2 }}
@@ -61,10 +70,10 @@ export default function SidebarDrawer({
             viewportRef={viewportRef}
           >
             <Box px="md">
-            <SidebarNavContent
-              navigationMode={navigationMode}
-              onNavigateAction={onCloseAction}
-            />
+              <SidebarNavContent
+                navigationMode={navigationMode}
+                onNavigateAction={onCloseAction}
+              />
             </Box>
           </ScrollArea>
         </NavigationScrollControls>

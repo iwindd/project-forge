@@ -5,13 +5,16 @@ import { useRef } from "react";
 import { OrganizationSwitcher } from "../../features/organization/organization-switcher";
 import NavigationScrollControls from "./navigation-scroll-controls";
 import classes from "./sidebar-default.module.css";
+import { SidebarBackButton } from "./sidebar-back-button";
 import SidebarNavContent from "./sidebar-nav-content";
 import type { SidebarNavigationMode } from "./navigation-utils";
 import { useScrollbarVisibility } from "./use-scrollbar-visibility";
 
 export default function SidebarDefault({
+  organizationSlug,
   navigationMode = "admin",
 }: {
+  organizationSlug: string;
   navigationMode?: SidebarNavigationMode;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -21,7 +24,11 @@ export default function SidebarDefault({
   return (
     <aside className={classes.sidebar} data-admin-sidebar>
       <div className={classes.sidebarHeader}>
-        <OrganizationSwitcher />
+        {navigationMode === "account" ? (
+          <SidebarBackButton organizationSlug={organizationSlug} />
+        ) : (
+          <OrganizationSwitcher />
+        )}
       </div>
 
       <NavigationScrollControls

@@ -36,68 +36,80 @@ export function AdminShell({
   const [settingsOpened, settingsHandlers] = useDisclosure(false);
   const [scroll, scrollTo] = useWindowScroll();
 
-  return (
-    <OrganizationProvider organizationSlug={organizationSlug}>
-      <AppShell
-        padding={0}
-        layout="alt"
-        header={{ height: 72 }}
-        navbar={{
-          width: 300,
-          breakpoint: "sm",
-          collapsed: { mobile: true },
-        }}
-        className={classes.appShell}
+  const shell = (
+    <AppShell
+      padding={0}
+      layout="alt"
+      header={{ height: 72 }}
+      navbar={{
+        width: 300,
+        breakpoint: "sm",
+        collapsed: { mobile: true },
+      }}
+      className={classes.appShell}
+    >
+      <AppShell.Header
+        className={classes.header}
+        data-scrolled={scroll.y > 0}
       >
-        <AppShell.Header
-          className={classes.header}
-          data-scrolled={scroll.y > 0}
-        >
-          <AdminHeader
-            user={user}
-            mobileOpened={mobileOpened}
-            onToggleMobileAction={mobileHandlers.toggle}
-            onOpenSettingsAction={settingsHandlers.open}
-          />
-        </AppShell.Header>
+        <AdminHeader
+          user={user}
+          mobileOpened={mobileOpened}
+          onToggleMobileAction={mobileHandlers.toggle}
+          onOpenSettingsAction={settingsHandlers.open}
+        />
+      </AppShell.Header>
 
-        <AppShell.Navbar className={classes.navbar}>
-          <SidebarDefault navigationMode={navigationMode} />
-        </AppShell.Navbar>
-
-        <SidebarDrawer
-          opened={mobileOpened}
-          onCloseAction={mobileHandlers.close}
+      <AppShell.Navbar className={classes.navbar}>
+        <SidebarDefault
+          organizationSlug={organizationSlug}
           navigationMode={navigationMode}
         />
+      </AppShell.Navbar>
 
-        <AppShell.Main className={classes.main}>
-          <Box className={classes.mainContent}>{children}</Box>
-        </AppShell.Main>
+      <SidebarDrawer
+        opened={mobileOpened}
+        onCloseAction={mobileHandlers.close}
+        organizationSlug={organizationSlug}
+        navigationMode={navigationMode}
+      />
 
-        <AdminSettingsDrawer
-          opened={settingsOpened}
-          onCloseAction={settingsHandlers.close}
-        />
+      <AppShell.Main className={classes.main}>
+        <Box className={classes.mainContent}>{children}</Box>
+      </AppShell.Main>
 
-        <Transition transition="slide-up" mounted={scroll.y > 320}>
-          {(transitionStyles) => (
-            <Affix position={{ bottom: 24, right: 24 }} style={transitionStyles}>
-              <ActionIcon
-                size="lg"
-                radius="xl"
-                variant="filled"
-                aria-label="กลับด้านบน"
-                onClick={() => scrollTo({ y: 0 })}
-              >
-                <IconArrowUp size={19} />
-              </ActionIcon>
-            </Affix>
-          )}
-        </Transition>
+      <AdminSettingsDrawer
+        opened={settingsOpened}
+        onCloseAction={settingsHandlers.close}
+      />
 
-        {!hydrated && <Box className={classes.hydrationCover} />}
-      </AppShell>
+      <Transition transition="slide-up" mounted={scroll.y > 320}>
+        {(transitionStyles) => (
+          <Affix position={{ bottom: 24, right: 24 }} style={transitionStyles}>
+            <ActionIcon
+              size="lg"
+              radius="xl"
+              variant="filled"
+              aria-label="กลับด้านบน"
+              onClick={() => scrollTo({ y: 0 })}
+            >
+              <IconArrowUp size={19} />
+            </ActionIcon>
+          </Affix>
+        )}
+      </Transition>
+
+      {!hydrated && <Box className={classes.hydrationCover} />}
+    </AppShell>
+  );
+
+  if (navigationMode === "account") {
+    return shell;
+  }
+
+  return (
+    <OrganizationProvider organizationSlug={organizationSlug}>
+      {shell}
     </OrganizationProvider>
   );
 }
