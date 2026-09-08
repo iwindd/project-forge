@@ -6,6 +6,7 @@ import {
 import {
   accountNavigation,
   adminNavigation,
+  adminRootNavigation,
   type AdminNavigationGroup,
   type AdminNavigationItem,
 } from "../../navigation";
@@ -16,7 +17,7 @@ import type { RouteParams } from "../../routing";
 export type NavItem = AdminNavigationItem;
 export type NavGroup = AdminNavigationGroup;
 export type NavLinkHref = string;
-export type SidebarNavigationMode = "admin" | "account";
+export type SidebarNavigationMode = "admin" | "admin-root" | "account";
 
 type PermissionCheck = (
   keys: PermissionKey | readonly PermissionKey[],
@@ -71,7 +72,11 @@ export function useNavigationGroups(
 ): NavGroup[] {
   const adminGroups = useFilteredNavGroups();
 
-  return mode === "account" ? accountNavigation : adminGroups;
+  if (mode === "account") {
+    return accountNavigation;
+  }
+
+  return mode === "admin-root" ? adminRootNavigation : adminGroups;
 }
 
 export function getNavItems(groups: NavGroup[]) {

@@ -16,6 +16,23 @@ const adminRoutes = ROUTER({
       }
     }
   },
+  admin: {
+    path: '/admin',
+    label: 'ระบบจัดการ',
+    hiddenBreadcrumb: true,
+    children: {
+      users: {
+        path: '/admin/users',
+        label: 'ผู้ใช้งาน',
+        permission: 'manageUsers'
+      },
+      activities: {
+        path: '/admin/activities',
+        label: 'ประวัติการทำรายการ',
+        permission: 'viewAuditLogs'
+      }
+    }
+  },
   profile: {
     path: '/:organizationSlug/profile',
     label: 'โปรไฟล์',

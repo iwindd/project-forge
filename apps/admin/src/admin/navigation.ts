@@ -69,22 +69,6 @@ function routeItem(
 
 export const adminNavigation: AdminNavigationGroup[] = [
   {
-    id: 'system',
-    label: 'ระบบ',
-    permissionKey: ['manageUsers', 'viewAuditLogs'],
-    permissionMode: 'any',
-    items: [
-      routeItem('system.users', {
-        icon: IconUsers,
-        permissionKey: 'manageUsers'
-      }),
-      routeItem('system.auditLogs', {
-        icon: IconHistory,
-        permissionKey: 'viewAuditLogs'
-      })
-    ]
-  },
-  {
     id: 'settings',
     label: 'ตั้งค่า',
     permissionKey: 'manageUsers',
@@ -92,6 +76,25 @@ export const adminNavigation: AdminNavigationGroup[] = [
       routeItem('settings.members', {
         icon: IconUsers,
         permissionKey: 'manageUsers'
+      })
+    ]
+  }
+]
+
+export const adminRootNavigation: AdminNavigationGroup[] = [
+  {
+    id: 'system',
+    label: 'ระบบ',
+    permissionKey: ['manageUsers', 'viewAuditLogs'],
+    permissionMode: 'any',
+    items: [
+      routeItem('admin.users', {
+        icon: IconUsers,
+        permissionKey: 'manageUsers'
+      }),
+      routeItem('admin.activities', {
+        icon: IconHistory,
+        permissionKey: 'viewAuditLogs'
       })
     ]
   }

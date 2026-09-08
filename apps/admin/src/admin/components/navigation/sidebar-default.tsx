@@ -17,6 +17,8 @@ export default function SidebarDefault({
   organizationSlug: string;
   navigationMode?: SidebarNavigationMode;
 }) {
+  const showBackButton =
+    navigationMode === "account" || navigationMode === "admin-root";
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ""}`;
@@ -24,7 +26,7 @@ export default function SidebarDefault({
   return (
     <aside className={classes.sidebar} data-admin-sidebar>
       <div className={classes.sidebarHeader}>
-        {navigationMode === "account" ? (
+        {showBackButton ? (
           <SidebarBackButton organizationSlug={organizationSlug} />
         ) : (
           <OrganizationSwitcher />

@@ -23,6 +23,8 @@ export default function SidebarDrawer({
   organizationSlug,
   navigationMode = "admin",
 }: SidebarDrawerProps) {
+  const showBackButton =
+    navigationMode === "account" || navigationMode === "admin-root";
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ""}`;
@@ -35,7 +37,7 @@ export default function SidebarDrawer({
       position="left"
       size={300}
       title={
-        navigationMode === "account" ? (
+        showBackButton ? (
           <SidebarBackButton organizationSlug={organizationSlug} />
         ) : (
           <OrganizationSwitcher />

@@ -10,6 +10,7 @@ import { FilterTrigger } from "@/admin/components/filter-trigger";
 import TableActionMenu from "@/admin/components/table-action-menu";
 import TableSearchInput from "@/admin/components/table-search-input";
 import { useGetUsersQuery } from "@/admin/features/user/users-api";
+import { useOrganizationContext } from "@/admin/features/organization/organization-provider";
 import { getPath } from "@/admin/routes";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";
@@ -31,7 +32,7 @@ import { DataTable } from "mantine-datatable";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import classes from "./users-table.style.module.css";
 
 const SORTABLE_FIELDS = [
@@ -45,7 +46,22 @@ const SORTABLE_FIELDS = [
 export function UsersTable() {
   const t = useTranslations("Users");
   const common = useTranslations("Common");
-  const { organizationSlug } = useParams<{ organizationSlug: string }>();
+  const { organizationSlug: routeOrganizationSlug } = useParams<{
+    organizationSlug?: string;
+  }>();
+  const { activeOrganization } = useOrganizationContext();
+  const organizationSlug =
+    routeOrganizationSlug ?? activeOrganization?.slug ?? null;
+  const getUserProfilePath = useCallback(
+    (userId: string) =>
+      organizationSlug
+        ? getPath("system.users.profile", {
+            organizationSlug,
+            userId,
+          })
+        : "/admin/users",
+    [organizationSlug],
+  );
   const columns = useMemo(
     () => [
       {
@@ -55,10 +71,7 @@ export function UsersTable() {
         render: (record: UserListItem) => (
           <Text
             component={Link}
-            href={getPath("system.users.profile", {
-              organizationSlug,
-              userId: record.id,
-            })}
+            href={getUserProfilePath(record.id)}
             className={classes.nameLink}
           >
             {record.name}
@@ -110,10 +123,7 @@ export function UsersTable() {
                 actions={[
                   {
                     label: common("open"),
-                    action: getPath("system.users.profile", {
-                      organizationSlug,
-                      userId: record.id,
-                    }),
+                    action: getUserProfilePath(record.id),
                     icon: IconEye,
                   },
                 ]}
@@ -126,10 +136,7 @@ export function UsersTable() {
                 actions={[
                   {
                     label: common("open"),
-                    action: getPath("system.users.profile", {
-                      organizationSlug,
-                      userId: record.id,
-                    }),
+                    action: getUserProfilePath(record.id),
                     icon: IconEye,
                   },
                 ]}
@@ -139,7 +146,7 @@ export function UsersTable() {
         ),
       },
     ],
-    [common, organizationSlug, t],
+    [common, getUserProfilePath, t],
   );
 
   const datatable = useDatatable<UserListItem, UserListQuery>({
