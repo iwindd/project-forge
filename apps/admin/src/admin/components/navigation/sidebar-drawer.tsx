@@ -37,7 +37,7 @@ export default function SidebarDrawer({
         content: classes.mobileDrawerContent,
       }}
     >
-      <div className={classes.mobileDrawerSidebar}>
+      <div className={classes.mobileDrawerSidebar} data-admin-sidebar>
         <NavigationScrollControls
           orientation="vertical"
           viewportRef={viewportRef}

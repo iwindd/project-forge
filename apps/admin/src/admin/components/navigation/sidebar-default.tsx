@@ -14,7 +14,7 @@ export default function SidebarDefault() {
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ""}`;
 
   return (
-    <aside className={classes.sidebar}>
+    <aside className={classes.sidebar} data-admin-sidebar>
       <div className={classes.sidebarHeader}>
         <OrganizationSwitcher />
       </div>

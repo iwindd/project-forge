@@ -43,7 +43,12 @@ export default function SidebarNavContent({
   const routeParams = organizationSlug ? { organizationSlug } : {};
 
   return (
-    <Stack className={classes.sidebarScrollContent} gap={0} pb="xl">
+    <Stack
+      className={classes.sidebarScrollContent}
+      data-sidebar-content
+      gap={0}
+      pb="xl"
+    >
       {groups.map((group) => (
         <SidebarGroup
           key={group.id}
@@ -78,17 +83,27 @@ function SidebarGroup({
       <UnstyledButton
         onClick={toggle}
         className={classes.groupHeadingButton}
+        data-sidebar-group-heading
         aria-expanded={opened}
       >
-        <div className={classes.groupHeadingIconWrapper}>
+        <div
+          className={classes.groupHeadingIconWrapper}
+          data-sidebar-group-icon
+        >
           <IconChevronRight
             size={14}
             stroke={2.5}
             className={classes.groupHeadingChevron}
+            data-sidebar-group-chevron
             data-expanded={opened}
           />
         </div>
-        <Text className={classes.groupHeadingText} size="xs" fw="bold">
+        <Text
+          className={classes.groupHeadingText}
+          data-sidebar-group-label
+          size="xs"
+          fw="bold"
+        >
           {translate(group.id === "overview" ? "overview" : group.id === "content" ? "content" : "system")}
         </Text>
       </UnstyledButton>
@@ -151,20 +166,29 @@ function SidebarItem({
     level > 1
       ? `${classes.nestedItemWrapper} ${isLast ? classes.lastNestedItemWrapper : ""}`
       : classes.itemWrapper;
+  const sidebarLevel = level > 1 ? "nested" : "root";
+  const sidebarLast = isLast ? "true" : undefined;
 
   if (hasChildren) {
     return (
-      <div className={wrapperClass}>
+      <div
+        className={wrapperClass}
+        data-sidebar-item-wrapper
+        data-sidebar-last={sidebarLast}
+        data-sidebar-level={sidebarLevel}
+      >
         <UnstyledButton
           onClick={toggle}
           className={itemClass}
+          data-sidebar-item
+          data-sidebar-level={sidebarLevel}
           data-active={level === 1 ? isActive : isActive && !opened}
           data-disabled={item.disabled || undefined}
           disabled={item.disabled}
           aria-expanded={opened}
         >
           {IconComponent && (
-            <span className={classes.icon}>
+            <span className={classes.icon} data-sidebar-icon>
               <IconComponent size={22} stroke={1.8} />
             </span>
           )}
@@ -175,6 +199,7 @@ function SidebarItem({
             size={16}
             stroke={1.8}
             className={classes.chevron}
+            data-sidebar-chevron
             data-opened={opened}
           />
         </UnstyledButton>
@@ -201,7 +226,7 @@ function SidebarItem({
   const content = (
     <>
       {IconComponent && (
-        <span className={classes.icon}>
+        <span className={classes.icon} data-sidebar-icon>
           <IconComponent size={22} stroke={1.8} />
         </span>
       )}
@@ -209,7 +234,11 @@ function SidebarItem({
         <Text size="sm" fw={600}>
           {translate(item.routeName === "dashboard" ? "dashboard" : item.routeName === "system.users" ? "users" : item.routeName === "system.auditLogs" ? "auditLogs" : item.label)}
         </Text>
-        {item.info && <Text className={classes.itemInfo}>{item.info}</Text>}
+        {item.info && (
+          <Text className={classes.itemInfo} data-sidebar-item-info>
+            {item.info}
+          </Text>
+        )}
       </Stack>
       {notificationCount > 0 && (
         <Badge variant="light" size="sm" circle>
@@ -222,6 +251,7 @@ function SidebarItem({
           variant="light"
           size="xs"
           className={classes.badge}
+          data-sidebar-badge
         >
           {item.badge.label}
         </Badge>
@@ -231,9 +261,16 @@ function SidebarItem({
 
   if (!isLinkItem(item)) {
     return (
-      <div className={wrapperClass}>
+      <div
+        className={wrapperClass}
+        data-sidebar-item-wrapper
+        data-sidebar-last={sidebarLast}
+        data-sidebar-level={sidebarLevel}
+      >
         <UnstyledButton
           className={itemClass}
+          data-sidebar-item
+          data-sidebar-level={sidebarLevel}
           data-disabled
           disabled
           style={{ width: "100%" }}
@@ -246,11 +283,18 @@ function SidebarItem({
   }
 
   return (
-    <div className={wrapperClass}>
+    <div
+      className={wrapperClass}
+      data-sidebar-item-wrapper
+      data-sidebar-last={sidebarLast}
+      data-sidebar-level={sidebarLevel}
+    >
       <Anchor
         component={Link}
         href={getLinkHref(item, routeParams)}
         className={itemClass}
+        data-sidebar-item
+        data-sidebar-level={sidebarLevel}
         data-active={isSelfActive}
         aria-current={isSelfActive ? "page" : undefined}
         onClick={onNavigateAction}
