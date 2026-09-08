@@ -21,8 +21,8 @@ const corsOrigins = [
 app.enableCors({
   origin: corsOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-ID'],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-ID', 'X-Organization-Id'],
 });
 app.useGlobalFilters(new PublicErrorFilter());
 await app.listen(config.getOrThrow<number>('API_PORT'), '0.0.0.0');

@@ -7,26 +7,29 @@ import { createAccessRequest } from '../../../access-requests/domain/access-requ
 import { AccessStatus, createUser, UserRole } from '../../../users/domain/user.js';
 import { USER_REPOSITORY } from '../../../users/application/ports/user.repository.js';
 import type { UserRepository } from '../../../users/application/ports/user.repository.js';
-import { createOAuthAccount } from '../../domain/oauth-account.js';
-import { OAUTH_ACCOUNT_REPOSITORY } from '../ports/oauth-account.repository.js';
-import type { OAuthAccountRepository } from '../ports/oauth-account.repository.js';
 import { AUTH_CONFIG, GITHUB_OAUTH, SECRET_CIPHER } from '../ports/auth.ports.js';
 import type { AuthConfig, GithubOAuthPort, SecretCipherPort } from '../ports/auth.ports.js';
 import { IssueSessionUseCase } from './session.use-cases.js';
 import { toPrincipal } from '../auth.mappers.js';
 import type { AuthenticatedPrincipal } from '../../../../common/auth/auth.types.js';
 import { InvalidInputError } from '../../../../common/errors/application-error.js';
+import { SECURITY_LOGGER } from '../../../../common/security/security-log.port.js';
+import type { SecurityLogPort } from '../../../../common/security/security-log.port.js';
+import { OrganizationService } from '../../../organizations/application/organization.service.js';
+import { ProfileConnectionRepository } from '../../infrastructure/persistence/profile-connection.repository.js';
 
 @Injectable()
 export class CompleteGithubLoginUseCase {
   constructor(
     @Inject(GITHUB_OAUTH) private readonly github: GithubOAuthPort,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
-    @Inject(OAUTH_ACCOUNT_REPOSITORY) private readonly accounts: OAuthAccountRepository,
     @Inject(ACCESS_REQUEST_REPOSITORY) private readonly accessRequests: AccessRequestRepository,
     @Inject(SECRET_CIPHER) private readonly cipher: SecretCipherPort,
     @Inject(AUTH_CONFIG) private readonly config: AuthConfig,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
+    private readonly profilesAndConnections: ProfileConnectionRepository,
+    private readonly organizations: OrganizationService,
+    @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort,
     private readonly issueSession: IssueSessionUseCase,
   ) {}
 
@@ -54,26 +57,34 @@ export class CompleteGithubLoginUseCase {
       user.updatedAt = new Date();
       await this.users.save(user);
 
-      const account =
-        (await this.accounts.findByProviderAccount('GITHUB', userId)) ??
-        createOAuthAccount({
-          userId: user.id,
-          providerAccountId: userId,
-          accessTokenCiphertext: '',
-          scope: null,
-        });
-      account.userId = user.id;
-      account.accessTokenCiphertext = this.cipher.encrypt(result.accessToken);
-      account.scope = result.scope;
-      account.updatedAt = new Date();
-      await this.accounts.save(account);
+      await this.profilesAndConnections.ensureProfile({
+        userId: user.id,
+        displayName: user.name,
+        avatarUrl: user.avatarUrl,
+      });
+      await this.profilesAndConnections.upsertConnection({
+        userId: user.id,
+        provider: 'GITHUB',
+        providerAccountId: userId,
+        providerUsername: result.profile.login,
+        providerEmail: result.profile.email,
+        accessTokenCiphertext: this.cipher.encrypt(result.accessToken),
+        scopes: result.scope,
+      });
+      const personalWorkspace = await this.organizations.ensurePersonalWorkspace(user.id, user.name ?? user.githubLogin);
 
       const pending = await this.accessRequests.findPendingByUserId(user.id);
       if (!pending && user.accessStatus === AccessStatus.PENDING) {
         await this.accessRequests.save(createAccessRequest(user.id, null));
       }
 
-      const sessionToken = await this.issueSession.issueWithinTransaction(user.id);
+      const sessionToken = await this.issueSession.issueWithinTransaction(user.id, personalWorkspace.id);
+      await this.security.record({
+        organizationId: personalWorkspace.id,
+        userId: user.id,
+        provider: 'GITHUB',
+        event: 'LOGIN_SUCCEEDED',
+      });
       return { principal: toPrincipal(user), sessionToken };
     });
   }

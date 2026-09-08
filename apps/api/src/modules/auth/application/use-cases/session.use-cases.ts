@@ -21,15 +21,17 @@ export class IssueSessionUseCase {
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
-  execute(userId: string): Promise<string> {
-    return this.unitOfWork.run(() => this.issueWithinTransaction(userId));
+  execute(userId: string, activeOrganizationId?: string | null): Promise<string> {
+    return this.unitOfWork.run(() => this.issueWithinTransaction(userId, activeOrganizationId));
   }
 
-  issueWithinTransaction(userId: string): Promise<string> {
+  issueWithinTransaction(userId: string, activeOrganizationId?: string | null): Promise<string> {
     const token = this.tokens.base64Url(32);
     const expiresAt = new Date(Date.now() + this.config.sessionTtlSeconds * 1000);
+    const session = createSession({ userId, tokenHash: this.hasher.hash(token), expiresAt });
+    session.activeOrganizationId = activeOrganizationId ?? null;
     return this.sessions
-      .create(createSession({ userId, tokenHash: this.hasher.hash(token), expiresAt }))
+      .create(session)
       .then(() => token);
   }
 }
@@ -52,7 +54,7 @@ export class AuthenticateSessionUseCase implements SessionAuthenticator {
       if (!user?.isActive) return null;
       session.lastSeenAt = new Date();
       await this.sessions.save(session);
-      return toPrincipal(user);
+      return { ...toPrincipal(user), activeOrganizationId: session.activeOrganizationId };
     });
   }
 }

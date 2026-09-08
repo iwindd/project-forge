@@ -1,11 +1,10 @@
 import { OptionalProps } from '@mikro-orm/core';
 import { Entity, Index, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
 
-@Entity({ tableName: 'audit_logs' })
-@Index({ properties: ['createdAt'] })
+@Entity({ tableName: 'user_security_logs' })
+@Index({ properties: ['userId', 'createdAt'] })
 @Index({ properties: ['organizationId', 'createdAt'] })
-@Index({ properties: ['targetUserId'] })
-export class AuditLogOrmEntity {
+export class UserSecurityLogOrmEntity {
   [OptionalProps]?: 'id' | 'createdAt';
 
   @PrimaryKey({ type: 'uuid' })
@@ -15,31 +14,22 @@ export class AuditLogOrmEntity {
   organizationId: string | null = null;
 
   @Property({ type: 'uuid', nullable: true })
-  actorId: string | null = null;
-
-  @Property({ type: 'uuid', nullable: true })
-  targetUserId: string | null = null;
+  userId: string | null = null;
 
   @Property({ type: 'text' })
-  action!: string;
-
-  @Property({ type: 'text' })
-  resourceType!: string;
+  event!: string;
 
   @Property({ type: 'text', nullable: true })
-  resourceId: string | null = null;
+  provider: string | null = null;
+
+  @Property({ type: 'text', nullable: true })
+  ipAddress: string | null = null;
+
+  @Property({ type: 'text', nullable: true })
+  userAgent: string | null = null;
 
   @Property({ type: 'json', nullable: true })
-  beforeJson: Record<string, unknown> | null = null;
-
-  @Property({ type: 'json', nullable: true })
-  afterJson: Record<string, unknown> | null = null;
-
-  @Property({ type: 'text', nullable: true })
-  reason: string | null = null;
-
-  @Property({ type: 'text', nullable: true })
-  requestId: string | null = null;
+  metadata: Record<string, unknown> | null = null;
 
   @Property({ type: 'timestamptz' })
   createdAt = new Date();

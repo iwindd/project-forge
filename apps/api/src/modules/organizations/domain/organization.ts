@@ -1,0 +1,139 @@
+import { randomUUID } from 'node:crypto';
+
+export enum OrganizationType {
+  PERSONAL = 'PERSONAL',
+  SHARED = 'SHARED',
+}
+
+export enum OrganizationStatus {
+  ACTIVE = 'ACTIVE',
+  ARCHIVED = 'ARCHIVED',
+  SUSPENDED = 'SUSPENDED',
+}
+
+export enum OrganizationMemberRole {
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  MEMBER = 'MEMBER',
+}
+
+export enum OrganizationMemberStatus {
+  ACTIVE = 'ACTIVE',
+  INVITED = 'INVITED',
+  SUSPENDED = 'SUSPENDED',
+  REMOVED = 'REMOVED',
+}
+
+export enum OrganizationInvitationStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
+
+export type OrganizationRecord = {
+  id: string;
+  ownerId: string;
+  name: string;
+  slug: string;
+  type: OrganizationType;
+  status: OrganizationStatus;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type OrganizationMemberRecord = {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrganizationMemberRole;
+  status: OrganizationMemberStatus;
+  joinedAt: Date;
+  updatedAt: Date;
+};
+
+export type OrganizationInvitationRecord = {
+  id: string;
+  organizationId: string;
+  invitedBy: string;
+  email: string | null;
+  tokenHash: string;
+  role: OrganizationMemberRole;
+  status: OrganizationInvitationStatus;
+  expiresAt: Date;
+  acceptedBy: string | null;
+  acceptedAt: Date | null;
+  createdAt: Date;
+};
+
+export function createOrganization(input: {
+  ownerId: string;
+  name: string;
+  slug: string;
+  type: OrganizationType;
+}): OrganizationRecord {
+  const now = new Date();
+  return {
+    id: randomUUID(),
+    ownerId: input.ownerId,
+    name: input.name,
+    slug: input.slug,
+    type: input.type,
+    status: OrganizationStatus.ACTIVE,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function createOrganizationMember(input: {
+  organizationId: string;
+  userId: string;
+  role: OrganizationMemberRole;
+  status?: OrganizationMemberStatus;
+}): OrganizationMemberRecord {
+  const now = new Date();
+  return {
+    id: randomUUID(),
+    organizationId: input.organizationId,
+    userId: input.userId,
+    role: input.role,
+    status: input.status ?? OrganizationMemberStatus.ACTIVE,
+    joinedAt: now,
+    updatedAt: now,
+  };
+}
+
+export function createOrganizationInvitation(input: {
+  organizationId: string;
+  invitedBy: string;
+  email: string | null;
+  tokenHash: string;
+  role: OrganizationMemberRole;
+  expiresAt: Date;
+}): OrganizationInvitationRecord {
+  return {
+    id: randomUUID(),
+    organizationId: input.organizationId,
+    invitedBy: input.invitedBy,
+    email: input.email,
+    tokenHash: input.tokenHash,
+    role: input.role,
+    status: OrganizationInvitationStatus.PENDING,
+    expiresAt: input.expiresAt,
+    acceptedBy: null,
+    acceptedAt: null,
+    createdAt: new Date(),
+  };
+}
+
+export function slugifyOrganizationName(name: string): string {
+  const value = name
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50);
+  return value || `organization-${randomUUID().slice(0, 8)}`;
+}

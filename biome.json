@@ -38,6 +38,18 @@
       "recommended": true
     }
   },
+  "overrides": [
+    {
+      "includes": ["apps/admin/**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": false
   }

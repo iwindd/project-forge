@@ -10,6 +10,7 @@ export class MikroOrmAuditAdapter implements AuditLogPort {
   async record(input: AuditLogInput): Promise<void> {
     this.em.persist(
       this.em.create(AuditLogOrmEntity, {
+        organizationId: input.organizationId ?? null,
         actorId: input.actorId ?? null,
         targetUserId: input.targetUserId ?? null,
         action: input.action,
@@ -21,5 +22,6 @@ export class MikroOrmAuditAdapter implements AuditLogPort {
         requestId: input.requestId ?? null,
       }),
     );
+    await this.em.flush();
   }
 }

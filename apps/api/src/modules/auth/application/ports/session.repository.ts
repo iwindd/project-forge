@@ -8,4 +8,5 @@ export interface SessionRepository {
   create(session: SessionRecord): Promise<void>;
   revokeByTokenHash(tokenHash: string): Promise<void>;
   revokeAllForUser(userId: string): Promise<void>;
+  setActiveOrganization(tokenHash: string, organizationId: string): Promise<void>;
 }

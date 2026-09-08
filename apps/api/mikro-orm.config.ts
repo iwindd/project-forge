@@ -13,12 +13,24 @@ import { SessionOrmEntity } from './src/modules/auth/infrastructure/persistence/
 import { ProjectMemberOrmEntity } from './src/modules/projects/infrastructure/persistence/project-member.orm-entity.js';
 import { ProjectOrmEntity } from './src/modules/projects/infrastructure/persistence/project.orm-entity.js';
 import { UserOrmEntity } from './src/modules/users/infrastructure/persistence/user.orm-entity.js';
+import { ProfileOrmEntity } from './src/modules/users/infrastructure/persistence/profile.orm-entity.js';
+import { ConnectionOrmEntity } from './src/modules/auth/infrastructure/persistence/connection.orm-entity.js';
+import { OrganizationInvitationOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization-invitation.orm-entity.js';
+import { OrganizationMemberOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization-member.orm-entity.js';
+import { OrganizationOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization.orm-entity.js';
+import { UserSecurityLogOrmEntity } from './src/common/security/user-security-log.orm-entity.js';
 
 export default defineConfig({
   clientUrl: process.env.DATABASE_URL,
   metadataProvider: ReflectMetadataProvider,
   entities: [
     UserOrmEntity,
+    ProfileOrmEntity,
+    ConnectionOrmEntity,
+    OrganizationOrmEntity,
+    OrganizationMemberOrmEntity,
+    OrganizationInvitationOrmEntity,
+    UserSecurityLogOrmEntity,
     OAuthAccountOrmEntity,
     SessionOrmEntity,
     AccessRequestOrmEntity,

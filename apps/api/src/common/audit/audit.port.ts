@@ -1,6 +1,7 @@
 export const AUDIT_LOGGER = Symbol('AUDIT_LOGGER');
 
 export type AuditLogInput = {
+  organizationId?: string | null;
   actorId?: string | null;
   targetUserId?: string | null;
   action: string;

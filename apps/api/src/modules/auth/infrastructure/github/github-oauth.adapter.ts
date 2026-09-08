@@ -55,6 +55,18 @@ export class GithubOAuthAdapter implements GithubOAuthPort {
     });
     if (!profileResponse.ok) throw new ExternalServiceError('GitHub profile lookup failed');
     const profile = (await profileResponse.json()) as GithubProfile;
+    const emailsResponse = await fetch('https://api.github.com/user/emails', {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${tokenBody.access_token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'Project-Forge',
+      },
+    });
+    if (emailsResponse.ok) {
+      const emails = (await emailsResponse.json()) as Array<{ email?: string; primary?: boolean; verified?: boolean }>;
+      profile.email = emails.find((email) => email.primary && email.verified)?.email ?? emails.find((email) => email.verified)?.email ?? null;
+    }
     return {
       profile,
       accessToken: tokenBody.access_token,

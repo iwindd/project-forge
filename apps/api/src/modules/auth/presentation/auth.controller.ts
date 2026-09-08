@@ -16,6 +16,10 @@ import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
 import type { AuditLogPort } from '../../../common/audit/audit.port.js';
 import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js';
 import type { UnitOfWork } from '../../../common/database/unit-of-work.port.js';
+import { ProfileConnectionRepository } from '../infrastructure/persistence/profile-connection.repository.js';
+import { OrganizationService } from '../../organizations/application/organization.service.js';
+import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js';
+import type { SecurityLogPort } from '../../../common/security/security-log.port.js';
 
 const updateProfileSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -32,6 +36,9 @@ export class AuthController {
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
+    private readonly profileConnections: ProfileConnectionRepository,
+    private readonly organizations: OrganizationService,
+    @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort,
   ) {}
 
   private adminRedirect(path: string) {
@@ -88,11 +95,33 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(SessionGuard)
-  me(@Principal() principal: AuthenticatedPrincipal) {
-    return { user: principal };
+  async me(@Principal() principal: AuthenticatedPrincipal) {
+    const profile = await this.profileConnections.findProfile(principal.id);
+    const organizations = await this.organizations.listForUser(principal.id);
+    return {
+      user: principal,
+      profile: profile
+        ? {
+            id: principal.id,
+            displayName: profile.displayName ?? principal.name ?? principal.githubLogin,
+            avatarUrl: profile.avatarUrl ?? principal.avatarUrl,
+            bio: profile.bio,
+            timezone: profile.timezone,
+            updatedAt: profile.updatedAt.toISOString(),
+          }
+        : null,
+      organizations: organizations.map(({ organization, membership }) => ({
+        id: organization.id,
+        name: organization.name,
+        slug: organization.slug,
+        type: organization.type,
+        role: membership.role,
+      })),
+    };
   }
 
   @Patch('me')
+  @UseGuards(SessionGuard)
   async updateMe(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
     const input = updateProfileSchema.parse(body);
     return this.unitOfWork.run(async () => {
@@ -104,6 +133,7 @@ export class AuthController {
         user.name = name;
         user.updatedAt = new Date();
         await this.users.save(user);
+        await this.profileConnections.ensureProfile({ userId: user.id, displayName: name, avatarUrl: user.avatarUrl });
         await this.audit.record({
           actorId: user.id,
           targetUserId: user.id,
@@ -122,7 +152,13 @@ export class AuthController {
   @Post('logout')
   @UseGuards(SessionGuard)
   async logoutSession(@Req() request: Request, @Res() response: Response) {
+    const principal = (request as Request & { principal?: AuthenticatedPrincipal }).principal;
     await this.logout.execute(getCookie(request, 'pf_session'));
+    await this.security.record({
+      organizationId: principal?.activeOrganizationId ?? null,
+      userId: principal?.id ?? null,
+      event: 'LOGOUT',
+    });
     response.clearCookie('pf_session', { path: '/' });
     return response.status(204).send();
   }

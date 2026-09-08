@@ -25,9 +25,12 @@ import { AdminGuard } from '../../common/auth/admin.guard.js';
 import { ApprovedGuard } from '../../common/auth/approved.guard.js';
 import { SessionGuard } from '../../common/auth/session.guard.js';
 import { AuthController } from './presentation/auth.controller.js';
+import { SecurityModule } from '../../common/security/security.module.js';
+import { ProfileConnectionRepository } from './infrastructure/persistence/profile-connection.repository.js';
+import { OrganizationService } from '../organizations/application/organization.service.js';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, AuditModule],
+  imports: [ConfigModule, DatabaseModule, AuditModule, SecurityModule],
   controllers: [AuthController],
   providers: [
     {
@@ -60,6 +63,8 @@ import { AuthController } from './presentation/auth.controller.js';
     IssueSessionUseCase,
     AuthenticateSessionUseCase,
     LogoutUseCase,
+    ProfileConnectionRepository,
+    OrganizationService,
     { provide: SESSION_AUTHENTICATOR, useExisting: AuthenticateSessionUseCase },
     SessionGuard,
     ApprovedGuard,

@@ -17,8 +17,9 @@ const user: UserRecord = {
 };
 
 const session: SessionRecord = {
-  id: 'session-id',
-  userId: 'user-id',
+      id: 'session-id',
+      userId: 'user-id',
+      activeOrganizationId: null,
   tokenHash: 'hashed-token',
   expiresAt: new Date(Date.now() + 60_000),
   revokedAt: null,

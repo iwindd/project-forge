@@ -17,12 +17,22 @@ import { PROJECT_MEMBER_REPOSITORY } from '../../modules/projects/application/po
 import { PROJECT_REPOSITORY } from '../../modules/projects/application/ports/project.repository.js';
 import { MikroOrmUserRepository } from '../../modules/users/infrastructure/persistence/mikro-orm-user.repository.js';
 import { UserOrmEntity } from '../../modules/users/infrastructure/persistence/user.orm-entity.js';
+import { ProfileOrmEntity } from '../../modules/users/infrastructure/persistence/profile.orm-entity.js';
+import { OrganizationInvitationOrmEntity } from '../../modules/organizations/infrastructure/persistence/organization-invitation.orm-entity.js';
+import { OrganizationMemberOrmEntity } from '../../modules/organizations/infrastructure/persistence/organization-member.orm-entity.js';
+import { OrganizationOrmEntity } from '../../modules/organizations/infrastructure/persistence/organization.orm-entity.js';
+import { ConnectionOrmEntity } from '../../modules/auth/infrastructure/persistence/connection.orm-entity.js';
 import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repository.js';
 
 @Module({
   imports: [
     MikroOrmModule.forFeature([
       UserOrmEntity,
+      ProfileOrmEntity,
+      ConnectionOrmEntity,
+      OrganizationOrmEntity,
+      OrganizationMemberOrmEntity,
+      OrganizationInvitationOrmEntity,
       OAuthAccountOrmEntity,
       SessionOrmEntity,
       AccessRequestOrmEntity,

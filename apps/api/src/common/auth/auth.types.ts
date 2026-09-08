@@ -11,6 +11,7 @@ export type AuthenticatedPrincipal = {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  activeOrganizationId: string | null;
 };
 
 export const SESSION_AUTHENTICATOR = Symbol('SESSION_AUTHENTICATOR');
