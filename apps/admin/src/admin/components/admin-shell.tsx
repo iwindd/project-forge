@@ -53,7 +53,6 @@ export function AdminShell({
         data-scrolled={scroll.y > 0}
       >
         <AdminHeader
-          user={user}
           mobileOpened={mobileOpened}
           onToggleMobileAction={mobileHandlers.toggle}
           onOpenSettingsAction={settingsHandlers.open}
@@ -62,6 +61,7 @@ export function AdminShell({
 
       <AppShell.Navbar className={classes.navbar}>
         <SidebarDefault
+          user={user}
           organizationSlug={organizationSlug}
           navigationMode={navigationMode}
         />
@@ -70,6 +70,7 @@ export function AdminShell({
       <SidebarDrawer
         opened={mobileOpened}
         onCloseAction={mobileHandlers.close}
+        user={user}
         organizationSlug={organizationSlug}
         navigationMode={navigationMode}
       />

@@ -1,0 +1,27 @@
+.control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs);
+  border: 0;
+  border-radius: var(--mantine-radius-md);
+  color: var(--nav-item-text-color);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.control:hover {
+  background-color: var(--nav-item-hover-bg-color);
+}
+
+.details {
+  min-width: 0;
+  flex: 1;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--nav-muted-text-color);
+}

@@ -3,16 +3,19 @@
 import { Box, Drawer, ScrollArea } from "@mantine/core";
 import { useRef } from "react";
 import { OrganizationSwitcher } from "../../features/organization/organization-switcher";
+import type { AdminUser } from "@/session";
 import NavigationScrollControls from "./navigation-scroll-controls";
 import type { SidebarNavigationMode } from "./navigation-utils";
 import classes from "./sidebar-drawer.module.css";
 import { SidebarBackButton } from "./sidebar-back-button";
 import SidebarNavContent from "./sidebar-nav-content";
+import { SidebarUserMenu } from "./sidebar-user-menu";
 import { useScrollbarVisibility } from "./use-scrollbar-visibility";
 
 type SidebarDrawerProps = {
   opened: boolean;
   onCloseAction: () => void;
+  user: AdminUser;
   organizationSlug: string;
   navigationMode?: SidebarNavigationMode;
 };
@@ -20,6 +23,7 @@ type SidebarDrawerProps = {
 export default function SidebarDrawer({
   opened,
   onCloseAction,
+  user,
   organizationSlug,
   navigationMode = "admin",
 }: SidebarDrawerProps) {
@@ -79,6 +83,10 @@ export default function SidebarDrawer({
             </Box>
           </ScrollArea>
         </NavigationScrollControls>
+
+        <div className={classes.sidebarFooter}>
+          <SidebarUserMenu user={user} />
+        </div>
       </div>
     </Drawer>
   );

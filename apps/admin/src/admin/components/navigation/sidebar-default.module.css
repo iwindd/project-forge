@@ -21,6 +21,12 @@
   flex: 1;
 }
 
+.sidebarFooter {
+  flex-shrink: 0;
+  padding: var(--mantine-spacing-sm);
+  border-top: 1px solid var(--nav-surface-border-color);
+}
+
 .navigationScrollbar {
   padding: 2px;
   background-color: transparent !important;

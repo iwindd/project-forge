@@ -3,17 +3,21 @@
 import { Box, ScrollArea } from "@mantine/core";
 import { useRef } from "react";
 import { OrganizationSwitcher } from "../../features/organization/organization-switcher";
+import type { AdminUser } from "@/session";
 import NavigationScrollControls from "./navigation-scroll-controls";
 import classes from "./sidebar-default.module.css";
 import { SidebarBackButton } from "./sidebar-back-button";
 import SidebarNavContent from "./sidebar-nav-content";
+import { SidebarUserMenu } from "./sidebar-user-menu";
 import type { SidebarNavigationMode } from "./navigation-utils";
 import { useScrollbarVisibility } from "./use-scrollbar-visibility";
 
 export default function SidebarDefault({
+  user,
   organizationSlug,
   navigationMode = "admin",
 }: {
+  user: AdminUser;
   organizationSlug: string;
   navigationMode?: SidebarNavigationMode;
 }) {
@@ -57,6 +61,10 @@ export default function SidebarDefault({
           </Box>
         </ScrollArea>
       </NavigationScrollControls>
+
+      <div className={classes.sidebarFooter}>
+        <SidebarUserMenu user={user} />
+      </div>
     </aside>
   );
 }
