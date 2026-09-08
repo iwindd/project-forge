@@ -21,6 +21,7 @@ export class MikroOrmUserRepository implements UserRepository {
   async list(query: UserListQuery): Promise<{ data: UserRecord[]; total: number }> {
     const where: FilterQuery<UserOrmEntity> = {};
     if (query.status) where.accessStatus = query.status;
+    if (query.role) where.role = query.role;
     if (query.search?.trim()) where.githubLogin = { $ilike: `%${query.search.trim()}%` };
     const [users, total] = await Promise.all([
       this.em.find(UserOrmEntity, where, {

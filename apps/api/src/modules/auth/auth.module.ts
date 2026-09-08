@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SESSION_AUTHENTICATOR } from '../../common/auth/auth.types.js';
 import { DatabaseModule } from '../../common/database/database.module.js';
+import { AuditModule } from '../../common/audit/audit.module.js';
 import {
   AUTH_CONFIG,
   GITHUB_OAUTH,
@@ -26,7 +27,7 @@ import { SessionGuard } from '../../common/auth/session.guard.js';
 import { AuthController } from './presentation/auth.controller.js';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule],
+  imports: [ConfigModule, DatabaseModule, AuditModule],
   controllers: [AuthController],
   providers: [
     {

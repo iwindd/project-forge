@@ -11,5 +11,7 @@ export function toPrincipal(user: UserRecord): AuthenticatedPrincipal {
     role: user.role,
     accessStatus: user.accessStatus,
     isActive: user.isActive,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }

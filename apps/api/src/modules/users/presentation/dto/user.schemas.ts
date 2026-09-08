@@ -11,5 +11,11 @@ export const changeUserRoleSchema = z.object({
   reason: z.string().trim().max(1000).optional().default(''),
 });
 
+export const changeUserNameSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  reason: z.string().trim().max(1000).optional().default(''),
+});
+
 export type ChangeUserStatusDto = z.infer<typeof changeUserStatusSchema>;
 export type ChangeUserRoleDto = z.infer<typeof changeUserRoleSchema>;
+export type ChangeUserNameDto = z.infer<typeof changeUserNameSchema>;

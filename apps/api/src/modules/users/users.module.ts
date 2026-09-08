@@ -4,6 +4,7 @@ import { DatabaseModule } from '../../common/database/database.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import {
   ChangeUserRoleUseCase,
+  ChangeUserNameUseCase,
   ChangeUserStatusUseCase,
   GetUserUseCase,
   ListUsersUseCase,
@@ -19,6 +20,7 @@ import { UsersController } from './presentation/users.controller.js';
     GetUserUseCase,
     ChangeUserStatusUseCase,
     ChangeUserRoleUseCase,
+    ChangeUserNameUseCase,
     RevokeUserSessionsUseCase,
   ],
 })

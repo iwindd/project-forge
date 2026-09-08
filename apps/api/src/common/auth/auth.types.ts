@@ -9,6 +9,8 @@ export type AuthenticatedPrincipal = {
   role: UserRole;
   accessStatus: AccessStatus;
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export const SESSION_AUTHENTICATOR = Symbol('SESSION_AUTHENTICATOR');

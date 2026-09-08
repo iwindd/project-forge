@@ -5,6 +5,7 @@ export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 export type UserListQuery = {
   search?: string;
   status?: AccessStatus;
+  role?: UserRole;
   page: number;
   limit: number;
 };

@@ -20,18 +20,24 @@ export type ChangeUserRoleInput = {
   reason?: string;
 };
 
+export type ChangeUserNameInput = {
+  name: string;
+  reason?: string;
+};
+
 @Injectable()
 export class ListUsersUseCase {
   constructor(@Inject(USER_REPOSITORY) private readonly users: UserRepository) {}
 
-  execute(query: { search?: string; status?: string; page?: number; limit?: number }) {
+  execute(query: { search?: string; status?: string; role?: string; page?: number; limit?: number }) {
     const limit = Math.min(Math.max(query.limit || 25, 1), 100);
     const page = Math.max(query.page || 1, 1);
     const status =
       query.status && Object.values(AccessStatus).includes(query.status as AccessStatus)
         ? (query.status as AccessStatus)
         : undefined;
-    const input: UserListQuery = { search: query.search, status, page, limit };
+    const role = query.role === UserRole.ADMIN || query.role === UserRole.USER ? query.role : undefined;
+    const input: UserListQuery = { search: query.search, status, role, page, limit };
     return this.users.list(input).then(({ data, total }) => ({ data, total, page, limit }));
   }
 }
@@ -44,6 +50,40 @@ export class GetUserUseCase {
     const user = await this.users.findById(id);
     if (!user) throw new NotFoundError('User was not found');
     return user;
+  }
+}
+
+@Injectable()
+export class ChangeUserNameUseCase {
+  constructor(
+    @Inject(USER_REPOSITORY) private readonly users: UserRepository,
+    @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
+  ) {}
+
+  execute(actorId: string, targetId: string, input: ChangeUserNameInput): Promise<UserRecord> {
+    return this.unitOfWork.run(async () => {
+      const target = await this.users.findById(targetId);
+      if (!target) throw new NotFoundError('User was not found');
+      const name = input.name.trim();
+      if (!name || target.name === name) return target;
+
+      const before = { name: target.name };
+      target.name = name;
+      target.updatedAt = new Date();
+      await this.users.save(target);
+      await this.audit.record({
+        actorId,
+        targetUserId: target.id,
+        action: actorId === targetId ? 'PROFILE_NAME_CHANGED' : 'USER_NAME_CHANGED',
+        resourceType: actorId === targetId ? 'PROFILE' : 'USER',
+        resourceId: target.id,
+        before,
+        after: { name: target.name },
+        reason: input.reason,
+      });
+      return target;
+    });
   }
 }
 

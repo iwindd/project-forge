@@ -5,12 +5,13 @@ import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
 import {
   ChangeUserRoleUseCase,
+  ChangeUserNameUseCase,
   ChangeUserStatusUseCase,
   GetUserUseCase,
   ListUsersUseCase,
   RevokeUserSessionsUseCase,
 } from '../application/use-cases/user.use-cases.js';
-import { changeUserRoleSchema, changeUserStatusSchema } from './dto/user.schemas.js';
+import { changeUserNameSchema, changeUserRoleSchema, changeUserStatusSchema } from './dto/user.schemas.js';
 
 @Controller('admin/users')
 @UseGuards(SessionGuard, AdminGuard)
@@ -20,32 +21,56 @@ export class UsersController {
     private readonly getUser: GetUserUseCase,
     private readonly changeStatus: ChangeUserStatusUseCase,
     private readonly changeRole: ChangeUserRoleUseCase,
+    private readonly changeName: ChangeUserNameUseCase,
     private readonly revokeSessions: RevokeUserSessionsUseCase,
   ) {}
+
+  private present(user: Awaited<ReturnType<GetUserUseCase['execute']>>) {
+    return {
+      id: user.id,
+      name: user.name ?? user.githubLogin,
+      email: user.githubLogin,
+      role: user.role === 'ADMIN' ? 'ADMIN' : 'EDITOR',
+      isActive: user.isActive && user.accessStatus !== 'SUSPENDED',
+      accessStatus: user.accessStatus,
+      githubLogin: user.githubLogin,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
+  }
 
   @Get()
   list(
     @Query('search') search?: string,
     @Query('status') status?: string,
+    @Query('role') role?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.listUsers.execute({ search, status, page: Number(page) || 1, limit: Number(limit) || 25 });
+    return this.listUsers.execute({ search, status, role: role === 'EDITOR' ? 'USER' : role, page: Number(page) || 1, limit: Number(limit) || 25 }).then((result) => ({
+      ...result,
+      data: result.data.map((user) => this.present(user)),
+    }));
   }
 
   @Get(':id')
   async get(@Param('id') id: string) {
-    return { user: await this.getUser.execute(id) };
+    return { user: this.present(await this.getUser.execute(id)) };
+  }
+
+  @Patch(':id/name')
+  async setName(@Param('id') id: string, @Body() body: unknown, @Principal() actor: AuthenticatedPrincipal) {
+    return { user: this.present(await this.changeName.execute(actor.id, id, changeUserNameSchema.parse(body))) };
   }
 
   @Patch(':id/status')
   async setStatus(@Param('id') id: string, @Body() body: unknown, @Principal() actor: AuthenticatedPrincipal) {
-    return { user: await this.changeStatus.execute(actor.id, id, changeUserStatusSchema.parse(body)) };
+    return { user: this.present(await this.changeStatus.execute(actor.id, id, changeUserStatusSchema.parse(body))) };
   }
 
   @Patch(':id/role')
   async setRole(@Param('id') id: string, @Body() body: unknown, @Principal() actor: AuthenticatedPrincipal) {
-    return { user: await this.changeRole.execute(actor.id, id, changeUserRoleSchema.parse(body)) };
+    return { user: this.present(await this.changeRole.execute(actor.id, id, changeUserRoleSchema.parse(body))) };
   }
 
   @Post(':id/revoke-sessions')

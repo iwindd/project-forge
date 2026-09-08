@@ -1,4 +1,5 @@
-import { Inject, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Inject, Controller, Get, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { z } from 'zod';
 import type { Request, Response } from 'express';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
@@ -9,6 +10,17 @@ import type { AuthConfig } from '../application/ports/auth.ports.js';
 import { CompleteGithubLoginUseCase } from '../application/use-cases/complete-github-login.use-case.js';
 import { LogoutUseCase } from '../application/use-cases/session.use-cases.js';
 import { StartGithubLoginUseCase } from '../application/use-cases/start-github-login.use-case.js';
+import { USER_REPOSITORY } from '../../users/application/ports/user.repository.js';
+import type { UserRepository } from '../../users/application/ports/user.repository.js';
+import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
+import type { AuditLogPort } from '../../../common/audit/audit.port.js';
+import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js';
+import type { UnitOfWork } from '../../../common/database/unit-of-work.port.js';
+
+const updateProfileSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  reason: z.string().trim().max(1000).optional().default(''),
+});
 
 @Controller('auth')
 export class AuthController {
@@ -17,6 +29,9 @@ export class AuthController {
     private readonly completeGithubLogin: CompleteGithubLoginUseCase,
     private readonly logout: LogoutUseCase,
     @Inject(AUTH_CONFIG) private readonly config: AuthConfig,
+    @Inject(USER_REPOSITORY) private readonly users: UserRepository,
+    @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
   private adminRedirect(path: string) {
@@ -75,6 +90,33 @@ export class AuthController {
   @UseGuards(SessionGuard)
   me(@Principal() principal: AuthenticatedPrincipal) {
     return { user: principal };
+  }
+
+  @Patch('me')
+  async updateMe(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
+    const input = updateProfileSchema.parse(body);
+    return this.unitOfWork.run(async () => {
+      const user = await this.users.findById(principal.id);
+      if (!user) return { user: principal };
+      const name = input.name.trim();
+      if (name !== user.name) {
+        const before = { name: user.name };
+        user.name = name;
+        user.updatedAt = new Date();
+        await this.users.save(user);
+        await this.audit.record({
+          actorId: user.id,
+          targetUserId: user.id,
+          action: 'PROFILE_NAME_CHANGED',
+          resourceType: 'PROFILE',
+          resourceId: user.id,
+          before,
+          after: { name },
+          reason: input.reason,
+        });
+      }
+      return { user: { ...user } };
+    });
   }
 
   @Post('logout')
