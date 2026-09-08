@@ -104,9 +104,14 @@ function routeSpecificity(path: string) {
   const segments = path.split("/").filter(Boolean);
   const parameters = path.match(PARAMETER_PATTERN) ?? [];
   const wildcards = parameters.filter((parameter) => parameter.startsWith("*"));
+  const dynamicSegments = segments.filter((segment) =>
+    /[:*][A-Za-z_$]/.test(segment),
+  ).length;
+  const staticSegments = segments.length - dynamicSegments;
 
   return (
     segments.length * 100 +
+    staticSegments * 20 +
     path.length -
     parameters.length * 10 -
     wildcards.length * 20

@@ -1,5 +1,6 @@
 import {
   IconHistory,
+  IconLayoutDashboard,
   IconUser,
   IconUsers,
   type TablerIcon
@@ -34,6 +35,7 @@ export type AdminNavigationGroup = {
   id: string
   label: string
   items: AdminNavigationItem[]
+  hideHeading?: boolean
   permissionKey?: PermissionKey | readonly PermissionKey[]
   permissionMode?: PermissionMode
 }
@@ -68,6 +70,16 @@ function routeItem(
 }
 
 export const adminNavigation: AdminNavigationGroup[] = [
+  {
+    id: 'overview',
+    label: 'ภาพรวม',
+    hideHeading: true,
+    items: [
+      routeItem('overview', {
+        icon: IconLayoutDashboard
+      })
+    ]
+  },
   {
     id: 'settings',
     label: 'ตั้งค่า',

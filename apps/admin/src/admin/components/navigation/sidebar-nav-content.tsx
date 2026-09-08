@@ -83,43 +83,45 @@ function SidebarGroup({
 
   return (
     <Box>
-      <UnstyledButton
-        onClick={toggle}
-        className={classes.groupHeadingButton}
-        data-sidebar-group-heading
-        aria-expanded={opened}
-      >
-        <div
-          className={classes.groupHeadingIconWrapper}
-          data-sidebar-group-icon
+      {!group.hideHeading && (
+        <UnstyledButton
+          onClick={toggle}
+          className={classes.groupHeadingButton}
+          data-sidebar-group-heading
+          aria-expanded={opened}
         >
-          <IconChevronRight
-            size={14}
-            stroke={2.5}
-            className={classes.groupHeadingChevron}
-            data-sidebar-group-chevron
-            data-expanded={opened}
-          />
-        </div>
-        <Text
-          className={classes.groupHeadingText}
-          data-sidebar-group-label
-          size="xs"
-          fw="bold"
-        >
-          {translate(
-            group.id === "overview"
-              ? "overview"
-              : group.id === "content"
-                ? "content"
-                : group.id === "settings"
-                  ? "settings"
-                  : group.id === "profile"
-                    ? "profile"
-                  : "system",
-          )}
-        </Text>
-      </UnstyledButton>
+          <div
+            className={classes.groupHeadingIconWrapper}
+            data-sidebar-group-icon
+          >
+            <IconChevronRight
+              size={14}
+              stroke={2.5}
+              className={classes.groupHeadingChevron}
+              data-sidebar-group-chevron
+              data-expanded={opened}
+            />
+          </div>
+          <Text
+            className={classes.groupHeadingText}
+            data-sidebar-group-label
+            size="xs"
+            fw="bold"
+          >
+            {translate(
+              group.id === "overview"
+                ? "overview"
+                : group.id === "content"
+                  ? "content"
+                  : group.id === "settings"
+                    ? "settings"
+                    : group.id === "profile"
+                      ? "profile"
+                      : "system",
+            )}
+          </Text>
+        </UnstyledButton>
+      )}
       <Collapse expanded={opened}>
         <Stack gap={4}>
           {group.items.map((item, index) => (
@@ -207,8 +209,10 @@ function SidebarItem({
           )}
           <Text size="sm" fw={600} style={{ flexGrow: 1 }}>
             {translate(
-              item.routeName === "dashboard"
-                ? "dashboard"
+              item.routeName === "overview"
+                ? "overview"
+                : item.routeName === "dashboard"
+                  ? "dashboard"
                 : item.routeName === "system.users"
                   ? "users"
                   : item.routeName === "system.auditLogs"
@@ -264,23 +268,25 @@ function SidebarItem({
       <Stack gap={0} style={{ flexGrow: 1, alignItems: "flex-start" }}>
         <Text size="sm" fw={600}>
           {translate(
-            item.routeName === "dashboard"
-              ? "dashboard"
-              : item.routeName === "system.users"
-                ? "users"
-                : item.routeName === "system.auditLogs"
-                  ? "auditLogs"
-              : item.routeName === "settings.members"
-                ? "members"
-                : item.routeName === "admin.users"
+            item.routeName === "overview"
+              ? "overview"
+              : item.routeName === "dashboard"
+                ? "dashboard"
+                : item.routeName === "system.users"
                   ? "users"
-                  : item.routeName === "admin.activities"
+                  : item.routeName === "system.auditLogs"
                     ? "auditLogs"
-                : item.routeName === "account.settings"
-                  ? "account"
-                : item.routeName === "account.activity"
-                  ? "activity"
-                : item.label,
+                    : item.routeName === "settings.members"
+                      ? "members"
+                      : item.routeName === "admin.users"
+                        ? "users"
+                        : item.routeName === "admin.activities"
+                          ? "auditLogs"
+                          : item.routeName === "account.settings"
+                            ? "account"
+                            : item.routeName === "account.activity"
+                              ? "activity"
+                              : item.label,
           )}
         </Text>
         {item.info && (
