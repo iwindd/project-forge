@@ -1,0 +1,22 @@
+.button {
+  display: flex;
+  color: var(--mantine-color-dimmed);
+  cursor: default;
+}
+
+.title {
+  margin-inline-start: 0;
+}
+
+.dirty {
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+  cursor: pointer;
+}
+
+.dirty .title {
+  margin-inline-start: rem(4px);
+}
+
+.dirty:hover {
+  color: var(--mantine-primary-color-filled);
+}

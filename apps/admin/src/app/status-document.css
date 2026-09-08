@@ -1,0 +1,26 @@
+/*
+ * Minimal document styles for the standalone status pages (`global-not-found.tsx`
+ * and `global-error.tsx`). Those files replace the root layout, so they cannot rely
+ * on `(web)/globals.css`. Keep this file small — it is the only stylesheet those
+ * pages load besides the `StatusScreen` CSS module.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: #eef4f8;
+  color: #16324a;
+  font-family: var(--font-sarabun), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}

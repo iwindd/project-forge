@@ -1,0 +1,19 @@
+.headerInner {
+  height: 72px;
+  padding: 0 var(--mantine-spacing-lg);
+}
+
+.userDetails {
+  display: block;
+}
+
+@media (max-width: 47.999em) {
+  .headerInner {
+    padding: 0 var(--mantine-spacing-sm);
+  }
+
+  .userDetails,
+  .websiteButton {
+    display: none;
+  }
+}

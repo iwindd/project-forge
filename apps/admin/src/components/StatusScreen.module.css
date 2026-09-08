@@ -1,0 +1,428 @@
+/*
+ * Status screen (404 / 500) for the public frontend.
+ *
+ * Tokens are redeclared locally instead of relying on `(web)/globals.css`, because
+ * `global-not-found.tsx` and `global-error.tsx` bypass the root layout and therefore
+ * never load the global stylesheet.
+ */
+.root {
+  --status-navy: #035b98;
+  --status-navy-dark: #0c4a86;
+  --status-ink: #16324a;
+  --status-muted: #6a7682;
+  --status-line: #e3eaf0;
+  --status-accent: #1f8a4c;
+  --status-accent-soft: #e7f4ec;
+  --status-accent-strong: #2f9e57;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: min(640px, 70vh);
+  padding: 60px 30px 72px;
+  /* Ends on white so the section blends into the white page body below it when the
+     screen is taller than the content. */
+  background: linear-gradient(180deg, #d2edfe 0%, #e6f4fe 55%, #fff 100%);
+  font-family: var(--font-sarabun), sans-serif;
+  color: var(--status-ink);
+}
+
+.root[data-layout='standalone'] {
+  min-height: 100vh;
+}
+
+.root[data-tone='danger'] {
+  --status-accent: #b3341f;
+  --status-accent-soft: #f8d7d0;
+  --status-accent-strong: #c8402a;
+
+  background: linear-gradient(180deg, #fbe8e2 0%, #f9f2ef 48%, #fff 100%);
+}
+
+/* ---- decorative watermark, mirrors the .pagehead treatment ---- */
+.watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  font-family: var(--font-prompt), sans-serif;
+  font-size: 112.5px;
+  font-weight: 700;
+  line-height: 172.5px;
+  letter-spacing: 25.5px;
+  white-space: pre;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(120, 180, 150, 0.1);
+  transform: translate(-22.5px, -7.5px);
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 780px;
+  text-align: center;
+}
+
+/* ---- brand mark, only shown when the site nav is not available ---- */
+.brandRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 27px;
+}
+
+.brand {
+  display: inline-flex;
+}
+
+.brand img {
+  display: block;
+  width: auto;
+  height: 66px;
+}
+
+/* ---- big status figure ---- */
+.figure {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 12px;
+}
+
+/* Inline wrapper so the glow and icon can be positioned against the digits only. */
+.figureStack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.figureGlow {
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 30%, rgba(255, 255, 255, 0) 72%);
+}
+
+.figureCode {
+  position: relative;
+  font-family: var(--font-prompt), sans-serif;
+  font-size: 132px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -3px;
+  background: linear-gradient(180deg, var(--status-navy) 0%, var(--status-navy-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.root[data-tone='danger'] .figureCode {
+  background: linear-gradient(180deg, #c8402a 0%, #8d2718 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.figureIcon {
+  position: absolute;
+  top: 6px;
+  right: -33px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 57px;
+  height: 57px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 9px 22.5px rgba(20, 60, 90, 0.18);
+  color: var(--status-accent);
+}
+
+.figureIcon svg {
+  width: 28.5px;
+  height: 28.5px;
+}
+
+/* ---- copy ---- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7.5px;
+  margin-bottom: 13.5px;
+  padding: 6px 16.5px;
+  border-radius: 22.5px;
+  background: var(--status-accent-soft);
+  color: var(--status-accent);
+  font-size: 16.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.eyebrowDot {
+  width: 8.25px;
+  height: 8.25px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.title {
+  margin: 0 auto;
+  max-width: 660px;
+  font-family: var(--font-prompt), sans-serif;
+  font-size: 45px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+  color: var(--status-navy);
+}
+
+.root[data-tone='danger'] .title {
+  color: #8d2718;
+}
+
+.description {
+  margin: 13.5px auto 0;
+  max-width: 600px;
+  font-size: 18.75px;
+  line-height: 1.55;
+  color: #3f6f96;
+}
+
+.root[data-tone='danger'] .description {
+  color: #6f4a43;
+}
+
+/* ---- actions ---- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 13.5px;
+  margin-top: 27px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10.5px 25.5px;
+  border: 2px solid transparent;
+  border-radius: 30px;
+  background: var(--status-accent-strong);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15.75px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+}
+
+.action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10.5px 22.5px rgba(20, 60, 90, 0.18);
+}
+
+.action:focus-visible {
+  outline: 3px solid rgba(3, 91, 152, 0.35);
+  outline-offset: 3px;
+}
+
+.action[data-variant='ghost'] {
+  border-color: #b9d5e8;
+  background: #fff;
+  color: var(--status-navy);
+}
+
+.action[data-variant='ghost']:hover {
+  border-color: var(--status-navy);
+}
+
+.action svg {
+  width: 16.5px;
+  height: 16.5px;
+}
+
+.reference {
+  margin-top: 19.5px;
+  font-size: 14.25px;
+  color: var(--status-muted);
+}
+
+.reference code {
+  padding: 2.25px 9px;
+  border: 1px solid var(--status-line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13.5px;
+  color: var(--status-ink);
+  word-break: break-all;
+}
+
+/* ---- section shortcuts ---- */
+.links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13.5px;
+  margin-top: 37.5px;
+  text-align: left;
+}
+
+/* The label and description stack on the left; the arrow stays on the right. */
+.linkCard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'label arrow'
+    'description arrow';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 3px;
+  padding: 15px 18px;
+  border: 1px solid var(--status-line);
+  border-radius: 13.5px;
+  background: #fff;
+  box-shadow: 0 7.5px 19.5px rgba(30, 60, 90, 0.07);
+  text-decoration: none;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s,
+    border-color 0.18s;
+}
+
+.linkCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--status-navy);
+  box-shadow: 0 13.5px 28.5px rgba(30, 60, 90, 0.15);
+}
+
+.linkCard:focus-visible {
+  outline: 3px solid rgba(3, 91, 152, 0.35);
+  outline-offset: 2px;
+}
+
+.linkLabel {
+  grid-area: label;
+  min-width: 0;
+  font-family: var(--font-prompt), sans-serif;
+  font-size: 17.25px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--status-ink);
+}
+
+.linkDescription {
+  grid-area: description;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--status-muted);
+}
+
+.linkArrow {
+  grid-area: arrow;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 31.5px;
+  height: 31.5px;
+  border-radius: 50%;
+  background: #eef6fb;
+  color: var(--status-navy);
+}
+
+.linkArrow svg {
+  width: 16.5px;
+  height: 16.5px;
+}
+
+@media (max-width: 900px) {
+  .watermark {
+    font-size: 84px;
+    line-height: 132px;
+    letter-spacing: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .root {
+    min-height: auto;
+    padding: 45px 21px 54px;
+  }
+
+  .figureCode {
+    font-size: 96px;
+  }
+
+  .figureIcon {
+    top: 3px;
+    right: -21px;
+    width: 45px;
+    height: 45px;
+  }
+
+  .figureIcon svg {
+    width: 22.5px;
+    height: 22.5px;
+  }
+
+  .figureGlow {
+    width: 165px;
+    height: 165px;
+  }
+
+  .brandRow {
+    margin-bottom: 19.5px;
+  }
+
+  .brand img {
+    height: 51px;
+  }
+
+  .title {
+    font-size: 30px;
+  }
+
+  .description {
+    font-size: 16.5px;
+  }
+
+  .eyebrow {
+    font-size: 14.25px;
+    white-space: normal;
+  }
+
+  .action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .links {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action,
+  .linkCard {
+    transition: none;
+  }
+
+  .action:hover,
+  .linkCard:hover {
+    transform: none;
+  }
+}

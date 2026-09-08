@@ -1,0 +1,68 @@
+.dateFilter {
+  width: 100%;
+}
+
+.filterDrawerScroll {
+  height: 100%;
+}
+
+.filterDrawerContent {
+  min-height: 100%;
+}
+
+.filterAccordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-xs);
+}
+
+.filterAccordionItem {
+  overflow: hidden;
+}
+
+.filterAccordionControl {
+  min-height: 3rem;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+}
+
+.filterAccordionPanel {
+  border-top: 1px dashed var(--mantine-color-default-border);
+}
+
+.filterAccordionContent {
+  padding: var(--mantine-spacing-md);
+}
+
+.filterOption {
+  display: flex;
+  width: 100%;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.filterOption:hover {
+  background-color: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-5)
+  );
+}
+
+.filterOption[data-checked] {
+  background-color: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-5)
+  );
+  color: var(--mantine-color-text);
+}
+
+.filterOption[data-checked]:hover {
+  background-color: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-5)
+  );
+}

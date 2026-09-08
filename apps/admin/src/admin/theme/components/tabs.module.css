@@ -1,0 +1,38 @@
+/* Container for the tabs list */
+.list[data-variant="underline"] {
+  border-bottom: none;
+  gap: var(--mantine-spacing-lg);
+}
+
+/* Individual tab button */
+.tab[data-variant="underline"] {
+  border: none;
+  background-color: transparent;
+  padding-top: var(--tabs-pt, var(--mantine-spacing-xs));
+  padding-bottom: var(--tabs-pb, var(--mantine-spacing-xs));
+  padding-left: 0;
+  padding-right: 0;
+  font-weight: 500;
+  font-size: var(--tabs-fz, var(--mantine-font-size-sm));
+  color: light-dark(
+    var(--mantine-color-gray-6),
+    var(--mantine-color-dark-3)
+  );
+  transition: color 150ms ease;
+}
+
+.tab[data-variant="underline"]:hover:not([data-active]):not(:disabled) {
+  background-color: transparent;
+  color: var(--mantine-color-text);
+}
+
+/* Active tab */
+.tab[data-variant="underline"][data-active] {
+  color: var(--mantine-color-text);
+  font-weight: 600;
+}
+
+.tab[data-variant="underline"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

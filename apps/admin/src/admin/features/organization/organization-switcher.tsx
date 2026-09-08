@@ -1,0 +1,322 @@
+"use client";
+
+import {
+  Avatar,
+  Badge,
+  Button,
+  Divider,
+  Menu,
+  Modal,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  UnstyledButton,
+} from "@mantine/core";
+import {
+  IconBuilding,
+  IconCheck,
+  IconChevronDown,
+  IconPlus,
+  IconSearch,
+  IconUsers,
+} from "@tabler/icons-react";
+import { useMemo, useState } from "react";
+import {
+  useOrganizationContext,
+  type Organization,
+} from "./organization-provider";
+import classes from "./organization-switcher.module.css";
+
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
+
+function getOrganizationInitial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || "O";
+}
+
+function getOrganizationTypeLabel(type: Organization["type"]) {
+  return type === "PERSONAL" ? "ส่วนตัว" : "ทีม";
+}
+
+function canInviteMembers(organization: Organization | undefined) {
+  return Boolean(
+    organization &&
+      organization.type === "SHARED" &&
+      ["OWNER", "ADMIN"].includes(organization.role),
+  );
+}
+
+export function OrganizationSwitcher() {
+  const {
+    organizations,
+    activeId,
+    activeOrganization,
+    pending: switchPending,
+    loadOrganizations,
+    switchOrganization,
+  } = useOrganizationContext();
+  const [createOpened, setCreateOpened] = useState(false);
+  const [inviteOpened, setInviteOpened] = useState(false);
+  const [search, setSearch] = useState("");
+  const [name, setName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [actionPending, setActionPending] = useState(false);
+  const pending = switchPending || actionPending;
+
+  const createOrganization = async () => {
+    if (!name.trim()) return;
+
+    setActionPending(true);
+    try {
+      const response = await fetch(`${apiOrigin}/api/v1/organizations`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!response.ok) return;
+
+      const result = (await response.json()) as {
+        organization: Organization;
+      };
+      setName("");
+      setCreateOpened(false);
+      await loadOrganizations();
+      await switchOrganization(result.organization.id);
+    } finally {
+      setActionPending(false);
+    }
+  };
+
+  const createInvitation = async () => {
+    if (!activeOrganization) return;
+
+    setActionPending(true);
+    try {
+      const response = await fetch(
+        `${apiOrigin}/api/v1/organizations/${activeOrganization.id}/invitations`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email: inviteEmail || null,
+            role: inviteRole,
+          }),
+        },
+      );
+
+      if (!response.ok) return;
+
+      const result = (await response.json()) as { token: string };
+      setInviteLink(
+        `${window.location.origin}/admin/invitations/${result.token}`,
+      );
+    } finally {
+      setActionPending(false);
+    }
+  };
+
+  const filteredOrganizations = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return organizations;
+
+    return organizations.filter((organization) =>
+      `${organization.name} ${organization.slug}`
+        .toLowerCase()
+        .includes(normalizedSearch),
+    );
+  }, [organizations, search]);
+
+  if (!organizations.length) return null;
+
+  const selectedOrganization = activeOrganization ?? organizations[0];
+  const showInviteAction = canInviteMembers(activeOrganization);
+
+  return (
+    <>
+      <Menu
+        position="right-start"
+        offset={8}
+        width={340}
+        shadow="md"
+        withinPortal
+        onChange={(opened) => {
+          if (!opened) setSearch("");
+        }}
+      >
+        <Menu.Target>
+          <UnstyledButton
+            className={classes.control}
+            disabled={pending}
+            aria-label="เลือก Organization"
+          >
+            <Avatar
+              color="brand"
+              radius="xl"
+              size={32}
+              className={classes.controlAvatar}
+            >
+              {getOrganizationInitial(selectedOrganization.name)}
+            </Avatar>
+            <Stack className={classes.controlCopy} gap={0}>
+              <Text className={classes.controlName} size="sm" fw={700} truncate>
+                {selectedOrganization.name}
+              </Text>
+              <Badge
+                className={classes.controlBadge}
+                variant="light"
+                size="xs"
+              >
+                {getOrganizationTypeLabel(selectedOrganization.type)}
+              </Badge>
+            </Stack>
+            <IconChevronDown size={16} stroke={2} />
+          </UnstyledButton>
+        </Menu.Target>
+
+        <Menu.Dropdown className={classes.dropdown}>
+          <TextInput
+            value={search}
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            onKeyDown={(event) => event.stopPropagation()}
+            placeholder="ค้นหา Organization..."
+            leftSection={<IconSearch size={16} />}
+            aria-label="ค้นหา Organization"
+            size="sm"
+            autoFocus
+          />
+
+          <Stack gap={4} mt="xs">
+            {filteredOrganizations.map((organization) => {
+              const selected = organization.id === activeId;
+
+              return (
+                <Menu.Item
+                  key={organization.id}
+                  className={classes.organizationItem}
+                  leftSection={
+                    <Avatar color="brand" radius="xl" size={28}>
+                      {getOrganizationInitial(organization.name)}
+                    </Avatar>
+                  }
+                  rightSection={
+                    selected ? <IconCheck size={17} stroke={2.2} /> : null
+                  }
+                  onClick={() => void switchOrganization(organization.id)}
+                >
+                  <Stack gap={0}>
+                    <Text size="sm" fw={600} truncate>
+                      {organization.name}
+                    </Text>
+                    <Badge variant="light" size="xs" w="fit-content">
+                      {getOrganizationTypeLabel(organization.type)}
+                    </Badge>
+                  </Stack>
+                </Menu.Item>
+              );
+            })}
+          </Stack>
+
+          {!filteredOrganizations.length && (
+            <Stack className={classes.emptyState} align="center" gap={4} py="lg">
+              <IconBuilding size={22} stroke={1.5} />
+              <Text size="sm" c="dimmed" ta="center">
+                ไม่พบ Organization
+              </Text>
+            </Stack>
+          )}
+
+          <Divider my="sm" />
+
+          <Menu.Item
+            leftSection={<IconPlus size={18} />}
+            onClick={() => setCreateOpened(true)}
+          >
+            <Stack gap={0}>
+              <Text size="sm" fw={600}>
+                สร้าง Organization
+              </Text>
+              <Text size="xs" c="dimmed">
+                สร้าง workspace สำหรับทีมของคุณ
+              </Text>
+            </Stack>
+          </Menu.Item>
+
+          {showInviteAction && (
+            <Menu.Item
+              leftSection={<IconUsers size={18} />}
+              onClick={() => setInviteOpened(true)}
+            >
+              <Stack gap={0}>
+                <Text size="sm" fw={600}>
+                  เชิญสมาชิก
+                </Text>
+                <Text size="xs" c="dimmed">
+                  แชร์ Organization ให้กับทีม
+                </Text>
+              </Stack>
+            </Menu.Item>
+          )}
+        </Menu.Dropdown>
+      </Menu>
+
+      <Modal
+        opened={createOpened}
+        onClose={() => setCreateOpened(false)}
+        title="สร้าง Organization"
+      >
+        <Stack>
+          <TextInput
+            label="ชื่อ Organization"
+            value={name}
+            onChange={(event) => setName(event.currentTarget.value)}
+          />
+          <Button
+            onClick={() => void createOrganization()}
+            loading={pending}
+            disabled={!name.trim()}
+          >
+            สร้าง
+          </Button>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={inviteOpened}
+        onClose={() => setInviteOpened(false)}
+        title="เชิญสมาชิกเข้า Organization"
+      >
+        <Stack>
+          <TextInput
+            label="อีเมลสำหรับตรวจสอบสิทธิ์ (ไม่บังคับ)"
+            value={inviteEmail}
+            onChange={(event) => setInviteEmail(event.currentTarget.value)}
+          />
+          <Select
+            label="บทบาท"
+            value={inviteRole}
+            onChange={(value) =>
+              value && setInviteRole(value as "ADMIN" | "MEMBER")
+            }
+            data={[
+              { value: "MEMBER", label: "สมาชิก" },
+              { value: "ADMIN", label: "ผู้ดูแล" },
+            ]}
+          />
+          <Button onClick={() => void createInvitation()} loading={pending}>
+            สร้างลิงก์เชิญ
+          </Button>
+          {inviteLink ? (
+            <Text size="sm" style={{ wordBreak: "break-all" }}>
+              {inviteLink}
+            </Text>
+          ) : null}
+        </Stack>
+      </Modal>
+    </>
+  );
+}

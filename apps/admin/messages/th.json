@@ -1,0 +1,117 @@
+{
+  "Metadata": {
+    "title": "SimpleDashboard Template",
+    "description": "เทมเพลตแดชบอร์ด SimpleDashboard"
+  },
+  "Common": {
+    "unknown": "ไม่ระบุ",
+    "admin": "ผู้ดูแลระบบ",
+    "editor": "ผู้แก้ไข",
+    "all": "ทั้งหมด",
+    "open": "เปิด",
+    "close": "ปิด",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "search": "ค้นหา",
+    "filter": "ตัวกรอง",
+    "clearFilters": "ล้างตัวกรองทั้งหมด",
+    "loading": "กำลังโหลด...",
+    "noData": "ไม่พบข้อมูล",
+    "tryAgain": "กรุณาลองใหม่อีกครั้ง",
+    "success": "ดำเนินการสำเร็จ",
+    "error": "เกิดข้อผิดพลาด",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อ",
+    "status": "สถานะ",
+    "role": "บทบาท",
+    "createdAt": "สร้างเมื่อ",
+    "user": "ผู้ใช้งาน",
+    "navigation": "เส้นทางการนำทาง",
+    "back": "กลับ"
+  },
+  "Auth": {
+    "title": "เข้าสู่ระบบผู้ดูแล",
+    "description": "ใช้บัญชีผู้ดูแลเพื่อจัดการข้อมูลเว็บไซต์",
+    "login": "เข้าสู่ระบบ",
+    "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    "userLoadFailed": "ไม่สามารถโหลดข้อมูลผู้ใช้หลังเข้าสู่ระบบได้",
+    "loginFailed": "ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่อีกครั้ง",
+    "enterPassword": "กรอกรหัสผ่าน"
+  },
+  "Navigation": {
+    "overview": "ภาพรวม",
+    "content": "จัดการเนื้อหา",
+    "system": "ระบบ",
+    "dashboard": "แดชบอร์ด",
+    "users": "ผู้ใช้งาน",
+    "userDetail": "รายละเอียดผู้ใช้งาน",
+    "auditLogs": "ประวัติการทำรายการ",
+    "profile": "โปรไฟล์",
+    "myAccount": "บัญชีของฉัน",
+    "logout": "ออกจากระบบ",
+    "settings": "การตั้งค่า",
+    "openSettings": "เปิดการตั้งค่า",
+    "openMenu": "เปิดเมนูหลัก",
+    "closeMenu": "ปิดเมนูหลัก"
+  },
+  "Home": {
+    "greeting": "สวัสดี!",
+    "welcome": "ยินดีต้อนรับกลับเข้าสู่ระบบจัดการเว็บไซต์"
+  },
+  "Users": {
+    "title": "ผู้ใช้งาน",
+    "create": "สร้างผู้ใช้งาน",
+    "active": "เปิดใช้งาน",
+    "inactive": "ปิดใช้งาน",
+    "allRoles": "บทบาททั้งหมด",
+    "allStatuses": "สถานะทั้งหมด",
+    "view": "เปิดข้อมูล {name}",
+    "editItem": "แก้ไขรายการ",
+    "searchPlaceholder": "ค้นหาจากชื่อหรืออีเมล",
+    "deleteSearch": "ลบคำค้นหา",
+    "deleteRole": "ลบบทบาท",
+    "deleteStatus": "ลบสถานะ",
+    "search": "ค้นหา",
+    "roles": "บทบาท"
+  },
+  "Profile": {
+    "title": "โปรไฟล์",
+    "logging": "ประวัติการทำรายการ"
+  },
+  "AuditLogs": {
+    "title": "ประวัติการทำรายการ",
+    "loadFailed": "ไม่สามารถโหลดประวัติการทำรายการได้",
+    "notFound": "ไม่พบประวัติการทำรายการ",
+    "event": "เหตุการณ์",
+    "resourceType": "ประเภทข้อมูล",
+    "actorRole": "บทบาทผู้กระทำ",
+    "relation": "ความเกี่ยวข้อง",
+    "dateRange": "ช่วงวันที่",
+    "startDate": "วันเริ่มต้น",
+    "endDate": "วันสิ้นสุด",
+    "searchEvent": "ค้นหาเหตุการณ์",
+    "searchPlaceholder": "ค้นหาจากผู้ใช้งาน เหตุผล หรือรหัสข้อมูล",
+    "actor": "เป็นผู้กระทำ",
+    "target": "ถูกกระทำ",
+    "noEvents": "ไม่พบเหตุการณ์",
+    "filterTitle": "ตัวกรองประวัติ"
+  },
+  "Status": {
+    "latestActivity": "ความเคลื่อนไหวล่าสุด",
+    "reference": "รหัสอ้างอิงสำหรับแจ้งผู้ดูแลระบบ:",
+    "otherAreas": "ไปยังส่วนอื่นของเว็บไซต์"
+  },
+  "Settings": {
+    "title": "การตั้งค่า",
+    "appearance": "การแสดงผล",
+    "navigation": "การนำทาง",
+    "font": "แบบอักษร",
+    "fullscreen": "เต็มหน้าจอ",
+    "exitFullscreen": "ออกจากเต็มหน้าจอ",
+    "reset": "รีเซ็ตค่าเริ่มต้น",
+    "close": "ปิดการตั้งค่า"
+  }
+}

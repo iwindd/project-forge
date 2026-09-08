@@ -1,0 +1,25 @@
+.root {
+  margin-bottom: var(--mantine-spacing-xl);
+}
+
+.content {
+  min-width: 0;
+}
+
+.backButton {
+  color: var(--mantine-color-dimmed);
+}
+
+.backButton:hover:not(:disabled) {
+  color: var(--mantine-color-text);
+}
+
+.rightSection {
+  flex-shrink: 0;
+}
+
+@media (max-width: 47.999em) {
+  .rightSection {
+    width: 100%;
+  }
+}

@@ -1,0 +1,77 @@
+@import "@mantine/core/styles.css";
+@import "@mantine/dates/styles.css";
+@import "@mantine/notifications/styles.css";
+@import "mantine-datatable/styles.css";
+@layer mantine, mantine-datatable;
+
+:root,
+[data-mantine-color-scheme="light"] {
+  --shadow-xs: 0 1px 2px rgba(145, 158, 171, 0.2);
+  --shadow-sm: 0 8px 16px rgba(145, 158, 171, 0.16);
+  --shadow-md:
+    0 0 2px rgba(145, 158, 171, 0.2), 0 12px 24px -4px rgba(145, 158, 171, 0.12);
+  --shadow-lg:
+    0 0 2px rgba(145, 158, 171, 0.2), 0 16px 32px -4px rgba(145, 158, 171, 0.12);
+  --shadow-xl: -40px 40px 80px -8px rgba(145, 158, 171, 0.24);
+}
+
+[data-mantine-color-scheme="dark"] {
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-sm: 0 8px 16px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 0 2px rgba(0, 0, 0, 0.2), 0 12px 24px -4px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 0 2px rgba(0, 0, 0, 0.2), 0 16px 32px -4px rgba(0, 0, 0, 0.24);
+  --shadow-xl: -40px 40px 80px -8px rgba(0, 0, 0, 0.24);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--mantine-color-body);
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Custom table & datatable styles */
+.mantine-datatable-table {
+  th {
+    font-weight: 600;
+    font-size: var(--mantine-font-size-xs);
+  }
+}
+
+.mantine-datatable {
+  border-radius: var(--paper-radius) !important;
+}
+
+thead th,
+.mantine-datatable-header th {
+  background-color: var(--mantine-color-gray-0) !important;
+}
+
+[data-mantine-color-scheme="dark"] thead th,
+[data-mantine-color-scheme="dark"] .mantine-datatable-header th {
+  background-color: var(--mantine-color-dark-6) !important;
+}
+
+.mantine-datatable-row[data-with-row-border]:not(:last-of-type) td {
+  border-bottom-style: dashed !important;
+}
+
+.mantine-datatable-pagination {
+  border-top-style: dashed !important;
+}
+
+.mantine-Table-tbody
+  .mantine-Table-tr[data-with-row-border]:not(:last-of-type) {
+  border-bottom: 1px dashed var(--table-border-color);
+}
+
+[data-mantine-color-scheme="dark"] .mantine-datatable {
+  background-color: var(--mantine-color-dark-7) !important;
+  --mantine-datatable-background-color: var(--mantine-color-dark-7) !important;
+}

@@ -1,0 +1,14 @@
+.search {
+  min-width: 280px;
+}
+
+.resourceId {
+  font-size: var(--mantine-font-size-xs);
+  word-break: break-all;
+}
+
+@media (max-width: 48em) {
+  .search {
+    min-width: min(100%, 320px);
+  }
+}

@@ -1,0 +1,57 @@
+.desktop {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.root {
+  flex-shrink: 0;
+}
+
+.list {
+  gap: 4px;
+}
+
+.tab {
+  justify-content: flex-start;
+  gap: 6px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  border: 0;
+  border-radius: var(--mantine-radius-sm);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.tab:hover {
+  background-color: light-dark(
+    var(--mantine-color-gray-2),
+    var(--mantine-color-dark-7)
+  );
+}
+
+.tab[data-active] {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  background-color: light-dark(
+    var(--mantine-color-gray-3),
+    var(--mantine-color-dark-6)
+  );
+}
+
+.tabSection[data-position="left"] {
+  margin-inline-end: 0;
+}
+
+.tabLabel {
+  flex: 0 1 auto;
+  text-align: start;
+}
+
+.mobileTrigger {
+  align-self: flex-start;
+}
+
+@media (max-width: 47.999em) {
+  .desktop {
+    display: none;
+  }
+}

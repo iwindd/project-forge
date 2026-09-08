@@ -1,0 +1,57 @@
+.drawerContent {
+  height: 100%;
+}
+
+.drawerBody {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.drawerHeader {
+  flex: 0 0 auto;
+}
+
+.drawerScrollArea {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.drawerContentInner {
+  min-height: 100%;
+}
+
+.settingsScrollbar {
+  padding: 2px;
+  background-color: transparent !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.settingsScrollbarVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settingsScrollbarThumb {
+  background-color: light-dark(
+    var(--mantine-color-gray-4),
+    var(--mantine-color-dark-4)
+  );
+}
+
+.changeIndicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--mantine-color-red-5);
+  border: 1.5px solid
+    light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+}

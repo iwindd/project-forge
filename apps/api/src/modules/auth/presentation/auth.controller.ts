@@ -80,7 +80,7 @@ export class AuthController {
         path: '/',
       });
       const destination = result.principal.accessStatus === 'APPROVED'
-        ? '/admin'
+        ? '/'
         : '/admin/login?status=pending';
       return response.redirect(this.adminRedirect(destination));
     } catch (error) {

@@ -1,0 +1,29 @@
+.root[data-variant="contrast"] {
+  --button-bg: light-dark(
+    var(--mantine-color-dark-8),
+    var(--mantine-color-white)
+  );
+  --button-hover: light-dark(
+    var(--mantine-color-dark-6),
+    var(--mantine-color-gray-2)
+  );
+  --button-color: light-dark(
+    var(--mantine-color-white),
+    var(--mantine-color-black)
+  );
+  --button-hover-color: light-dark(
+    var(--mantine-color-white),
+    var(--mantine-color-black)
+  );
+  --button-bd: transparent;
+}
+
+.root[data-variant="pawgradient"] {
+  background: linear-gradient(
+    135deg,
+    var(--mantine-color-pawpink-4),
+    var(--mantine-color-pawblue-5)
+  );
+  color: var(--mantine-color-white);
+  border: transparent;
+}

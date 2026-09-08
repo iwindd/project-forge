@@ -1,0 +1,63 @@
+.sidebar {
+  box-sizing: border-box;
+  width: 300px;
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid var(--nav-surface-border-color);
+  background-color: var(--nav-surface-bg-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarHeader {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+}
+
+.iconSidebarScroll {
+  width: 100%;
+  flex: 1;
+}
+
+.navigationScrollbar {
+  padding: 2px;
+  background-color: transparent !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.navigationScrollbar:hover,
+.navigationScrollbar:active,
+.navigationScrollbar::before {
+  background-color: transparent !important;
+}
+
+.navigationScrollbarVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.navigationScrollbarThumb,
+.navigationScrollbarThumb:hover,
+.navigationScrollbarThumb:active {
+  border-radius: 999px;
+  background-color: color-mix(
+    in srgb,
+    var(--mantine-color-gray-5) 24%,
+    transparent
+  ) !important;
+  transition: none;
+}
+
+[data-mantine-color-scheme="dark"] .navigationScrollbarThumb,
+[data-mantine-color-scheme="dark"] .navigationScrollbarThumb:hover,
+[data-mantine-color-scheme="dark"] .navigationScrollbarThumb:active {
+  background-color: color-mix(
+    in srgb,
+    var(--mantine-color-gray-6) 26%,
+    transparent
+  ) !important;
+}
