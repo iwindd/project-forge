@@ -1,11 +1,5 @@
-import { AuditLogsTable } from "@/admin/features/audit-log/audit-logs-table";
-import { SecurityLogsTable } from "@/admin/features/security/security-logs-table";
+import { redirect } from "next/navigation";
 
 export default function ProfileLoggingPage() {
-  return (
-    <>
-      <AuditLogsTable scope="own" />
-      <SecurityLogsTable />
-    </>
-  );
+  redirect("/account/activity");
 }

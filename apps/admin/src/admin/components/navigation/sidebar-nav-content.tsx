@@ -21,9 +21,10 @@ import {
   getNotificationCount,
   isLinkItem,
   isParentItem,
-  useFilteredNavGroups,
+  useNavigationGroups,
   useIsRouteActive,
   useNotifications,
+  type SidebarNavigationMode,
   type NavGroup,
   type NavItem,
 } from "./navigation-utils";
@@ -31,13 +32,15 @@ import classes from "./sidebar-nav-content.module.css";
 
 type SidebarNavContentProps = {
   onNavigateAction?: () => void;
+  navigationMode?: SidebarNavigationMode;
 };
 
 export default function SidebarNavContent({
   onNavigateAction,
+  navigationMode = "admin",
 }: SidebarNavContentProps) {
   const notifications = useNotifications();
-  const groups = useFilteredNavGroups();
+  const groups = useNavigationGroups(navigationMode);
   const t = useTranslations("Navigation");
   const { organizationSlug } = useParams<{ organizationSlug?: string }>();
   const routeParams = organizationSlug ? { organizationSlug } : {};
@@ -111,6 +114,8 @@ function SidebarGroup({
                 ? "content"
                 : group.id === "settings"
                   ? "settings"
+                  : group.id === "profile"
+                    ? "profile"
                   : "system",
           )}
         </Text>
@@ -208,9 +213,13 @@ function SidebarItem({
                   ? "users"
                   : item.routeName === "system.auditLogs"
                     ? "auditLogs"
-                    : item.routeName === "settings.members"
-                      ? "members"
-                      : item.label,
+              : item.routeName === "settings.members"
+                ? "members"
+                : item.routeName === "account.settings"
+                  ? "account"
+                  : item.routeName === "account.activity"
+                    ? "activity"
+                  : item.label,
             )}
           </Text>
           <IconChevronRight
@@ -257,9 +266,13 @@ function SidebarItem({
                 ? "users"
                 : item.routeName === "system.auditLogs"
                   ? "auditLogs"
-                  : item.routeName === "settings.members"
-                    ? "members"
-                    : item.label,
+            : item.routeName === "settings.members"
+              ? "members"
+              : item.routeName === "account.settings"
+                ? "account"
+                : item.routeName === "account.activity"
+                  ? "activity"
+                : item.label,
           )}
         </Text>
         {item.info && (

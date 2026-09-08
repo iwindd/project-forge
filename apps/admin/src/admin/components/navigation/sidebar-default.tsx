@@ -6,9 +6,14 @@ import { OrganizationSwitcher } from "../../features/organization/organization-s
 import NavigationScrollControls from "./navigation-scroll-controls";
 import classes from "./sidebar-default.module.css";
 import SidebarNavContent from "./sidebar-nav-content";
+import type { SidebarNavigationMode } from "./navigation-utils";
 import { useScrollbarVisibility } from "./use-scrollbar-visibility";
 
-export default function SidebarDefault() {
+export default function SidebarDefault({
+  navigationMode = "admin",
+}: {
+  navigationMode?: SidebarNavigationMode;
+}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ""}`;
@@ -39,7 +44,7 @@ export default function SidebarDefault() {
           viewportRef={viewportRef}
         >
           <Box px="md">
-            <SidebarNavContent />
+            <SidebarNavContent navigationMode={navigationMode} />
           </Box>
         </ScrollArea>
       </NavigationScrollControls>

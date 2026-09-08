@@ -18,14 +18,17 @@ import { AdminSettingsDrawer } from "./admin-settings-drawer";
 import classes from "./admin-shell.module.css";
 import SidebarDefault from "./navigation/sidebar-default";
 import SidebarDrawer from "./navigation/sidebar-drawer";
+import type { SidebarNavigationMode } from "./navigation/navigation-utils";
 
 export function AdminShell({
   user,
   organizationSlug,
+  navigationMode = "admin",
   children,
 }: Readonly<{
   user: AdminUser;
   organizationSlug: string;
+  navigationMode?: SidebarNavigationMode;
   children: ReactNode;
 }>) {
   const hydrated = useAppSelector((state) => state.layout.isHydrated);
@@ -59,12 +62,13 @@ export function AdminShell({
         </AppShell.Header>
 
         <AppShell.Navbar className={classes.navbar}>
-          <SidebarDefault />
+          <SidebarDefault navigationMode={navigationMode} />
         </AppShell.Navbar>
 
         <SidebarDrawer
           opened={mobileOpened}
           onCloseAction={mobileHandlers.close}
+          navigationMode={navigationMode}
         />
 
         <AppShell.Main className={classes.main}>

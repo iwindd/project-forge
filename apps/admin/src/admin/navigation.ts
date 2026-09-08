@@ -1,5 +1,6 @@
 import {
   IconHistory,
+  IconUser,
   IconUsers,
   type TablerIcon
 } from '@tabler/icons-react'
@@ -91,6 +92,21 @@ export const adminNavigation: AdminNavigationGroup[] = [
       routeItem('settings.members', {
         icon: IconUsers,
         permissionKey: 'manageUsers'
+      })
+    ]
+  }
+]
+
+export const accountNavigation: AdminNavigationGroup[] = [
+  {
+    id: 'profile',
+    label: 'โปรไฟล์',
+    items: [
+      routeItem('account.settings', {
+        icon: IconUser
+      }),
+      routeItem('account.activity', {
+        icon: IconHistory
       })
     ]
   }

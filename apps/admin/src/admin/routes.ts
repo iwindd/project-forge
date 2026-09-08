@@ -1,6 +1,21 @@
 import { buildRouteUtility, ROUTER } from './routing'
 
 const adminRoutes = ROUTER({
+  account: {
+    path: '/account',
+    label: 'บัญชีของฉัน',
+    hiddenBreadcrumb: true,
+    children: {
+      settings: {
+        path: '/account/settings',
+        label: 'บัญชี'
+      },
+      activity: {
+        path: '/account/activity',
+        label: 'ประวัติการทำรายการ'
+      }
+    }
+  },
   profile: {
     path: '/:organizationSlug/profile',
     label: 'โปรไฟล์',

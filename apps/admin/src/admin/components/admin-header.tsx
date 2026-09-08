@@ -18,7 +18,7 @@ import {
 import { IconLogout, IconSettings, IconUserCircle } from '@tabler/icons-react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { getPath } from '@/admin/routes'
 import { AdminBrand } from './admin-brand'
 import classes from './admin-header.module.css'
@@ -39,7 +39,6 @@ export function AdminHeader({
   const { resetAllAdminApiCaches } = useAdminCacheInvalidation()
   const t = useTranslations('Navigation')
   const common = useTranslations('Common')
-  const { organizationSlug } = useParams<{ organizationSlug?: string }>()
   const displayName = user.name || user.email || common('admin')
 
   const handleLogout = async () => {
@@ -111,7 +110,7 @@ export function AdminHeader({
             <Menu.Label>{user.email}</Menu.Label>
             <Menu.Item
               component={Link}
-              href={getPath('profile', { organizationSlug })}
+              href={getPath('account.settings')}
               leftSection={<IconUserCircle size={17} />}
             >
               {t('myAccount')}

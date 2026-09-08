@@ -4,6 +4,7 @@ import {
   usePermissions,
 } from "../../hooks";
 import {
+  accountNavigation,
   adminNavigation,
   type AdminNavigationGroup,
   type AdminNavigationItem,
@@ -15,6 +16,7 @@ import type { RouteParams } from "../../routing";
 export type NavItem = AdminNavigationItem;
 export type NavGroup = AdminNavigationGroup;
 export type NavLinkHref = string;
+export type SidebarNavigationMode = "admin" | "account";
 
 type PermissionCheck = (
   keys: PermissionKey | readonly PermissionKey[],
@@ -58,10 +60,18 @@ function filterNavGroups(
   });
 }
 
-export function useFilteredNavGroups(): NavGroup[] {
+function useFilteredNavGroups(): NavGroup[] {
   const { can } = usePermissions();
 
   return filterNavGroups(adminNavigation, can);
+}
+
+export function useNavigationGroups(
+  mode: SidebarNavigationMode = "admin",
+): NavGroup[] {
+  const adminGroups = useFilteredNavGroups();
+
+  return mode === "account" ? accountNavigation : adminGroups;
 }
 
 export function getNavItems(groups: NavGroup[]) {

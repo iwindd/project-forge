@@ -113,6 +113,12 @@ export function OrganizationProvider({
         const organization =
           organizations.find((candidate) => candidate.id === id) ??
           result.organization;
+
+        if (pathname === "/account" || pathname.startsWith("/account/")) {
+          router.refresh();
+          return;
+        }
+
         if (organization) {
           const suffix = pathname.split("/").filter(Boolean).slice(1).join("/");
           router.push(
