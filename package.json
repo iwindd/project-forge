@@ -3,8 +3,9 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev": "pnpm --parallel --filter @project-forge/api --filter @project-forge/web dev",
+    "dev": "pnpm --parallel --filter @project-forge/api --filter @project-forge/admin dev",
     "dev:api": "pnpm --filter @project-forge/api dev",
+    "dev:admin": "pnpm --filter @project-forge/admin dev",
     "dev:web": "pnpm --filter @project-forge/web dev",
     "build": "pnpm --recursive build",
     "check-types": "pnpm --recursive check-types",

@@ -1,14 +1,25 @@
 import { Module } from '@nestjs/common';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { AuditModule } from '../../common/audit/audit.module.js';
+import { DatabaseModule } from '../../common/database/database.module.js';
 import { AuthModule } from '../auth/auth.module.js';
-import { ProjectsController } from './projects.controller.js';
-import { ProjectsService } from './projects.service.js';
-import { Project } from './project.entity.js';
-import { ProjectMember } from './project-member.entity.js';
+import {
+  ArchiveProjectUseCase,
+  CreateProjectUseCase,
+  GetProjectUseCase,
+  ListProjectsUseCase,
+  UpdateProjectUseCase,
+} from './application/use-cases/project.use-cases.js';
+import { ProjectsController } from './presentation/projects.controller.js';
 
 @Module({
-  imports: [AuthModule, MikroOrmModule.forFeature([Project, ProjectMember])],
+  imports: [AuthModule, DatabaseModule, AuditModule],
   controllers: [ProjectsController],
-  providers: [ProjectsService],
+  providers: [
+    ListProjectsUseCase,
+    GetProjectUseCase,
+    CreateProjectUseCase,
+    UpdateProjectUseCase,
+    ArchiveProjectUseCase,
+  ],
 })
 export class ProjectsModule {}

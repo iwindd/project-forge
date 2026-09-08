@@ -90,21 +90,23 @@ apps/api/src/
 ├── app.module.ts
 ├── common/
 │   ├── auth/                         # principal, guards, decorators
-│   ├── authorization/                # policy/permission checks
-│   ├── database/                     # MikroORM config, entities and transactions
-│   ├── errors/                       # public error mapping
-│   ├── audit/                        # audit service
-│   └── pagination/
+│   ├── config/                       # validated environment configuration
+│   ├── database/                     # MikroORM bootstrap, ports and transactions
+│   ├── errors/                       # application errors and public error mapping
+│   ├── http/                         # request context, cookies and request IDs
+│   └── audit/                        # audit port and persistence adapter
 ├── modules/
 │   ├── auth/
 │   ├── access-requests/
 │   ├── users/
 │   ├── projects/
 │   └── health/
-└── migrations/                       # MikroORM migrations
+└── database/                         # MikroORM migrations, seed and migration runner
 ~~~
 
 ทุก module แยก domain/, application/, infrastructure/ และ presentation/ ตาม hexagonal pattern ของ Pawpal Controller รับ request และเรียก use case เท่านั้น ใช้ MikroORM ผ่าน repository/adapter ใน API ห้ามให้ Next.js อ่าน DB โดยตรง และห้ามให้ controller สั่ง EntityManager กระจายทั่วไฟล์
+
+ทิศทาง dependency ของ API คือ `presentation -> application -> domain` และ `infrastructure -> application ports/domain` โดย domain ไม่ import NestJS, Express หรือ MikroORM ส่วน ORM entities จะอยู่ใน infrastructure และถูก map เป็น domain record ผ่าน repository adapter
 
 Phase 1 มี module:
 

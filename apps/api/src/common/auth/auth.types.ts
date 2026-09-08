@@ -1,4 +1,4 @@
-import type { AccessStatus, UserRole } from '../../modules/users/user.entity.js';
+import type { AccessStatus, UserRole } from '../../modules/users/domain/user.js';
 
 export type AuthenticatedPrincipal = {
   id: string;
@@ -10,3 +10,9 @@ export type AuthenticatedPrincipal = {
   accessStatus: AccessStatus;
   isActive: boolean;
 };
+
+export const SESSION_AUTHENTICATOR = Symbol('SESSION_AUTHENTICATOR');
+
+export interface SessionAuthenticator {
+  principalFromToken(token: string | undefined): Promise<AuthenticatedPrincipal | null>;
+}

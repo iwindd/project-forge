@@ -24,12 +24,12 @@ pnpm dev:api
 pnpm dev:web
 ```
 
-เว็บอยู่ที่ `http://localhost:3000` และ API อยู่ที่ `http://localhost:3001/api/v1` ส่วน PostgreSQL ของ Project Forge ใช้ host port `55432` เพื่อไม่ชนกับ project-bot ที่ใช้ `5433`
+เว็บอยู่ที่ `http://localhost:3000` และ API อยู่ที่ `http://localhost:5050/api/v1` ส่วน PostgreSQL ของ Project Forge ใช้ host port `55432` เพื่อไม่ชนกับ project-bot ที่ใช้ `5433`
 
 ตั้งค่า GitHub OAuth ใน `.env` โดยใช้ callback:
 
 ```text
-http://localhost:3001/api/v1/auth/github/callback
+http://localhost:5050/api/v1/auth/github/callback
 ```
 
 กำหนด `ADMIN_GITHUB_IDS` เป็น GitHub numeric user ID ของผู้ดูแลคนแรก หรือใช้ `SEED_ADMIN_GITHUB_ID` กับ `pnpm --filter @project-forge/api db:seed` หลัง migration
@@ -37,7 +37,7 @@ http://localhost:3001/api/v1/auth/github/callback
 ตรวจระบบโดยไม่ต้อง login:
 
 ```text
-GET http://localhost:3001/api/v1/health
+GET http://localhost:5050/api/v1/health
 ```
 
 ## เอกสาร
