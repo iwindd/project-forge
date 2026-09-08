@@ -104,7 +104,15 @@ function SidebarGroup({
           size="xs"
           fw="bold"
         >
-          {translate(group.id === "overview" ? "overview" : group.id === "content" ? "content" : "system")}
+          {translate(
+            group.id === "overview"
+              ? "overview"
+              : group.id === "content"
+                ? "content"
+                : group.id === "settings"
+                  ? "settings"
+                  : "system",
+          )}
         </Text>
       </UnstyledButton>
       <Collapse expanded={opened}>
@@ -193,7 +201,17 @@ function SidebarItem({
             </span>
           )}
           <Text size="sm" fw={600} style={{ flexGrow: 1 }}>
-            {translate(item.routeName === "dashboard" ? "dashboard" : item.routeName === "system.users" ? "users" : item.routeName === "system.auditLogs" ? "auditLogs" : item.label)}
+            {translate(
+              item.routeName === "dashboard"
+                ? "dashboard"
+                : item.routeName === "system.users"
+                  ? "users"
+                  : item.routeName === "system.auditLogs"
+                    ? "auditLogs"
+                    : item.routeName === "settings.members"
+                      ? "members"
+                      : item.label,
+            )}
           </Text>
           <IconChevronRight
             size={16}
@@ -232,7 +250,17 @@ function SidebarItem({
       )}
       <Stack gap={0} style={{ flexGrow: 1, alignItems: "flex-start" }}>
         <Text size="sm" fw={600}>
-          {translate(item.routeName === "dashboard" ? "dashboard" : item.routeName === "system.users" ? "users" : item.routeName === "system.auditLogs" ? "auditLogs" : item.label)}
+          {translate(
+            item.routeName === "dashboard"
+              ? "dashboard"
+              : item.routeName === "system.users"
+                ? "users"
+                : item.routeName === "system.auditLogs"
+                  ? "auditLogs"
+                  : item.routeName === "settings.members"
+                    ? "members"
+                    : item.label,
+          )}
         </Text>
         {item.info && (
           <Text className={classes.itemInfo} data-sidebar-item-info>

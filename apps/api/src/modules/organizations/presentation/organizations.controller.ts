@@ -192,6 +192,14 @@ export class OrganizationsController {
     };
   }
 
+  @Get(':id/invitations')
+  async invitations(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param('id') organizationId: string,
+  ) {
+    return { data: await this.organizations.listInvitations(principal.id, organizationId) };
+  }
+
   @Post('invitations/:token/accept')
   async accept(@Principal() principal: AuthenticatedPrincipal, @Param('token') token: string) {
     const organization = await this.organizations.acceptInvitation(principal.id, token);

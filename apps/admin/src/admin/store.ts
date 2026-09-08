@@ -3,6 +3,7 @@ import authReducer, { type AuthState } from "./features/auth/auth-slice";
 import layoutReducer from "./features/layout/layout-slice";
 import { ADMIN_LAYOUT_SETTINGS_KEY } from "./constants";
 import { auditLogsApi } from "./features/audit-log/audit-logs-api";
+import { organizationMembersApi } from "./features/organization/organization-members-api";
 import { usersApi } from "./features/user/users-api";
 
 export type PreloadedState = { auth: AuthState };
@@ -14,6 +15,7 @@ export function makeStore(preloadedState: PreloadedState) {
       layout: layoutReducer,
       [usersApi.reducerPath]: usersApi.reducer,
       [auditLogsApi.reducerPath]: auditLogsApi.reducer,
+      [organizationMembersApi.reducerPath]: organizationMembersApi.reducer,
     },
     preloadedState: {
       auth: preloadedState.auth,
@@ -22,6 +24,7 @@ export function makeStore(preloadedState: PreloadedState) {
       getDefaultMiddleware().concat(
         usersApi.middleware,
         auditLogsApi.middleware,
+        organizationMembersApi.middleware,
       ),
   });
 

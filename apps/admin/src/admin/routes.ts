@@ -43,6 +43,19 @@ const adminRoutes = ROUTER({
         permission: 'viewAuditLogs'
       }
     }
+  },
+  settings: {
+    path: '/:organizationSlug/settings',
+    label: 'ตั้งค่า',
+    hiddenBreadcrumb: true,
+    permission: 'manageUsers',
+    children: {
+      members: {
+        path: '/:organizationSlug/settings/members',
+        label: 'สมาชิก',
+        permission: 'manageUsers'
+      }
+    }
   }
 })
 

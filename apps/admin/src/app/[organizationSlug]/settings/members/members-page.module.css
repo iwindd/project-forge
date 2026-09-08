@@ -1,0 +1,206 @@
+.page {
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+.inviteCard,
+.membersCard {
+  overflow: hidden;
+  border-color: var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
+}
+
+.inviteContent {
+  padding: var(--mantine-spacing-lg);
+}
+
+.inviteHeading {
+  font-size: var(--mantine-font-size-xl);
+  line-height: 1.2;
+}
+
+.inviteDescription {
+  color: var(--mantine-color-dimmed);
+}
+
+.inviteRows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+}
+
+.inviteRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.8fr);
+  gap: var(--mantine-spacing-sm);
+  align-items: end;
+}
+
+.inviteActions {
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.inviteFooter {
+  min-height: 3.5rem;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.inviteLinks {
+  padding: var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-default-hover);
+}
+
+.inviteLink {
+  overflow-wrap: anywhere;
+}
+
+.tabs {
+  margin-top: var(--mantine-spacing-xl);
+}
+
+.tabsList {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.tab {
+  min-height: 2.75rem;
+  padding-inline: 0.125rem;
+  margin-right: var(--mantine-spacing-xl);
+  color: var(--mantine-color-dimmed);
+  border-bottom: 2px solid transparent;
+}
+
+.tab[data-active] {
+  color: var(--mantine-color-text);
+  border-bottom-color: var(--mantine-primary-color-filled);
+}
+
+.tabPanel {
+  padding-top: var(--mantine-spacing-md);
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.6fr) repeat(3, minmax(9rem, 1fr));
+  gap: var(--mantine-spacing-xs);
+}
+
+.membersCard {
+  margin-top: var(--mantine-spacing-sm);
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.table th {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: var(--mantine-font-size-sm);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.memberIdentity {
+  min-width: 14rem;
+}
+
+.memberEmail {
+  color: var(--mantine-color-dimmed);
+  overflow-wrap: anywhere;
+}
+
+.emptyState {
+  min-height: 10rem;
+  padding: var(--mantine-spacing-xl);
+}
+
+.tableFooter {
+  min-height: 3.25rem;
+  padding: 0 var(--mantine-spacing-lg);
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.invitationRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8rem 11rem;
+  gap: var(--mantine-spacing-md);
+  align-items: center;
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.invitationRow:last-child {
+  border-bottom: 0;
+}
+
+.invitationEmail {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 62em) {
+  .toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 48em) {
+  .page {
+    max-width: none;
+  }
+
+  .inviteContent {
+    padding: var(--mantine-spacing-md);
+  }
+
+  .inviteFooter {
+    padding-inline: var(--mantine-spacing-md);
+  }
+
+  .inviteRow,
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tab {
+    margin-right: var(--mantine-spacing-lg);
+  }
+
+  .tableFooter {
+    padding-inline: var(--mantine-spacing-md);
+  }
+
+  .invitationRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--mantine-spacing-xs);
+    padding-inline: var(--mantine-spacing-md);
+  }
+
+  .invitationRow > :last-child {
+    grid-column: 1 / -1;
+  }
+}

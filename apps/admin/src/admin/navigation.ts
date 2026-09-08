@@ -82,5 +82,16 @@ export const adminNavigation: AdminNavigationGroup[] = [
         permissionKey: 'viewAuditLogs'
       })
     ]
+  },
+  {
+    id: 'settings',
+    label: 'ตั้งค่า',
+    permissionKey: 'manageUsers',
+    items: [
+      routeItem('settings.members', {
+        icon: IconUsers,
+        permissionKey: 'manageUsers'
+      })
+    ]
   }
 ]

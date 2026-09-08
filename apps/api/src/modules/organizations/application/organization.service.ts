@@ -390,6 +390,28 @@ export class OrganizationService {
     return { invitation, token };
   }
 
+  async listInvitations(actorId: string, organizationId: string) {
+    await this.requireManager(actorId, organizationId);
+    const invitations = await this.em.find(
+      OrganizationInvitationOrmEntity,
+      {
+        organizationId,
+        status: OrganizationInvitationStatus.PENDING,
+      },
+      { orderBy: { createdAt: 'DESC' } },
+    );
+
+    return invitations.map((invitation) => ({
+      id: invitation.id,
+      organizationId: invitation.organizationId,
+      email: invitation.email,
+      role: invitation.role,
+      status: invitation.status,
+      expiresAt: invitation.expiresAt.toISOString(),
+      createdAt: invitation.createdAt.toISOString(),
+    }));
+  }
+
   async acceptInvitation(userId: string, token: string) {
     const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
       tokenHash: this.hashToken(token),

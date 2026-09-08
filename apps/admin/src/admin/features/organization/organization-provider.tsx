@@ -1,6 +1,7 @@
 "use client";
 
 import { auditLogsApi } from "@/admin/features/audit-log/audit-logs-api";
+import { organizationMembersApi } from "@/admin/features/organization/organization-members-api";
 import { usersApi } from "@/admin/features/user/users-api";
 import { useAppDispatch } from "@/admin/hooks";
 import { usePathname, useRouter } from "next/navigation";
@@ -108,6 +109,7 @@ export function OrganizationProvider({
         setActiveId(id);
         dispatch(usersApi.util.resetApiState());
         dispatch(auditLogsApi.util.resetApiState());
+        dispatch(organizationMembersApi.util.resetApiState());
         const organization =
           organizations.find((candidate) => candidate.id === id) ??
           result.organization;
