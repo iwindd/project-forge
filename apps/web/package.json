@@ -2,9 +2,9 @@
   "name": "@project-forge/web",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3006",
+    "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3006",
+    "start": "next start -p 3000",
     "check-types": "tsc --noEmit",
     "lint": "pnpm -w exec biome lint apps/web/src"
   },

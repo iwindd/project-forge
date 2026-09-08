@@ -1,5 +1,5 @@
-import { AppShell } from '@/components/app-shell';
+import { AdminShell } from '@/admin/components/admin-shell';
 
 export default function MainLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <AppShell>{children}</AppShell>;
+  return <AdminShell>{children}</AdminShell>;
 }

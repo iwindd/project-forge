@@ -1,0 +1,41 @@
+.compactSidebar {
+  width: 90px;
+  height: 100%;
+  border-right: 1px solid var(--nav-surface-border-color);
+  background-color: var(--nav-surface-bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+  gap: 1rem;
+}
+.compactSidebarItem {
+  width: 74px;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
+  color: var(--nav-item-text-color);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.compactSidebarItem:hover,
+.compactSidebarItem[data-active="true"] {
+  background-color: var(--nav-item-active-bg-color);
+  color: var(--nav-item-active-text-color);
+}
+.compactSidebarLabel {
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  width: 70%;
+}
+.iconSidebarScroll {
+  width: 100%;
+  flex: 1;
+}

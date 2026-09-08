@@ -1,6 +1,22 @@
-:root {
-  --font-prompt: "Prompt";
-  --font-sarabun: "Sarabun";
+@import "@mantine/core/styles.css";
+
+@layer mantine;
+
+:root,
+[data-mantine-color-scheme="light"] {
+  --shadow-xs: 0 1px 2px rgb(145 158 171 / 20%);
+  --shadow-sm: 0 8px 16px rgb(145 158 171 / 16%);
+  --shadow-md: 0 0 2px rgb(145 158 171 / 20%), 0 12px 24px -4px rgb(145 158 171 / 12%);
+  --shadow-lg: 0 0 2px rgb(145 158 171 / 20%), 0 16px 32px -4px rgb(145 158 171 / 12%);
+  --shadow-xl: -40px 40px 80px -8px rgb(145 158 171 / 24%);
+}
+
+[data-mantine-color-scheme="dark"] {
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 24%);
+  --shadow-sm: 0 8px 16px rgb(0 0 0 / 24%);
+  --shadow-md: 0 0 2px rgb(0 0 0 / 20%), 0 12px 24px -4px rgb(0 0 0 / 24%);
+  --shadow-lg: 0 0 2px rgb(0 0 0 / 20%), 0 16px 32px -4px rgb(0 0 0 / 24%);
+  --shadow-xl: -40px 40px 80px -8px rgb(0 0 0 / 24%);
 }
 
 * {
@@ -16,66 +32,19 @@ body {
   margin: 0;
   background: var(--mantine-color-body);
   color: var(--mantine-color-text);
+  font-family: var(--font-sarabun), sans-serif;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+  font-family: inherit;
 }
 
-.forge-header {
-  background: light-dark(
-    color-mix(in srgb, var(--mantine-color-white) 88%, transparent),
-    color-mix(in srgb, var(--mantine-color-dark-9) 88%, transparent)
-  );
-  backdrop-filter: blur(18px);
-  border-bottom-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-7));
-}
-
-.forge-navbar {
-  background: light-dark(var(--mantine-color-white), var(--mantine-color-dark-9));
-  border-right-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-7));
-}
-
-.forge-navbar .mantine-NavLink-root {
-  color: light-dark(var(--mantine-color-dark-3), var(--mantine-color-dark-1));
-}
-
-.forge-navbar .mantine-NavLink-root:hover {
-  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-7));
-}
-
-.forge-navbar .mantine-NavLink-root[data-active="true"] {
-  color: light-dark(var(--mantine-primary-color-7), var(--mantine-primary-color-3));
-  background: light-dark(
-    var(--mantine-primary-color-0),
-    color-mix(in srgb, var(--mantine-primary-color-9) 18%, transparent)
-  );
-}
-
-.forge-main {
-  min-height: 100dvh;
-  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-9));
-}
-
-.forge-signout {
-  display: flex;
-  align-items: center;
-  gap: var(--mantine-spacing-sm);
-  width: 100%;
-  padding: var(--mantine-spacing-sm);
-  border-radius: var(--mantine-radius-md);
-  color: light-dark(var(--mantine-color-dark-3), var(--mantine-color-dark-1));
-  transition:
-    background-color 120ms ease,
-    color 120ms ease;
-}
-
-.forge-signout:hover {
-  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-7));
-  color: var(--mantine-color-red-7);
+.mantine-datatable-table th {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
 }
 
 .forge-page-header {
@@ -104,7 +73,7 @@ select {
       color-mix(in srgb, var(--mantine-primary-color-1) 65%, transparent),
       transparent 35%
     ),
-    light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-9));
+    var(--mantine-color-body);
 }
 
 .forge-auth-card {
@@ -113,10 +82,4 @@ select {
 
 .forge-table-wrap {
   overflow-x: auto;
-}
-
-@media (max-width: 47.999em) {
-  .forge-main {
-    min-height: calc(100dvh - 72px);
-  }
 }
