@@ -1,5 +1,5 @@
-import { AuditLogsTable } from "@/admin/features/audit-log/audit-logs-table";
-import { SecurityLogsTable } from "@/admin/features/security/security-logs-table";
+import { AuditLogsTable } from "@/lib/features/audit-log/audit-logs-table";
+import { SecurityLogsTable } from "@/lib/features/security/security-logs-table";
 
 export default async function UserLoggingPage({
   params,

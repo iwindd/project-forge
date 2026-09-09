@@ -9,8 +9,8 @@ import {
 import { FilterTrigger } from "@/admin/components/filter-trigger";
 import TableActionMenu from "@/admin/components/table-action-menu";
 import TableSearchInput from "@/admin/components/table-search-input";
-import { useGetUsersQuery } from "@/admin/features/user/users-api";
-import { useOrganizationContext } from "@/admin/features/organization/organization-provider";
+import { useGetUsersQuery } from "@/lib/features/user/users-api";
+import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { getPath } from "@/admin/routes";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";

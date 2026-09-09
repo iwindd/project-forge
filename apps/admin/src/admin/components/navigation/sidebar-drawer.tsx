@@ -2,7 +2,7 @@
 
 import { Box, Drawer, ScrollArea } from "@mantine/core";
 import { useRef } from "react";
-import { OrganizationSwitcher } from "../../features/organization/organization-switcher";
+import { OrganizationSwitcher } from "@/lib/features/organization/organization-switcher";
 import type { AdminUser } from "@/session";
 import NavigationScrollControls from "./navigation-scroll-controls";
 import type { SidebarNavigationMode } from "./navigation-utils";

@@ -11,8 +11,8 @@ import {
   useUpdateMemberStatusMutation,
   type OrganizationMember,
   type OrganizationRole,
-} from "@/admin/features/organization/organization-members-api";
-import { useOrganizationContext } from "@/admin/features/organization/organization-provider";
+} from "@/lib/features/organization/organization-members-api";
+import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { formatDate } from "@/utils/format";
 import {
   ActionIcon,

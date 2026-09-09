@@ -1,8 +1,8 @@
 "use client";
 
 import { PageHeader } from "@/admin/components/page-header";
-import { useCreateRoleMutation } from "@/admin/features/organization/organization-members-api";
-import { useOrganizationContext } from "@/admin/features/organization/organization-provider";
+import { useCreateRoleMutation } from "@/lib/features/organization/organization-members-api";
+import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { getPath } from "@/admin/routes";
 import { Alert, Box } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

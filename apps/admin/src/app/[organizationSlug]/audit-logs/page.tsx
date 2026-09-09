@@ -1,5 +1,5 @@
 import { PageHeader } from "@/admin/components/page-header";
-import { AuditLogsTable } from "@/admin/features/audit-log/audit-logs-table";
+import { AuditLogsTable } from "@/lib/features/audit-log/audit-logs-table";
 import { Container, Stack } from "@mantine/core";
 import { getTranslations } from "next-intl/server";
 

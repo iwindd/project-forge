@@ -4,8 +4,8 @@ import { PageHeader } from "@/admin/components/page-header";
 import {
   useGetRolesQuery,
   useUpdateRoleMutation,
-} from "@/admin/features/organization/organization-members-api";
-import { useOrganizationContext } from "@/admin/features/organization/organization-provider";
+} from "@/lib/features/organization/organization-members-api";
+import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { getPath } from "@/admin/routes";
 import { Alert, Box, Center, Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

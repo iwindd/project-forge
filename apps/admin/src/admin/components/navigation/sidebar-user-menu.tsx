@@ -1,6 +1,6 @@
 "use client";
 
-import { setUser } from "@/admin/features/auth/auth-slice";
+import { setUser } from "@/lib/features/auth/auth-slice";
 import { useAppDispatch } from "@/admin/hooks";
 import { useAdminCacheInvalidation } from "@/admin/hooks/use-admin-cache-invalidation";
 import { getPath } from "@/admin/routes";

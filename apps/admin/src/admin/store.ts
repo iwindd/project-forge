@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer, { type AuthState } from "./features/auth/auth-slice";
-import { auditLogsApi } from "./features/audit-log/audit-logs-api";
-import { organizationMembersApi } from "./features/organization/organization-members-api";
-import { usersApi } from "./features/user/users-api";
+import authReducer, { type AuthState } from "@/lib/features/auth/auth-slice";
+import { auditLogsApi } from "@/lib/features/audit-log/audit-logs-api";
+import { organizationMembersApi } from "@/lib/features/organization/organization-members-api";
+import { usersApi } from "@/lib/features/user/users-api";
 
 export type PreloadedState = { auth: AuthState };
 

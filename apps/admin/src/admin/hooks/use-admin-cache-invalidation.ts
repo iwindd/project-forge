@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
-import { auditLogsApi } from "@/admin/features/audit-log/audit-logs-api";
-import { organizationMembersApi } from "@/admin/features/organization/organization-members-api";
-import { usersApi } from "@/admin/features/user/users-api";
+import { auditLogsApi } from "@/lib/features/audit-log/audit-logs-api";
+import { organizationMembersApi } from "@/lib/features/organization/organization-members-api";
+import { usersApi } from "@/lib/features/user/users-api";
 import { useAppDispatch } from "@/admin/hooks";
 
 type AdminCacheResource = "users";

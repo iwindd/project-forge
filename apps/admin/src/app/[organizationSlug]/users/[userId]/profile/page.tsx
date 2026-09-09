@@ -12,7 +12,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useState } from "react";
-import { getActiveOrganizationId } from "@/admin/features/organization/organization-context";
+import { getActiveOrganizationId } from "@/lib/features/organization/organization-context";
 import { useUser } from "@/app/admin/(main)/users/[userId]/components/user-context";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
