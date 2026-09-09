@@ -2,7 +2,8 @@
   min-height: 100%;
 }
 
-.groupHeadingButton {
+.sidebarScrollContent .groupHeadingButton {
+  width: 100%;
   display: flex;
   align-items: center;
   padding: 1rem 1rem 0.5rem 1rem;
@@ -10,6 +11,7 @@
   border: none;
   cursor: pointer;
   color: var(--nav-muted-text-color);
+  text-align: left;
   transition: color 300ms ease;
 }
 
@@ -52,13 +54,13 @@
   width: 100%;
 }
 
-.navbarItem {
+.sidebarScrollContent .navbarItem {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.5rem;
+  padding: 0.475rem 0.875rem;
+  border-radius: var(--mantine-radius-xs);
   color: var(--nav-item-text-color);
   text-decoration: none;
   user-select: none;
@@ -68,13 +70,13 @@
 }
 
 .navbarItem:hover:not([data-active="true"]):not([data-disabled]) {
-  background-color: var(--nav-item-hover-bg-color);
-}
-
-.navbarItem[data-active="true"] {
   background-color: var(--nav-item-active-bg-color);
   color: var(--nav-item-active-text-color);
   font-weight: 600;
+}
+
+.navbarItem[data-active="true"] {
+  background-color: var(--nav-item-hover-bg-color);
 }
 
 .navbarItem[data-disabled] {
@@ -166,7 +168,7 @@
   height: calc(1.125rem + 4px);
 }
 
-.nestedItem {
+.sidebarScrollContent .nestedItem {
   position: relative;
   width: calc(100% - 0.625rem);
   margin-left: 0.625rem;

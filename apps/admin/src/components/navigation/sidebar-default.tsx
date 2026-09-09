@@ -1,34 +1,34 @@
-"use client";
+'use client'
 
-import { Box, ScrollArea } from "@mantine/core";
-import { useRef } from "react";
-import { OrganizationSwitcher } from "@/lib/features/organization/organization-switcher";
-import type { AdminUser } from "@/session";
-import NavigationScrollControls from "./navigation-scroll-controls";
-import classes from "./sidebar-default.module.css";
-import { SidebarBackButton } from "./sidebar-back-button";
-import SidebarNavContent from "./sidebar-nav-content";
-import { SidebarUserMenu } from "./sidebar-user-menu";
-import type { SidebarNavigationMode } from "./navigation-utils";
-import { useScrollbarVisibility } from "./use-scrollbar-visibility";
+import { OrganizationSwitcher } from '@/lib/features/organization/organization-switcher'
+import type { AdminUser } from '@/session'
+import { Box, ScrollArea } from '@mantine/core'
+import { useRef } from 'react'
+import NavigationScrollControls from './navigation-scroll-controls'
+import type { SidebarNavigationMode } from './navigation-utils'
+import { SidebarBackButton } from './sidebar-back-button'
+import classes from './sidebar-default.module.css'
+import SidebarNavContent from './sidebar-nav-content'
+import { SidebarUserMenu } from './sidebar-user-menu'
+import { useScrollbarVisibility } from './use-scrollbar-visibility'
 
 export default function SidebarDefault({
   user,
   organizationSlug,
-  navigationMode = "admin",
+  navigationMode = 'admin'
 }: {
-  user: AdminUser;
-  organizationSlug: string;
-  navigationMode?: SidebarNavigationMode;
+  user: AdminUser
+  organizationSlug: string
+  navigationMode?: SidebarNavigationMode
 }) {
   const showBackButton =
-    navigationMode === "account" || navigationMode === "admin-root";
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const scrollbar = useScrollbarVisibility();
-  const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ""}`;
+    navigationMode === 'account' || navigationMode === 'admin-root'
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const scrollbar = useScrollbarVisibility()
+  const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ''}`
 
   return (
-    <aside className={classes.sidebar} data-admin-sidebar>
+    <aside className={classes.sidebar}>
       <div className={classes.sidebarHeader}>
         {showBackButton ? (
           <SidebarBackButton organizationSlug={organizationSlug} />
@@ -38,25 +38,25 @@ export default function SidebarDefault({
       </div>
 
       <NavigationScrollControls
-        orientation="vertical"
+        orientation='vertical'
         viewportRef={viewportRef}
       >
         <ScrollArea
           className={classes.iconSidebarScroll}
           classNames={{
             scrollbar: scrollbarClassName,
-            thumb: classes.navigationScrollbarThumb,
+            thumb: classes.navigationScrollbarThumb
           }}
           onMouseEnter={scrollbar.showThenHide}
           onMouseLeave={scrollbar.hide}
           onScrollPositionChange={scrollbar.showThenHide}
-          scrollbars="y"
+          scrollbars='y'
           scrollbarSize={10}
           scrollHideDelay={500}
-          type="always"
+          type='always'
           viewportRef={viewportRef}
         >
-          <Box px="md">
+          <Box px='xs'>
             <SidebarNavContent navigationMode={navigationMode} />
           </Box>
         </ScrollArea>
@@ -66,5 +66,5 @@ export default function SidebarDefault({
         <SidebarUserMenu user={user} />
       </div>
     </aside>
-  );
+  )
 }
