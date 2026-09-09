@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { Paper, Stack, Text, Title } from "@mantine/core";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { getOrganizations } from "@/servers/organization/queries/get-organizations";
 import { LoginForm } from "./login-form";
 import classes from "./login.module.css";
 
@@ -10,7 +11,8 @@ export default async function AdminLoginPage() {
   const session = await auth();
 
   if (session?.user?.id) {
-    const organization = session.organizations[0];
+    const organizations = await getOrganizations();
+    const organization = organizations?.[0];
 
     if (organization) {
       redirect(`/${encodeURIComponent(organization.slug)}`);

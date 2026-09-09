@@ -1,6 +1,6 @@
 'use client'
 
-import type { AuthState } from '@/lib/features/auth/auth-slice'
+import type { PreloadedState } from '@/lib/store'
 import { shadcnTheme } from '@/themes/shadcn'
 import { shadcnCssVariableResolver } from '@/themes/shadcn/cssVariableResolver'
 import '@/themes/shadcn/shadcn.style.css'
@@ -26,7 +26,7 @@ dayjs.extend(buddhistEra)
 export function AppProvider({
   children,
   preloadedState
-}: Readonly<{ children: ReactNode; preloadedState: { auth: AuthState } }>) {
+}: Readonly<{ children: ReactNode; preloadedState: PreloadedState }>) {
   return (
     <MantineProvider
       theme={shadcnTheme}

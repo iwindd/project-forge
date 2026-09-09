@@ -11,11 +11,11 @@ export function addOrganizationHeader(
 export function resolveOrganizationFromRoute(
   organizations: Organization[],
   organizationSlug: string,
-  organizationId?: string
+  organizationId: string
 ) {
   return organizations.find(
     organization =>
       organization.slug === organizationSlug &&
-      (!organizationId || organization.id === organizationId)
+      organization.id === organizationId
   )
 }

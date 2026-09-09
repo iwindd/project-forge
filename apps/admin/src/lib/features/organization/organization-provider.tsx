@@ -31,7 +31,7 @@ export function OrganizationProvider({
 }: Readonly<{
   children: ReactNode
   organizationSlug: string
-  organizationId?: string
+  organizationId: string
 }>) {
   const pathname = usePathname()
   const router = useRouter()
@@ -40,7 +40,9 @@ export function OrganizationProvider({
     data: organizations = [],
     isFetching,
     refetch
-  } = useGetOrganizationsQuery()
+  } = useGetOrganizationsQuery(undefined, {
+    refetchOnMountOrArgChange: false
+  })
 
   const activeOrganization = useMemo(
     () =>

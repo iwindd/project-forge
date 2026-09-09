@@ -29,7 +29,7 @@ export function AdminShell({
 }: Readonly<{
   user: AdminUser;
   organizationSlug: string;
-  organizationId?: string;
+  organizationId: string;
   navigationMode?: SidebarNavigationMode;
   children: ReactNode;
 }>) {

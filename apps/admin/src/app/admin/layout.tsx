@@ -1,6 +1,8 @@
 import { auth } from '@/auth'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { AppProvider } from '@/components/providers/app-provider'
+import { createPreloadedState } from '@/lib/store'
+import { getOrganizations } from '@/servers/organization/queries/get-organizations'
 import { fontClasses } from '@/themes/shadcn/font'
 import { mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
@@ -17,8 +19,13 @@ export default async function AdminRootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth()
+  const organizations = session ? await getOrganizations() : []
   const locale = await getLocale()
   const messages = await getMessages()
+  const preloadedState = await createPreloadedState(
+    { user: session?.user ?? null },
+    organizations ?? [],
+  )
 
   return (
     <html
@@ -38,11 +45,7 @@ export default async function AdminRootLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AppProvider
-            preloadedState={{
-              auth: { user: session?.user ?? null }
-            }}
-          >
+          <AppProvider preloadedState={preloadedState}>
             {children}
           </AppProvider>
         </NextIntlClientProvider>

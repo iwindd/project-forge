@@ -3,14 +3,6 @@ import { z } from 'zod'
 import { apiServerFetch } from '@/lib/api-server'
 import type { AdminSession } from '@/session'
 
-const organizationRoleSchema = z.object({
-  id: z.string().nullable(),
-  name: z.string().min(1),
-  permissions: z.array(z.string()),
-  isOwner: z.boolean(),
-  legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable()
-})
-
 const authMeSchema = z.object({
   user: z.object({
     id: z.string().min(1),
@@ -33,17 +25,8 @@ const authMeSchema = z.object({
       timezone: z.string().nullable(),
       updatedAt: z.string().min(1)
     })
-    .nullable(),
-  organizations: z.array(
-    z.object({
-      id: z.string().min(1),
-      name: z.string().min(1),
-      slug: z.string().min(1),
-      type: z.enum(['PERSONAL', 'SHARED']),
-      role: organizationRoleSchema
-    })
-  )
-})
+    .nullable()
+}).strict()
 
 const apiOrigin =
   process.env.API_INTERNAL_URL ??
@@ -71,8 +54,7 @@ export async function auth(): Promise<AdminSession | null> {
         role: user.role === 'ADMIN' ? 'ADMIN' : 'EDITOR',
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
-      },
-      organizations: data.organizations
+      }
     }
   } catch {
     return null

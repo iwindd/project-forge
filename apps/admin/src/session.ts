@@ -19,7 +19,6 @@ export type AdminUser = {
 
 export type AdminSession = {
   user: AdminUser
-  organizations: Organization[]
 }
 
 export function scopeUserToOrganization(

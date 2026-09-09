@@ -23,7 +23,6 @@ import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js'
 import { getCookie } from '../../../common/http/request-context.js'
 import type { SecurityLogPort } from '../../../common/security/security-log.port.js'
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js'
-import { OrganizationService } from '../../organizations/application/organization.service.js'
 import type { UserRepository } from '../../users/application/ports/user.repository.js'
 import { USER_REPOSITORY } from '../../users/application/ports/user.repository.js'
 import type { AuthConfig } from '../application/ports/auth.ports.js'
@@ -55,7 +54,6 @@ export class AuthController {
     @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
     private readonly profileConnections: ProfileConnectionRepository,
-    private readonly organizations: OrganizationService,
     @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort
   ) {}
 
@@ -119,7 +117,6 @@ export class AuthController {
   @UseGuards(SessionGuard)
   async me(@Principal() principal: AuthenticatedPrincipal) {
     const profile = await this.profileConnections.findProfile(principal.id)
-    const organizations = await this.organizations.listForUser(principal.id)
     const data = {
       user: {
         ...principal,
@@ -137,13 +134,6 @@ export class AuthController {
             updatedAt: profile.updatedAt.toISOString()
           }
         : null,
-      organizations: organizations.map(({ organization, role }) => ({
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-        type: organization.type,
-        role
-      }))
     }
     return apiSuccess(authMeDataSchema.parse(data))
   }
