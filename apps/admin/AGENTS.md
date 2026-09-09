@@ -14,7 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Admin has no database or authentication implementation of its own. Configure `NEXT_PUBLIC_API_URL` to point at `apps/api`.
 - `npm run dev` and `npm start` use port `5051`.
 - Verification for admin work is `npm run lint`, `npm run typecheck`, `npm run check:admin-client-boundary`, `npm test -- --run`, and `npm run build` for route/configuration changes.
-- `npm run lint` intentionally checks only `src/admin/**/*.{ts,tsx}`, `src/app/admin/**/*.{ts,tsx}`, `src/servers/**/*.{ts,tsx}`, `src/hooks/**/*.{ts,tsx}`, and `src/lib/**/*.{ts,tsx}` for now. Public `(web)` lint is out of scope until its pre-existing errors (`no-explicit-any`, `react-hooks/set-state-in-effect`, and others) are addressed. Do not report a full-repository lint as passing based on the admin-only command.
+- `npm run lint` intentionally checks only `src/components/**/*.{ts,tsx}`, `src/app/admin/**/*.{ts,tsx}`, `src/servers/**/*.{ts,tsx}`, `src/hooks/**/*.{ts,tsx}`, and `src/lib/**/*.{ts,tsx}` for now. Public `(web)` lint is out of scope until its pre-existing errors (`no-explicit-any`, `react-hooks/set-state-in-effect`, and others) are addressed. Do not report a full-repository lint as passing based on the admin-only command.
 - Database migrations and seeds belong to `apps/api`; do not add an ORM, database access, or API routes to this package.
 
 ## Admin Verification
@@ -58,3 +58,28 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Define a local Zod schema for every form and connect it to Mantine with `schemaResolver` from `@mantine/form`.
 - Use the form's `onSubmit`, `getInputProps`, and error state instead of hand-rolled field validation.
 - Keep frontend form schemas in the Admin app; mirror the API schema's field names, required/optional rules, trimming, bounds, enum values, and permission rules without importing validation code across apps.
+
+## Date And Time Formatting
+
+- Use `next-intl` for all user-facing date and time formatting. Do not create or import a display-formatting utility such as `src/utils/format.ts`.
+- Define shared presets in `src/i18n/request.ts` under `formats.dateTime`. Keep the application-wide `timeZone` and Buddhist calendar settings in the request config so Server and Client Components use the same rules.
+- In a Client Component, call `useFormatter` inside the component and use a registered preset:
+
+  ```tsx
+  import { useFormatter } from "next-intl";
+
+  const format = useFormatter();
+  const label = format.dateTime(new Date(value), "dateTime");
+  ```
+
+- In an async Server Component or Server Action, use `getFormatter` from `next-intl/server` instead of calling a React hook:
+
+  ```tsx
+  import { getFormatter } from "next-intl/server";
+
+  const format = await getFormatter();
+  const label = format.dateTime(new Date(value), "date");
+  ```
+
+- Use the existing preset names (`date`, `shortDate`, `dateTime`, and `longDate`). If a new display pattern is needed, add a named preset to `src/i18n/request.ts` first and then reference that preset from consumers.
+- Normalize or validate date input before passing it to the formatter. Keep invalid-value fallback behavior at the component boundary; do not recreate `Intl.DateTimeFormat` instances in individual components.

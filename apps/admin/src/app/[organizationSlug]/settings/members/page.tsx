@@ -13,7 +13,6 @@ import {
   type OrganizationRole,
 } from "@/lib/features/organization/organization-members-api";
 import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
-import { formatDate } from "@/utils/format";
 import {
   ActionIcon,
   Alert,
@@ -45,7 +44,7 @@ import {
   IconSearch,
   IconUserPlus,
 } from "@tabler/icons-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import classes from "./members-page.module.css";
 
@@ -71,6 +70,7 @@ function getInitial(name: string) {
 
 export default function OrganizationMembersPage() {
   const t = useTranslations("OrganizationMembers");
+  const format = useFormatter();
   const { activeOrganization } = useOrganizationContext();
   const organizationId = activeOrganization?.id ?? "";
   const canManage = Boolean(
@@ -482,7 +482,9 @@ export default function OrganizationMembersPage() {
                                   {member.isActive ? t("active") : t("inactive")}
                                 </Badge>
                               </td>
-                              <td>{formatDate(member.createdAt)}</td>
+                              <td>
+                                {format.dateTime(new Date(member.createdAt), "date")}
+                              </td>
                               <td>
                                 {canManage ? (
                                   <Menu shadow="md" position="bottom-end">
@@ -563,14 +565,14 @@ export default function OrganizationMembersPage() {
                     <Stack className={classes.invitationEmail} gap={2}>
                       <Text fw={600}>{invitation.email ?? "ลิงก์ทั่วไป"}</Text>
                       <Text size="sm" c="dimmed">
-                        {t("inviteLink")} · {formatDate(invitation.createdAt)}
+                        {t("inviteLink")} · {format.dateTime(new Date(invitation.createdAt), "date")}
                       </Text>
                     </Stack>
                     <Badge variant="light">
                       {invitation.role.name}
                     </Badge>
                     <Text size="sm" c="dimmed">
-                      {t("expiresAt")} {formatDate(invitation.expiresAt)}
+                      {t("expiresAt")} {format.dateTime(new Date(invitation.expiresAt), "date")}
                     </Text>
                   </Box>
                 ))

@@ -13,7 +13,6 @@ import type {
   AuditLogListItem,
   AuditLogListQuery
 } from '@/servers/audit-log/types'
-import { formatDateTime, formatThaiShortDate } from '@/utils/format'
 import {
   ActionIcon,
   Alert,
@@ -29,7 +28,8 @@ import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { IconDotsVertical, IconFileCode, IconFilter } from '@tabler/icons-react'
 import { DataTable, type DataTableColumn } from 'mantine-datatable'
-import { useMemo, useState } from 'react'
+import { useFormatter } from 'next-intl'
+import { useCallback, useMemo, useState } from 'react'
 import {
   AUDIT_ACTION_LABELS,
   AUDIT_ACTOR_ROLE_LABELS,
@@ -54,22 +54,6 @@ type AuditLogsTableProps = {
   scope: AuditLogScopeArg['kind']
   /** Required when `scope` is `user`. */
   userId?: string
-}
-
-function formatPeriodFilterLabel(from?: string, to?: string) {
-  if (from && to) {
-    return `ตั้งแต่ ${formatThaiShortDate(from)} - ${formatThaiShortDate(to)}`
-  }
-
-  if (from) {
-    return `ตั้งแต่วันที่ ${formatThaiShortDate(from)} เป็นต้นไป`
-  }
-
-  if (to) {
-    return `สิ้นสุดที่ ${formatThaiShortDate(to)}`
-  }
-
-  return ''
 }
 
 function UserCell({
@@ -147,6 +131,34 @@ function AuditLogExportMenuItem({
 }
 
 export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
+  const format = useFormatter()
+  const formatDateTime = useCallback((value: string) => {
+    const date = new Date(value)
+    return Number.isNaN(date.getTime())
+      ? '-'
+      : format.dateTime(date, 'dateTime')
+  }, [format])
+  const formatShortDate = useCallback((value: string) => {
+    const date = new Date(value)
+    return Number.isNaN(date.getTime())
+      ? '-'
+      : format.dateTime(date, 'shortDate')
+  }, [format])
+  const formatPeriodFilterLabel = useCallback((from?: string, to?: string) => {
+    if (from && to) {
+      return `ตั้งแต่ ${formatShortDate(from)} - ${formatShortDate(to)}`
+    }
+
+    if (from) {
+      return `ตั้งแต่วันที่ ${formatShortDate(from)} เป็นต้นไป`
+    }
+
+    if (to) {
+      return `สิ้นสุดที่ ${formatShortDate(to)}`
+    }
+
+    return ''
+  }, [formatShortDate])
   const scopeArg = useMemo<AuditLogScopeArg>(
     () =>
       scope === 'user'
@@ -233,7 +245,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         }
       }
     ],
-    [scopeArg]
+    [formatDateTime, scopeArg]
   )
 
   const datatable = useDatatable<AuditLogListItem, AuditLogListQuery>({

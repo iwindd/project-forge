@@ -15,7 +15,6 @@ import { getPath } from "@/routes";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";
 import type { UserListItem, UserListQuery } from "@/servers/user/types";
-import { formatDate } from "@/utils/format";
 import {
   Alert,
   Badge,
@@ -30,6 +29,7 @@ import {
 import { IconCheck, IconEye } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import Link from "next/link";
+import { useFormatter } from "next-intl";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
@@ -46,6 +46,7 @@ const SORTABLE_FIELDS = [
 export function UsersTable() {
   const t = useTranslations("Users");
   const common = useTranslations("Common");
+  const format = useFormatter();
   const { organizationSlug: routeOrganizationSlug } = useParams<{
     organizationSlug?: string;
   }>();
@@ -107,7 +108,9 @@ export function UsersTable() {
         title: common("createdAt"),
         sortable: true,
         render: (record: UserListItem) => (
-          <Text size="sm">{formatDate(record.createdAt)}</Text>
+          <Text size="sm">
+            {format.dateTime(new Date(record.createdAt), "date")}
+          </Text>
         ),
       },
       {
@@ -146,7 +149,7 @@ export function UsersTable() {
         ),
       },
     ],
-    [common, getUserProfilePath, t],
+    [common, format, getUserProfilePath, t],
   );
 
   const datatable = useDatatable<UserListItem, UserListQuery>({
