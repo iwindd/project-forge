@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
-import { AdminUIProvider } from '@/components/providers/mantine-provider'
+import { AppProvider } from '@/components/providers/app-provider'
 import { fontClasses } from '@/themes/shadcn/font'
 import { mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
@@ -32,19 +32,19 @@ export default async function AdminRootLayout({
          * mantineHtmlProps hard-codes data-mantine-color-scheme="light" on the
          * server, so without this blocking inline script every admin page paints
          * light first and only turns dark after hydration. The key and default
-         * must stay in sync with the colorSchemeManager in AdminUIProvider.
+         * must stay in sync with the colorSchemeManager in AppProvider.
          */}
         <AppColorSchemaScript />
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AdminUIProvider
+          <AppProvider
             preloadedState={{
               auth: { user: session?.user ?? null }
             }}
           >
             {children}
-          </AdminUIProvider>
+          </AppProvider>
         </NextIntlClientProvider>
       </body>
     </html>

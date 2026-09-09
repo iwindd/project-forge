@@ -3,7 +3,7 @@ import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { PageHeader } from '@/components/page-header'
-import { AdminUIProvider } from '@/components/providers/mantine-provider'
+import { AppProvider } from '@/components/providers/app-provider'
 import { getProfile } from '@/servers/profile/queries/get-profile'
 import { fontClasses } from '@/themes/shadcn/font'
 import { Container, mantineHtmlProps } from '@mantine/core'
@@ -59,7 +59,7 @@ export default async function AccountLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AdminUIProvider
+          <AppProvider
             preloadedState={{
               auth: { user: session.user }
             }}
@@ -76,7 +76,7 @@ export default async function AccountLayout({
                 </Container>
               </ProfileProvider>
             </AdminShell>
-          </AdminUIProvider>
+          </AppProvider>
         </NextIntlClientProvider>
       </body>
     </html>

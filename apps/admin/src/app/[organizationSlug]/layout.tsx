@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
-import { AdminUIProvider } from '@/components/providers/mantine-provider'
+import { AppProvider } from '@/components/providers/app-provider'
 import { apiServerFetch } from '@/lib/api-server'
 import { fontClasses } from '@/themes/shadcn/font'
 import { mantineHtmlProps } from '@mantine/core'
@@ -69,7 +69,7 @@ export default async function OrganizationLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AdminUIProvider
+            <AppProvider
             preloadedState={{
               auth: { user: session.user }
             }}
@@ -80,7 +80,7 @@ export default async function OrganizationLayout({
             >
               {children}
             </AdminShell>
-          </AdminUIProvider>
+            </AppProvider>
         </NextIntlClientProvider>
       </body>
     </html>

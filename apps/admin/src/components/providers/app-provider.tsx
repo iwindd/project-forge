@@ -23,7 +23,7 @@ const colorSchemeManager = localStorageColorSchemeManager({
 
 dayjs.extend(buddhistEra)
 
-export function AdminUIProvider({
+export function AppProvider({
   children,
   preloadedState
 }: Readonly<{ children: ReactNode; preloadedState: { auth: AuthState } }>) {
