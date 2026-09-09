@@ -3,28 +3,14 @@ import { AdminShell } from '@/components/admin-shell'
 import { AdminUIProvider } from '@/components/providers/mantine-provider'
 import { apiServerFetch } from '@/lib/api-server'
 import { ADMIN_COLOR_SCHEME_KEY } from '@/lib/constants'
+import { fontClasses } from '@/themes/shadcn/font'
 import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
-import { Prompt, Sarabun } from 'next/font/google'
 import { notFound, redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
-
-const prompt = Prompt({
-  weight: ['400', '500', '600', '700', '800'],
-  subsets: ['latin', 'thai'],
-  variable: '--font-prompt',
-  display: 'swap'
-})
-
-const sarabun = Sarabun({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin', 'thai'],
-  variable: '--font-sarabun',
-  display: 'swap'
-})
 
 export const dynamic = 'force-dynamic'
 
@@ -76,7 +62,7 @@ export default async function OrganizationLayout({
       lang={locale}
       {...mantineHtmlProps}
       suppressHydrationWarning
-      className={`${prompt.variable} ${sarabun.variable} ${sarabun.className}`}
+      className={fontClasses}
     >
       <head>
         <ColorSchemeScript
