@@ -20,7 +20,7 @@ export default function SidebarDrawer({
   onCloseAction,
   user,
   organizationSlug,
-  navigationMode = 'admin'
+  navigationMode = 'app'
 }: SidebarDrawerProps) {
   return (
     <Drawer

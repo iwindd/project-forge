@@ -15,7 +15,7 @@ import { useScrollbarVisibility } from './use-scrollbar-visibility'
 export default function SidebarDefault({
   user,
   organizationSlug,
-  navigationMode = 'admin',
+  navigationMode = 'app',
   onNavigateAction
 }: {
   user: AdminUser
@@ -24,7 +24,7 @@ export default function SidebarDefault({
   onNavigateAction?: () => void
 }) {
   const showBackButton =
-    navigationMode === 'account' || navigationMode === 'admin-root'
+    navigationMode === 'account' || navigationMode === 'admin'
   const viewportRef = useRef<HTMLDivElement>(null)
   const scrollbar = useScrollbarVisibility()
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ''}`

@@ -23,7 +23,7 @@ import type { SidebarNavigationMode } from "./navigation/navigation-utils";
 export function AdminShell({
   user,
   organizationSlug,
-  navigationMode = "admin",
+  navigationMode = "app",
   children,
 }: Readonly<{
   user: AdminUser;

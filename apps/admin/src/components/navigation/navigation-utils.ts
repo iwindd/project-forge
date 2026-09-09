@@ -17,7 +17,7 @@ import type { RouteParams } from '@/lib/routing'
 export type NavItem = AdminNavigationItem
 export type NavGroup = AdminNavigationGroup
 export type NavLinkHref = string
-export type SidebarNavigationMode = 'admin' | 'admin-root' | 'account'
+export type SidebarNavigationMode = 'app' | 'admin' | 'account'
 
 type PermissionCheck = (
   keys: PermissionKey | readonly PermissionKey[],
@@ -62,7 +62,7 @@ function useFilteredNavGroups(): NavGroup[] {
 }
 
 export function useNavigationGroups(
-  mode: SidebarNavigationMode = 'admin'
+  mode: SidebarNavigationMode = 'app'
 ): NavGroup[] {
   const adminGroups = useFilteredNavGroups()
 
@@ -70,7 +70,7 @@ export function useNavigationGroups(
     return accountNavigation
   }
 
-  return mode === 'admin-root' ? adminRootNavigation : adminGroups
+  return mode === 'admin' ? adminRootNavigation : adminGroups
 }
 
 export function getNavItems(groups: NavGroup[]) {

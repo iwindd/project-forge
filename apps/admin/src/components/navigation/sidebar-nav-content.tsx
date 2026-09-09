@@ -44,7 +44,7 @@ function getNavigationLabel(
 
 export default function SidebarNavContent({
   onNavigateAction,
-  navigationMode = 'admin'
+  navigationMode = 'app'
 }: SidebarNavContentProps) {
   const notifications = useNotifications()
   const groups = useNavigationGroups(navigationMode)

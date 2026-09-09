@@ -26,7 +26,7 @@ export default async function AdminMainLayout({
     <AdminShell
       user={session.user}
       organizationSlug={organization.slug}
-      navigationMode="admin-root"
+      navigationMode="admin"
     >
       {children}
     </AdminShell>
