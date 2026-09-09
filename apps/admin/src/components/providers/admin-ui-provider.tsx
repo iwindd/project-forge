@@ -1,5 +1,8 @@
 'use client'
 
+import type { AuthState } from '@/lib/features/auth/auth-slice'
+import { shadcnTheme } from '@/themes/shadcn'
+import { shadcnCssVariableResolver } from '@/themes/shadcn/cssVariableResolver'
 import { localStorageColorSchemeManager, MantineProvider } from '@mantine/core'
 import { DatesProvider } from '@mantine/dates'
 import { ModalsProvider } from '@mantine/modals'
@@ -9,10 +12,7 @@ import 'dayjs/locale/th'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import type { ReactNode } from 'react'
 import { ADMIN_COLOR_SCHEME_KEY } from '../../lib/constants'
-import type { AuthState } from '@/lib/features/auth/auth-slice'
-import { shadcnTheme } from '../theme'
-import { shadcnCssVariableResolver } from '../theme/cssVariableResolver'
-import '../theme/shadcn.style.css'
+import '@/themes/shadcn/shadcn.style.css'
 import { StoreProvider } from './store-provider'
 
 const colorSchemeManager = localStorageColorSchemeManager({

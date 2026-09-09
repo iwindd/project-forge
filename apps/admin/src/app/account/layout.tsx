@@ -1,7 +1,7 @@
 import { ADMIN_COLOR_SCHEME_KEY } from "@/lib/constants";
-import { AdminShell } from "@/admin/components/admin-shell";
-import { PageHeader } from "@/admin/components/page-header";
-import { AdminUIProvider } from "@/admin/providers/admin-ui-provider";
+import { AdminShell } from "@/components/admin-shell";
+import { PageHeader } from "@/components/page-header";
+import { AdminUIProvider } from "@/components/providers/admin-ui-provider";
 import { ProfileProvider } from "@/app/admin/(main)/profile/components/profile-context";
 import { auth } from "@/auth";
 import { getProfile } from "@/servers/profile/queries/get-profile";

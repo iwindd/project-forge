@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/admin/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { useCreateRoleMutation } from "@/lib/features/organization/organization-members-api";
 import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { getPath } from "@/routes";

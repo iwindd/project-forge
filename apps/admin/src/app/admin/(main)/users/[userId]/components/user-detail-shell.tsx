@@ -1,12 +1,12 @@
 "use client";
 
 
-import { AppBreadcrumbs } from "@/admin/components/app-breadcrumbs";
-import { PageHeader } from "@/admin/components/page-header";
+import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
+import { PageHeader } from "@/components/page-header";
 import {
   SidebarTabs,
   type SidebarTabItem,
-} from "@/admin/components/sidebar-tabs";
+} from "@/components/sidebar-tabs";
 import { getPath } from "@/routes";
 import { Box, Container, Flex } from "@mantine/core";
 import { IconHistory, IconUser } from "@tabler/icons-react";

@@ -1,5 +1,5 @@
 import { ADMIN_COLOR_SCHEME_KEY } from "@/lib/constants";
-import { AdminUIProvider } from "@/admin/providers/admin-ui-provider";
+import { AdminUIProvider } from "@/components/providers/admin-ui-provider";
 import { auth } from "@/auth";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import "@mantine/tiptap/styles.css";

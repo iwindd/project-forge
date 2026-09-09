@@ -12,13 +12,14 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useState } from "react";
-import { getActiveOrganizationId } from "@/lib/features/organization/organization-context";
+import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { useUser } from "@/app/admin/(main)/users/[userId]/components/user-context";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
 
 export default function UserProfilePage() {
   const { user, updateUser } = useUser();
+  const { activeId: organizationId } = useOrganizationContext();
   const [name, setName] = useState(user.name);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,8 +52,6 @@ export default function UserProfilePage() {
       setPending(false);
     }
   };
-
-  const organizationId = getActiveOrganizationId();
 
   return (
     <Stack gap="lg">

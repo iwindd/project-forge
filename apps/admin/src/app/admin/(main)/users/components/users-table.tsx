@@ -5,10 +5,10 @@ import {
   FilterResult,
   type FilterResultGroup,
   type FilterResultRemoveEvent,
-} from "@/admin/components/filter-result";
-import { FilterTrigger } from "@/admin/components/filter-trigger";
-import TableActionMenu from "@/admin/components/table-action-menu";
-import TableSearchInput from "@/admin/components/table-search-input";
+} from "@/components/filter-result";
+import { FilterTrigger } from "@/components/filter-trigger";
+import TableActionMenu from "@/components/table-action-menu";
+import TableSearchInput from "@/components/table-search-input";
 import { useGetUsersQuery } from "@/lib/features/user/users-api";
 import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { getPath } from "@/routes";
