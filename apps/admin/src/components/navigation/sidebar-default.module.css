@@ -23,7 +23,7 @@
 .sidebarFooter {
   flex-shrink: 0;
   padding: var(--mantine-spacing-sm);
-  border-top: 1px solid var(--nav-surface-border-color);
+  border-top: 1px dashed var(--nav-surface-border-color);
 }
 
 .navigationScrollbar {
