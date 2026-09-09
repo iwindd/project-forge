@@ -1,16 +1,4 @@
 .mobileDrawerContent {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.mobileDrawerBody {
-  flex: 1;
-  min-height: 0;
-}
-
-.mobileDrawerSidebar {
-  height: 100%;
   --nav-surface-bg-color: var(--mantine-color-body);
   --nav-surface-border-color: var(--mantine-color-default-border);
   --nav-item-text-color: var(--mantine-color-text);
@@ -23,49 +11,14 @@
   --nav-nested-item-active-text-color: var(--mantine-primary-color-light-color);
   --nav-nested-line-color: var(--mantine-color-default-border);
   --nav-muted-text-color: var(--mantine-color-dimmed);
-  background-color: var(--nav-surface-bg-color);
-  display: flex;
+  display: flex !important;
   flex-direction: column;
+  overflow: hidden !important;
 }
 
-.iconSidebarScroll {
-  width: 100%;
+.mobileDrawerBody {
+  display: flex;
   flex: 1;
-}
-
-.sidebarFooter {
-  flex-shrink: 0;
-  padding: var(--mantine-spacing-sm);
-  border-top: 1px solid var(--nav-surface-border-color);
-}
-
-.navigationScrollbar {
-  padding: 2px;
-  background-color: transparent !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 500ms ease;
-}
-
-.navigationScrollbar:hover,
-.navigationScrollbar:active,
-.navigationScrollbar::before {
-  background-color: transparent !important;
-}
-
-.navigationScrollbarVisible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.navigationScrollbarThumb,
-.navigationScrollbarThumb:hover,
-.navigationScrollbarThumb:active {
-  border-radius: 999px;
-  background-color: color-mix(
-    in srgb,
-    var(--mantine-color-dimmed) 32%,
-    transparent
-  ) !important;
-  transition: none;
+  min-height: 0;
+  padding: 0;
 }

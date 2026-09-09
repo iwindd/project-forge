@@ -15,11 +15,13 @@ import { useScrollbarVisibility } from './use-scrollbar-visibility'
 export default function SidebarDefault({
   user,
   organizationSlug,
-  navigationMode = 'admin'
+  navigationMode = 'admin',
+  onNavigateAction
 }: {
   user: AdminUser
   organizationSlug: string
   navigationMode?: SidebarNavigationMode
+  onNavigateAction?: () => void
 }) {
   const showBackButton =
     navigationMode === 'account' || navigationMode === 'admin-root'
@@ -57,7 +59,10 @@ export default function SidebarDefault({
           viewportRef={viewportRef}
         >
           <Box px='xs'>
-            <SidebarNavContent navigationMode={navigationMode} />
+            <SidebarNavContent
+              navigationMode={navigationMode}
+              onNavigateAction={onNavigateAction}
+            />
           </Box>
         </ScrollArea>
       </NavigationScrollControls>
