@@ -1,76 +1,75 @@
-import { ADMIN_COLOR_SCHEME_KEY } from "@/lib/constants";
-import { AdminShell } from "@/components/admin-shell";
-import { AdminUIProvider } from "@/components/providers/admin-ui-provider";
-import { apiServerFetch } from "@/lib/api-server";
-import { auth } from "@/auth";
-import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
-import "@mantine/tiptap/styles.css";
-import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
-import { Prompt, Sarabun } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
-import type { ReactNode } from "react";
-import "../admin/admin.css";
+import { auth } from '@/auth'
+import { AdminShell } from '@/components/admin-shell'
+import { AdminUIProvider } from '@/components/providers/mantine-provider'
+import { apiServerFetch } from '@/lib/api-server'
+import { ADMIN_COLOR_SCHEME_KEY } from '@/lib/constants'
+import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core'
+import '@mantine/tiptap/styles.css'
+import type { Metadata } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
+import { Prompt, Sarabun } from 'next/font/google'
+import { notFound, redirect } from 'next/navigation'
+import type { ReactNode } from 'react'
 
 const prompt = Prompt({
-  weight: ["400", "500", "600", "700", "800"],
-  subsets: ["latin", "thai"],
-  variable: "--font-prompt",
-  display: "swap",
-});
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['latin', 'thai'],
+  variable: '--font-prompt',
+  display: 'swap'
+})
 
 const sarabun = Sarabun({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin", "thai"],
-  variable: "--font-sarabun",
-  display: "swap",
-});
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin', 'thai'],
+  variable: '--font-sarabun',
+  display: 'swap'
+})
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: "SimpleDashboard Template",
-  description: "เทมเพลตแดชบอร์ด SimpleDashboard",
-};
+  title: 'SimpleDashboard Template',
+  description: 'เทมเพลตแดชบอร์ด SimpleDashboard'
+}
 
 type OrganizationLayoutProps = Readonly<{
-  children: ReactNode;
-  params: Promise<{ organizationSlug: string }>;
-}>;
+  children: ReactNode
+  params: Promise<{ organizationSlug: string }>
+}>
 
 export default async function OrganizationLayout({
   children,
-  params,
+  params
 }: OrganizationLayoutProps) {
-  const { organizationSlug } = await params;
-  const session = await auth();
+  const { organizationSlug } = await params
+  const session = await auth()
 
   if (!session?.user?.id) {
-    redirect("/admin/login");
+    redirect('/admin/login')
   }
 
   const organization = session.organizations.find(
-    (candidate) => candidate.slug === organizationSlug,
-  );
+    candidate => candidate.slug === organizationSlug
+  )
 
   if (!organization) {
-    notFound();
+    notFound()
   }
 
   if (session.user.activeOrganizationId !== organization.id) {
     try {
       await apiServerFetch(
         `organizations/${encodeURIComponent(organization.id)}/switch`,
-        { method: "POST" },
-      );
+        { method: 'POST' }
+      )
     } catch {
-      notFound();
+      notFound()
     }
   }
 
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const locale = await getLocale()
+  const messages = await getMessages()
 
   return (
     <html
@@ -81,7 +80,7 @@ export default async function OrganizationLayout({
     >
       <head>
         <ColorSchemeScript
-          defaultColorScheme="auto"
+          defaultColorScheme='auto'
           localStorageKey={ADMIN_COLOR_SCHEME_KEY}
         />
       </head>
@@ -89,7 +88,7 @@ export default async function OrganizationLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AdminUIProvider
             preloadedState={{
-              auth: { user: session.user },
+              auth: { user: session.user }
             }}
           >
             <AdminShell
@@ -102,5 +101,5 @@ export default async function OrganizationLayout({
         </NextIntlClientProvider>
       </body>
     </html>
-  );
+  )
 }

@@ -480,8 +480,8 @@
     background-color: transparent;
 
     &:where(:hover, :focus, [data-menu-active]):where(
-      :not(:disabled, [data-disabled])
-    ) {
+        :not(:disabled, [data-disabled])
+      ) {
       background-color: var(
         --menu-item-hover,
         var(--mantine-color-default-hover)
@@ -505,8 +505,8 @@
   color: var(--mantine-color-text);
 
   &:where(:hover, :focus, [data-combobox-active]):where(
-    :not([data-combobox-selected], [data-combobox-disabled])
-  ) {
+      :not([data-combobox-selected], [data-combobox-disabled])
+    ) {
     background-color: var(--mantine-color-default-hover);
   }
 
@@ -833,4 +833,77 @@
 /* Chart Tooltip */
 .mantine-ChartTooltip-tooltip {
   border: 1px solid var(--mantine-color-default-border);
+}
+
+/* Custom table & datatable styles */
+.mantine-datatable-table {
+  th {
+    font-weight: 600;
+    font-size: var(--mantine-font-size-xs);
+  }
+
+  th,
+  td {
+    padding-block: var(--mantine-spacing-md);
+  }
+}
+
+.mantine-datatable {
+  --mantine-datatable-color: var(--mantine-color-text) !important;
+  --mantine-datatable-background-color: var(--mantine-color-body) !important;
+  --mantine-datatable-row-background-color-light: var(
+    --mantine-color-default
+  ) !important;
+  --mantine-datatable-row-background-color-dark: var(
+    --mantine-color-default
+  ) !important;
+  --mantine-datatable-border-color: var(
+    --mantine-color-default-border
+  ) !important;
+  --mantine-datatable-row-border-color: var(
+    --mantine-color-default-border
+  ) !important;
+  --mantine-datatable-highlight-on-hover-color: var(
+    --mantine-color-default-hover
+  ) !important;
+
+  overflow: hidden;
+  border: 1px solid var(--mantine-datatable-border-color);
+  border-radius: var(--mantine-radius-default) !important;
+  background-color: var(--mantine-datatable-background-color) !important;
+}
+
+.mantine-datatable-table thead th,
+.mantine-datatable-header th {
+  color: var(--mantine-color-text);
+  background-color: transparent !important;
+  border-bottom-color: var(--mantine-datatable-border-color) !important;
+}
+
+.mantine-datatable-row[data-with-row-border]:not(:last-of-type) td {
+  border-bottom-style: solid !important;
+}
+
+.mantine-datatable-pagination {
+  background-color: transparent !important;
+  border-top-style: solid !important;
+  border-top-color: var(--mantine-datatable-border-color) !important;
+}
+
+.mantine-datatable-header-cell-sortable:hover:not(:has(button:hover)),
+.mantine-datatable-header-cell-draggable:hover:not(:has(button:hover)) {
+  background-color: var(--mantine-color-default-hover) !important;
+}
+
+.mantine-datatable-empty-state {
+  color: var(--mantine-color-dimmed);
+}
+
+.mantine-datatable-empty-state-icon {
+  background-color: var(--mantine-color-default-hover);
+}
+
+.mantine-Table-tbody
+  .mantine-Table-tr[data-with-row-border]:not(:last-of-type) {
+  border-bottom: 1px solid var(--mantine-color-default-border);
 }

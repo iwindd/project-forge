@@ -1,39 +1,38 @@
-import { ADMIN_COLOR_SCHEME_KEY } from "@/lib/constants";
-import { AdminUIProvider } from "@/components/providers/admin-ui-provider";
-import { auth } from "@/auth";
-import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
-import "@mantine/tiptap/styles.css";
-import type { Metadata } from "next";
-import { Prompt, Sarabun } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
-import "./admin.css";
+import { auth } from '@/auth'
+import { AdminUIProvider } from '@/components/providers/mantine-provider'
+import { ADMIN_COLOR_SCHEME_KEY } from '@/lib/constants'
+import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core'
+import '@mantine/tiptap/styles.css'
+import type { Metadata } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
+import { Prompt, Sarabun } from 'next/font/google'
 
 const prompt = Prompt({
-  weight: ["400", "500", "600", "700", "800"],
-  subsets: ["latin", "thai"],
-  variable: "--font-prompt",
-  display: "swap",
-});
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['latin', 'thai'],
+  variable: '--font-prompt',
+  display: 'swap'
+})
 
 const sarabun = Sarabun({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin", "thai"],
-  variable: "--font-sarabun",
-  display: "swap",
-});
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin', 'thai'],
+  variable: '--font-sarabun',
+  display: 'swap'
+})
 
 export const metadata: Metadata = {
-  title: "SimpleDashboard Template",
-  description: "เทมเพลตแดชบอร์ด SimpleDashboard",
-};
+  title: 'SimpleDashboard Template',
+  description: 'เทมเพลตแดชบอร์ด SimpleDashboard'
+}
 
 export default async function AdminRootLayout({
-  children,
+  children
 }: Readonly<{ children: React.ReactNode }>) {
-  const session = await auth();
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const session = await auth()
+  const locale = await getLocale()
+  const messages = await getMessages()
 
   return (
     <html
@@ -50,7 +49,7 @@ export default async function AdminRootLayout({
          * must stay in sync with the colorSchemeManager in AdminUIProvider.
          */}
         <ColorSchemeScript
-          defaultColorScheme="auto"
+          defaultColorScheme='auto'
           localStorageKey={ADMIN_COLOR_SCHEME_KEY}
         />
       </head>
@@ -58,7 +57,7 @@ export default async function AdminRootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AdminUIProvider
             preloadedState={{
-              auth: { user: session?.user ?? null },
+              auth: { user: session?.user ?? null }
             }}
           >
             {children}
@@ -66,5 +65,5 @@ export default async function AdminRootLayout({
         </NextIntlClientProvider>
       </body>
     </html>
-  );
+  )
 }
