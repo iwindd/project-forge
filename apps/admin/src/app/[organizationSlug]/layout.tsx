@@ -1,4 +1,4 @@
-import { ADMIN_COLOR_SCHEME_KEY } from "@/admin/constants";
+import { ADMIN_COLOR_SCHEME_KEY } from "@/lib/constants";
 import { AdminShell } from "@/admin/components/admin-shell";
 import { AdminUIProvider } from "@/admin/providers/admin-ui-provider";
 import { apiServerFetch } from "@/lib/api-server";

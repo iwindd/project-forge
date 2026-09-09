@@ -3,13 +3,13 @@
 import { usePathname } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import {
-  hasPermission,
   getPermissionsForUser,
+  hasPermission,
   type PermissionKey,
   type PermissionMode
-} from './permissions'
-import { findRouteTrail } from './routes'
-import type { AppDispatch, RootState } from './store'
+} from '../lib/permissions'
+import { findRouteTrail } from '../routes'
+import type { AppDispatch, RootState } from '../lib/store'
 
 export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 export const useAppSelector = useSelector.withTypes<RootState>()
@@ -21,7 +21,7 @@ export function usePermissions() {
   const permissions = getPermissionsForUser(
     user?.role,
     user?.organizationPermissions,
-    user?.organizationRole?.isOwner,
+    user?.organizationRole?.isOwner
   )
 
   return {

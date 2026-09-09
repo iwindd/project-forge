@@ -4,9 +4,9 @@ import {
   FilterResult,
   type FilterResultGroup,
   type FilterResultRemoveEvent
-} from '@/admin/components/filter-result'
-import TableSearchInput from '@/admin/components/table-search-input'
-import { useAdminCacheInvalidation } from '@/admin/hooks/use-admin-cache-invalidation'
+} from '@/components/filter-result'
+import TableSearchInput from '@/components/table-search-input'
+import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation'
 import useDatatable from '@/hooks/use-datatable'
 import { parseListAuditLogsQuery } from '@/servers/audit-log/queries/get-audit-log-list-schema'
 import type {

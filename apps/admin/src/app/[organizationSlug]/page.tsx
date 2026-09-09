@@ -1,4 +1,4 @@
-import { PageHeader } from "@/admin/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { Container, Paper, Stack, Text } from "@mantine/core";
 import { getTranslations } from "next-intl/server";
 

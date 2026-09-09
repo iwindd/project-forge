@@ -7,7 +7,7 @@ import {
   type OrganizationRoleSummary,
 } from "@/lib/features/organization/organization-members-api";
 import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
-import { getPath } from "@/admin/routes";
+import { getPath } from "@/routes";
 import {
   ActionIcon,
   Alert,

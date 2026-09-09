@@ -7,7 +7,7 @@ import {
   SidebarTabs,
   type SidebarTabItem,
 } from "@/admin/components/sidebar-tabs";
-import { getPath } from "@/admin/routes";
+import { getPath } from "@/routes";
 import { Box, Container, Flex } from "@mantine/core";
 import { IconHistory, IconUser } from "@tabler/icons-react";
 import { useParams } from "next/navigation";

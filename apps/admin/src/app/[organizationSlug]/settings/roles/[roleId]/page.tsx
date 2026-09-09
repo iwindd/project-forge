@@ -6,7 +6,7 @@ import {
   useUpdateRoleMutation,
 } from "@/lib/features/organization/organization-members-api";
 import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
-import { getPath } from "@/admin/routes";
+import { getPath } from "@/routes";
 import { Alert, Box, Center, Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconAlertCircle } from "@tabler/icons-react";

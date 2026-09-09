@@ -1,4 +1,4 @@
-import { PageHeader } from "@/admin/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { AuditLogsTable } from "@/lib/features/audit-log/audit-logs-table";
 import { Container, Stack } from "@mantine/core";
 import { getTranslations } from "next-intl/server";

@@ -6,7 +6,7 @@ import {
   type TablerIcon
 } from '@tabler/icons-react'
 import type { PermissionKey, PermissionMode } from './permissions'
-import { getRoute } from './routes'
+import { getRoute } from '../routes'
 
 export type AdminNavigationItem = {
   id: string

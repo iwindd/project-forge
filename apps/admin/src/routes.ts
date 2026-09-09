@@ -1,4 +1,4 @@
-import { buildRouteUtility, ROUTER } from './routing'
+import { buildRouteUtility, ROUTER } from './lib/routing'
 
 const adminRoutes = ROUTER({
   overview: {

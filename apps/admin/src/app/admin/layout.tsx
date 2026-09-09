@@ -1,4 +1,4 @@
-import { ADMIN_COLOR_SCHEME_KEY } from "@/admin/constants";
+import { ADMIN_COLOR_SCHEME_KEY } from "@/lib/constants";
 import { AdminUIProvider } from "@/admin/providers/admin-ui-provider";
 import { auth } from "@/auth";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";

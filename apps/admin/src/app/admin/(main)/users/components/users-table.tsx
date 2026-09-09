@@ -11,7 +11,7 @@ import TableActionMenu from "@/admin/components/table-action-menu";
 import TableSearchInput from "@/admin/components/table-search-input";
 import { useGetUsersQuery } from "@/lib/features/user/users-api";
 import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
-import { getPath } from "@/admin/routes";
+import { getPath } from "@/routes";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";
 import type { UserListItem, UserListQuery } from "@/servers/user/types";

@@ -10,7 +10,7 @@ import {
 import { useDisclosure, useWindowScroll } from "@mantine/hooks";
 import { IconArrowUp } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import type { AdminUser } from "../../session";
+import type { AdminUser } from "@/session";
 import { OrganizationProvider } from "@/lib/features/organization/organization-provider";
 import { AdminHeader } from "./admin-header";
 import { AdminSettingsDrawer } from "./admin-settings-drawer";

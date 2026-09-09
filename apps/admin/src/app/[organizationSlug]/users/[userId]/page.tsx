@@ -1,4 +1,4 @@
-import { getPath } from "@/admin/routes";
+import { getPath } from "@/routes";
 import { redirect } from "next/navigation";
 
 export default async function UserDetailRedirectPage({

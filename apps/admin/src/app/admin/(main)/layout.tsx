@@ -1,4 +1,4 @@
-import { AdminShell } from "@/admin/components/admin-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
