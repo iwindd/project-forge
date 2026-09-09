@@ -62,7 +62,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Date And Time Formatting
 
 - Use `next-intl` for all user-facing date and time formatting. Do not create or import a display-formatting utility such as `src/utils/format.ts`.
-- Define shared presets in `src/i18n/request.ts` under `formats.dateTime`. Keep the application-wide `timeZone` and Buddhist calendar settings in the request config so Server and Client Components use the same rules.
+- Define shared presets in `src/lib/i18n/request.ts` under `formats.dateTime`. Keep the application-wide `timeZone` and Buddhist calendar settings in the request config so Server and Client Components use the same rules.
 - In a Client Component, call `useFormatter` inside the component and use a registered preset:
 
   ```tsx
@@ -81,5 +81,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   const label = format.dateTime(new Date(value), "date");
   ```
 
-- Use the existing preset names (`date`, `shortDate`, `dateTime`, and `longDate`). If a new display pattern is needed, add a named preset to `src/i18n/request.ts` first and then reference that preset from consumers.
+- Use the existing preset names (`date`, `shortDate`, `dateTime`, and `longDate`). If a new display pattern is needed, add a named preset to `src/lib/i18n/request.ts` first and then reference that preset from consumers.
 - Normalize or validate date input before passing it to the formatter. Keep invalid-value fallback behavior at the component boundary; do not recreate `Intl.DateTimeFormat` instances in individual components.

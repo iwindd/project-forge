@@ -30,5 +30,5 @@ export default getRequestConfig(async () => ({
       },
     },
   },
-  messages: (await import("../../messages/th.json")).default,
+  messages: (await import("../../../messages/th.json")).default,
 }));
