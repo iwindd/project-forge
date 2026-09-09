@@ -5,10 +5,12 @@ import {
   Box,
   Burger,
   Group,
+  Text,
   Tooltip
 } from '@mantine/core'
 import { IconSettings } from '@tabler/icons-react'
 import { useTranslations } from 'next-intl'
+import { useActiveRouteTrail } from '@/hooks'
 import { AdminBrand } from './admin-brand'
 import classes from './admin-header.module.css'
 
@@ -22,6 +24,13 @@ export function AdminHeader({
   onOpenSettingsAction: () => void
 }) {
   const t = useTranslations('Navigation')
+  const routeTrail = useActiveRouteTrail()
+  const currentRoute = routeTrail[routeTrail.length - 1]
+  const pageTitle = currentRoute
+    ? currentRoute.navigationLabelKey
+      ? t(currentRoute.navigationLabelKey)
+      : currentRoute.navigationLabel ?? currentRoute.label
+    : ''
 
   return (
     <Group
@@ -42,6 +51,10 @@ export function AdminHeader({
           <AdminBrand />
         </Box>
       </Group>
+
+      <Text className={classes.pageTitle} size='sm' fw={600} truncate>
+        {pageTitle}
+      </Text>
 
       <Group gap='xs' wrap='nowrap'>
         <Tooltip label={t('settings')}>

@@ -8,6 +8,8 @@ export type RouteParams = Record<string, RouteParamValue | undefined>;
 type BaseRoute = {
   path: string;
   label: string;
+  navigationLabel?: string;
+  navigationLabelKey?: string;
   disabled?: boolean;
   hiddenBreadcrumb?: boolean;
   /**

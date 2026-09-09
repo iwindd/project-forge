@@ -1,6 +1,19 @@
 .headerInner {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
   height: var(--admin-header-height, 58px);
   padding: 0 var(--mantine-spacing-lg);
+}
+
+.headerInner > :last-child {
+  justify-self: end;
+}
+
+.pageTitle {
+  min-width: 0;
+  max-width: min(40vw, 360px);
+  text-align: center;
 }
 
 @media (max-width: 47.999em) {

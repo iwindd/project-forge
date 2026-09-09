@@ -4,6 +4,7 @@ const adminRoutes = ROUTER({
   overview: {
     path: '/:organizationSlug',
     label: 'ภาพรวม',
+    navigationLabelKey: 'overview',
     hiddenBreadcrumb: true
   },
   account: {
@@ -13,11 +14,13 @@ const adminRoutes = ROUTER({
     children: {
       settings: {
         path: '/account/settings',
-        label: 'บัญชี'
+        label: 'บัญชี',
+        navigationLabelKey: 'account'
       },
       activity: {
         path: '/account/activity',
-        label: 'ประวัติการทำรายการ'
+        label: 'ประวัติการทำรายการ',
+        navigationLabelKey: 'activity'
       }
     }
   },
@@ -29,11 +32,13 @@ const adminRoutes = ROUTER({
       users: {
         path: '/admin/users',
         label: 'ผู้ใช้งาน',
+        navigationLabelKey: 'users',
         permission: 'manageUsers'
       },
       activities: {
         path: '/admin/activities',
         label: 'ประวัติการทำรายการ',
+        navigationLabelKey: 'auditLogs',
         permission: 'viewAuditLogs'
       }
     }
@@ -41,10 +46,12 @@ const adminRoutes = ROUTER({
   profile: {
     path: '/:organizationSlug/profile',
     label: 'โปรไฟล์',
+    navigationLabelKey: 'profile',
     children: {
       logging: {
         path: '/:organizationSlug/profile/logging',
-        label: 'ประวัติการทำรายการ'
+        label: 'ประวัติการทำรายการ',
+        navigationLabelKey: 'auditLogs'
       }
     }
   },
@@ -60,16 +67,19 @@ const adminRoutes = ROUTER({
       users: {
         path: '/:organizationSlug/users',
         label: 'ผู้ใช้งาน',
+        navigationLabelKey: 'users',
         permission: 'manageUsers',
         children: {
           profile: {
             path: '/:organizationSlug/users/:userId/profile',
             label: 'รายละเอียดผู้ใช้งาน',
+            navigationLabelKey: 'userDetail',
             permission: 'manageUsers'
           },
           logging: {
             path: '/:organizationSlug/users/:userId/logging',
             label: 'ประวัติการทำรายการ',
+            navigationLabelKey: 'auditLogs',
             permission: 'manageUsers'
           }
         }
@@ -77,6 +87,7 @@ const adminRoutes = ROUTER({
       auditLogs: {
         path: '/:organizationSlug/audit-logs',
         label: 'ประวัติการทำรายการ',
+        navigationLabelKey: 'auditLogs',
         permission: 'viewAuditLogs'
       }
     }
@@ -90,11 +101,13 @@ const adminRoutes = ROUTER({
       members: {
         path: '/:organizationSlug/settings/members',
         label: 'สมาชิก',
+        navigationLabelKey: 'members',
         permission: 'manageOrganization'
       },
       roles: {
         path: '/:organizationSlug/settings/roles',
         label: 'บทบาท',
+        navigationLabelKey: 'roles',
         permission: 'manageOrganization',
         children: {
           new: {
