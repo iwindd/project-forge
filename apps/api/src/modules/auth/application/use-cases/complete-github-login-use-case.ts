@@ -9,7 +9,7 @@ import { USER_REPOSITORY } from '../../../users/application/ports/user.repositor
 import type { UserRepository } from '../../../users/application/ports/user.repository.js';
 import { AUTH_CONFIG, GITHUB_OAUTH, SECRET_CIPHER } from '../ports/auth.ports.js';
 import type { AuthConfig, GithubOAuthPort, SecretCipherPort } from '../ports/auth.ports.js';
-import { IssueSessionUseCase } from './session.use-cases.js';
+import { IssueSessionUseCase } from './issue-session-use-case.js';
 import { toPrincipal } from '../auth.mappers.js';
 import type { AuthenticatedPrincipal } from '../../../../common/auth/auth.types.js';
 import { InvalidInputError } from '../../../../common/errors/application-error.js';

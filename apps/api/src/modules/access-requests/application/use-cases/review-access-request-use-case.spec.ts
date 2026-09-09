@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RequestAccessUseCase, ReviewAccessRequestUseCase } from './access-request.use-cases.js';
 import { AccessRequestStatus, type AccessRequestRecord } from '../../domain/access-request.js';
+import { ReviewAccessRequestUseCase } from './review-access-request-use-case.js';
 import { AccessStatus, UserRole, type UserRecord } from '../../../users/domain/user.js';
 
 const pending: AccessRequestRecord = {
@@ -28,21 +28,7 @@ const user: UserRecord = {
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
 
-describe('access request use cases', () => {
-  it('returns the existing pending request instead of creating a duplicate', async () => {
-    const requests = {
-      findPendingByUserId: vi.fn(async () => pending),
-      save: vi.fn(async () => undefined),
-    };
-    const unitOfWork = { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
-    const useCase = new RequestAccessUseCase(requests as never, unitOfWork as never);
-
-    const result = await useCase.execute('user-id', { reason: 'still need access' });
-
-    expect(result).toBe(pending);
-    expect(requests.save).not.toHaveBeenCalled();
-  });
-
+describe('ReviewAccessRequestUseCase', () => {
   it('approves a request, activates the user and records the decision', async () => {
     const requests = {
       findById: vi.fn(async () => ({ ...pending })),

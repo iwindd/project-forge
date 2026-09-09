@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuthenticateSessionUseCase, LogoutUseCase } from './session.use-cases.js';
 import { AccessStatus, UserRole, type UserRecord } from '../../../users/domain/user.js';
 import type { SessionRecord } from '../../domain/session.js';
+import { AuthenticateSessionUseCase } from './authenticate-session-use-case.js';
 
 const user: UserRecord = {
   id: 'user-id',
@@ -17,9 +17,9 @@ const user: UserRecord = {
 };
 
 const session: SessionRecord = {
-      id: 'session-id',
-      userId: 'user-id',
-      activeOrganizationId: null,
+  id: 'session-id',
+  userId: 'user-id',
+  activeOrganizationId: null,
   tokenHash: 'hashed-token',
   expiresAt: new Date(Date.now() + 60_000),
   revokedAt: null,
@@ -31,7 +31,7 @@ function unitOfWork() {
   return { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
 }
 
-describe('session use cases', () => {
+describe('AuthenticateSessionUseCase', () => {
   it('rejects expired sessions', async () => {
     const sessions = {
       findActiveByTokenHash: vi.fn(async () => ({ ...session, expiresAt: new Date(Date.now() - 1) })),
@@ -63,18 +63,5 @@ describe('session use cases', () => {
 
     await expect(useCase.principalFromToken('token')).resolves.toMatchObject({ id: 'user-id' });
     expect(sessions.save).toHaveBeenCalledOnce();
-  });
-
-  it('revokes a session on logout', async () => {
-    const sessions = { revokeByTokenHash: vi.fn(async () => undefined) };
-    const useCase = new LogoutUseCase(
-      sessions as never,
-      { hash: vi.fn(() => 'hashed-token') } as never,
-      unitOfWork() as never,
-    );
-
-    await useCase.execute('token');
-
-    expect(sessions.revokeByTokenHash).toHaveBeenCalledWith('hashed-token');
   });
 });

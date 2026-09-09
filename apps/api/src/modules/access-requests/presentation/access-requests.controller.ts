@@ -3,12 +3,10 @@ import { AdminGuard } from '../../../common/auth/admin.guard.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
-import {
-  GetMyAccessRequestsUseCase,
-  ListAccessRequestsUseCase,
-  RequestAccessUseCase,
-  ReviewAccessRequestUseCase,
-} from '../application/use-cases/access-request.use-cases.js';
+import { GetMyAccessRequestsUseCase } from '../application/use-cases/get-my-access-requests-use-case.js';
+import { ListAccessRequestsUseCase } from '../application/use-cases/list-access-requests-use-case.js';
+import { RequestAccessUseCase } from '../application/use-cases/request-access-use-case.js';
+import { ReviewAccessRequestUseCase } from '../application/use-cases/review-access-request-use-case.js';
 import { requestAccessSchema, reviewAccessRequestSchema } from './dto/access-request.schemas.js';
 
 @Controller('access-requests')

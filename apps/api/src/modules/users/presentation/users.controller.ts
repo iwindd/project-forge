@@ -3,14 +3,12 @@ import { AdminGuard } from '../../../common/auth/admin.guard.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
-import {
-  ChangeUserRoleUseCase,
-  ChangeUserNameUseCase,
-  ChangeUserStatusUseCase,
-  GetUserUseCase,
-  ListUsersUseCase,
-  RevokeUserSessionsUseCase,
-} from '../application/use-cases/user.use-cases.js';
+import { ChangeUserNameUseCase } from '../application/use-cases/change-user-name-use-case.js';
+import { ChangeUserRoleUseCase } from '../application/use-cases/change-user-role-use-case.js';
+import { ChangeUserStatusUseCase } from '../application/use-cases/change-user-status-use-case.js';
+import { GetUserUseCase } from '../application/use-cases/get-user-use-case.js';
+import { ListUsersUseCase } from '../application/use-cases/list-users-use-case.js';
+import { RevokeUserSessionsUseCase } from '../application/use-cases/revoke-user-sessions-use-case.js';
 import { changeUserNameSchema, changeUserRoleSchema, changeUserStatusSchema } from './dto/user.schemas.js';
 
 @Controller('admin/users')

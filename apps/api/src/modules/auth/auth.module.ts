@@ -10,13 +10,11 @@ import {
   TOKEN_GENERATOR,
   TOKEN_HASHER,
 } from './application/ports/auth.ports.js';
-import { CompleteGithubLoginUseCase } from './application/use-cases/complete-github-login.use-case.js';
-import {
-  AuthenticateSessionUseCase,
-  IssueSessionUseCase,
-  LogoutUseCase,
-} from './application/use-cases/session.use-cases.js';
-import { StartGithubLoginUseCase } from './application/use-cases/start-github-login.use-case.js';
+import { AuthenticateSessionUseCase } from './application/use-cases/authenticate-session-use-case.js';
+import { CompleteGithubLoginUseCase } from './application/use-cases/complete-github-login-use-case.js';
+import { IssueSessionUseCase } from './application/use-cases/issue-session-use-case.js';
+import { LogoutUseCase } from './application/use-cases/logout-use-case.js';
+import { StartGithubLoginUseCase } from './application/use-cases/start-github-login-use-case.js';
 import { GithubOAuthAdapter } from './infrastructure/github/github-oauth.adapter.js';
 import { AesSecretCipherAdapter } from './infrastructure/crypto/aes-secret-cipher.adapter.js';
 import { NodeTokenGeneratorAdapter } from './infrastructure/crypto/node-token-generator.adapter.js';

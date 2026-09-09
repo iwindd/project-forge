@@ -7,52 +7,9 @@ import { NotFoundError } from '../../../../common/errors/application-error.js';
 import { USER_REPOSITORY } from '../../../users/application/ports/user.repository.js';
 import type { UserRepository } from '../../../users/application/ports/user.repository.js';
 import { AccessStatus } from '../../../users/domain/user.js';
+import { AccessRequestStatus } from '../../domain/access-request.js';
 import { ACCESS_REQUEST_REPOSITORY } from '../ports/access-request.repository.js';
 import type { AccessRequestRepository } from '../ports/access-request.repository.js';
-import { AccessRequestStatus, createAccessRequest } from '../../domain/access-request.js';
-
-export type RequestAccessInput = { reason?: string };
-
-@Injectable()
-export class GetMyAccessRequestsUseCase {
-  constructor(@Inject(ACCESS_REQUEST_REPOSITORY) private readonly requests: AccessRequestRepository) {}
-
-  execute(userId: string) {
-    return this.requests.findByUserId(userId);
-  }
-}
-
-@Injectable()
-export class RequestAccessUseCase {
-  constructor(
-    @Inject(ACCESS_REQUEST_REPOSITORY) private readonly requests: AccessRequestRepository,
-    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
-  ) {}
-
-  execute(userId: string, input: RequestAccessInput) {
-    return this.unitOfWork.run(async () => {
-      const existing = await this.requests.findPendingByUserId(userId);
-      if (existing) return existing;
-      const request = createAccessRequest(userId, input.reason?.trim() || null);
-      await this.requests.save(request);
-      return request;
-    });
-  }
-}
-
-@Injectable()
-export class ListAccessRequestsUseCase {
-  constructor(
-    @Inject(ACCESS_REQUEST_REPOSITORY) private readonly requests: AccessRequestRepository,
-    @Inject(USER_REPOSITORY) private readonly users: UserRepository,
-  ) {}
-
-  async execute() {
-    const requests = await this.requests.findAll();
-    const users = await Promise.all(requests.map((request) => this.users.findById(request.userId)));
-    return requests.map((request, index) => ({ request, user: users[index] ?? null }));
-  }
-}
 
 @Injectable()
 export class ReviewAccessRequestUseCase {

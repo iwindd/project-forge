@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { GetProjectUseCase, CreateProjectUseCase } from './project.use-cases.js';
 import { ProjectStatus } from '../../domain/project.js';
+import { CreateProjectUseCase } from './create-project-use-case.js';
 
 const input = {
   name: '',
@@ -15,7 +15,7 @@ function unitOfWork() {
   return { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
 }
 
-describe('project use cases', () => {
+describe('CreateProjectUseCase', () => {
   it('normalizes a GitHub URL and masks environment values', async () => {
     const projects = { save: vi.fn(async () => undefined) };
     const members = { create: vi.fn(async () => undefined) };
@@ -53,15 +53,5 @@ describe('project use cases', () => {
       useCase.execute('owner-id', { ...input, githubUrl: 'https://user:secret@github.com/acme/demo' }),
     ).rejects.toThrow('Only GitHub HTTPS repository URLs are supported');
     expect(projects.save).not.toHaveBeenCalled();
-  });
-
-  it('enforces owner scoping when reading a project', async () => {
-    const projects = {
-      findByOwnerAndId: vi.fn(async () => null),
-    };
-    const useCase = new GetProjectUseCase(projects as never);
-
-    await expect(useCase.execute('owner-id', 'project-id')).rejects.toThrow('Project was not found');
-    expect(projects.findByOwnerAndId).toHaveBeenCalledWith('owner-id', 'project-id');
   });
 });

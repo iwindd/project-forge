@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheckUseCase } from '../application/health-check.use-case.js';
+import { HealthCheckUseCase } from '../application/health-check-use-case.js';
 
 @Controller('health')
 export class HealthController {

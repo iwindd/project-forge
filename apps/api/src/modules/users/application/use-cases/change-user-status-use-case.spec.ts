@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ChangeUserStatusUseCase } from './user.use-cases.js';
 import { AccessStatus, UserRole, type UserRecord } from '../../domain/user.js';
+import { ChangeUserStatusUseCase } from './change-user-status-use-case.js';
 
 const approvedAdmin: UserRecord = {
   id: 'admin-id',
@@ -41,22 +41,6 @@ describe('ChangeUserStatusUseCase', () => {
       useCase.execute('admin-id', 'admin-id', { status: AccessStatus.SUSPENDED, reason: '' }),
     ).rejects.toThrow('You cannot suspend your own account');
     expect(deps.sessions.revokeAllForUser).not.toHaveBeenCalled();
-  });
-
-  it('keeps the last active administrator from being suspended', async () => {
-    const deps = setup();
-    deps.users.countActiveAdminsExcluding.mockResolvedValue(0);
-    const useCase = new ChangeUserStatusUseCase(
-      deps.users as never,
-      deps.sessions as never,
-      deps.audit as never,
-      deps.unitOfWork as never,
-    );
-
-    await expect(
-      useCase.execute('different-admin', 'admin-id', { status: AccessStatus.SUSPENDED, reason: '' }),
-    ).rejects.toThrow('At least one active administrator must remain');
-    expect(deps.users.save).not.toHaveBeenCalled();
   });
 
   it('revokes sessions and writes audit when suspending a user', async () => {

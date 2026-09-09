@@ -7,9 +7,9 @@ import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
 import { getCookie } from '../../../common/http/request-context.js';
 import { AUTH_CONFIG } from '../application/ports/auth.ports.js';
 import type { AuthConfig } from '../application/ports/auth.ports.js';
-import { CompleteGithubLoginUseCase } from '../application/use-cases/complete-github-login.use-case.js';
-import { LogoutUseCase } from '../application/use-cases/session.use-cases.js';
-import { StartGithubLoginUseCase } from '../application/use-cases/start-github-login.use-case.js';
+import { CompleteGithubLoginUseCase } from '../application/use-cases/complete-github-login-use-case.js';
+import { LogoutUseCase } from '../application/use-cases/logout-use-case.js';
+import { StartGithubLoginUseCase } from '../application/use-cases/start-github-login-use-case.js';
 import { USER_REPOSITORY } from '../../users/application/ports/user.repository.js';
 import type { UserRepository } from '../../users/application/ports/user.repository.js';
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';

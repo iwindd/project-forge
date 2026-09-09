@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { StartGithubLoginUseCase } from './start-github-login.use-case.js';
+import { StartGithubLoginUseCase } from './start-github-login-use-case.js';
 
 describe('StartGithubLoginUseCase', () => {
   it('creates a state token and delegates URL construction to the GitHub adapter', () => {
