@@ -99,7 +99,7 @@ function SidebarGroup({
               data-expanded={opened}
             />
           </div>
-          <Text className={classes.groupHeadingText} size='xs' fw='bold'>
+          <Text className={classes.groupHeadingText} size='xs' fw='400'>
             {getNavigationLabel(group, translate)}
           </Text>
         </UnstyledButton>
@@ -178,7 +178,7 @@ function SidebarItem({
               <IconComponent size={22} stroke={1.8} />
             </span>
           )}
-          <Text size='sm' fw={600} style={{ flexGrow: 1 }}>
+          <Text size='sm' fw={500} style={{ flexGrow: 1 }}>
             {getNavigationLabel(item, translate)}
           </Text>
           <IconChevronRight
@@ -216,7 +216,7 @@ function SidebarItem({
         </span>
       )}
       <Stack gap={0} style={{ flexGrow: 1, alignItems: 'flex-start' }}>
-        <Text size='sm' fw={600}>
+        <Text size='sm' fw={500}>
           {getNavigationLabel(item, translate)}
         </Text>
         {item.info && <Text className={classes.itemInfo}>{item.info}</Text>}
