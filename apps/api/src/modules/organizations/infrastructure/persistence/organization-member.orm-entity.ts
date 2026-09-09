@@ -7,7 +7,7 @@ import { OrganizationMemberRole, OrganizationMemberStatus } from '../../domain/o
 @Index({ properties: ['userId', 'status'] })
 @Unique({ properties: ['organizationId', 'userId'] })
 export class OrganizationMemberOrmEntity {
-  [OptionalProps]?: 'id' | 'status' | 'joinedAt' | 'updatedAt';
+  [OptionalProps]?: 'id' | 'roleId' | 'status' | 'joinedAt' | 'updatedAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();
@@ -20,6 +20,9 @@ export class OrganizationMemberOrmEntity {
 
   @Enum(() => OrganizationMemberRole)
   role: OrganizationMemberRole = OrganizationMemberRole.MEMBER;
+
+  @Property({ type: 'uuid', nullable: true })
+  roleId: string | null = null;
 
   @Enum(() => OrganizationMemberStatus)
   status: OrganizationMemberStatus = OrganizationMemberStatus.ACTIVE;

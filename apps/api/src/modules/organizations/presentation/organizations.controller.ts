@@ -3,8 +3,12 @@ import type { Request } from 'express';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
-import { OrganizationMemberRole } from '../domain/organization.js';
+import { ORGANIZATION_PERMISSIONS, OrganizationMemberRole } from '../domain/organization.js';
 import { OrganizationService } from '../application/organization.service.js';
+import { CreateOrganizationRoleUseCase } from '../application/use-cases/create-organization-role-use-case.js';
+import { DeleteOrganizationRoleUseCase } from '../application/use-cases/delete-organization-role-use-case.js';
+import { ListOrganizationRolesUseCase } from '../application/use-cases/list-organization-roles-use-case.js';
+import { UpdateOrganizationRoleUseCase } from '../application/use-cases/update-organization-role-use-case.js';
 import { getCookie } from '../../../common/http/request-context.js';
 import { SESSION_REPOSITORY } from '../../auth/application/ports/session.repository.js';
 import type { SessionRepository } from '../../auth/application/ports/session.repository.js';
@@ -15,6 +19,8 @@ import {
   updateMemberNameSchema,
   updateMemberStatusSchema,
   updateOrganizationSchema,
+  createOrganizationRoleSchema,
+  updateOrganizationRoleSchema,
 } from './dto/organization.schemas.js';
 
 @Controller('organizations')
@@ -22,6 +28,10 @@ import {
 export class OrganizationsController {
   constructor(
     private readonly organizations: OrganizationService,
+    private readonly listOrganizationRoles: ListOrganizationRolesUseCase,
+    private readonly createOrganizationRole: CreateOrganizationRoleUseCase,
+    private readonly updateOrganizationRole: UpdateOrganizationRoleUseCase,
+    private readonly deleteOrganizationRole: DeleteOrganizationRoleUseCase,
     @Inject(SESSION_REPOSITORY) private readonly sessions: SessionRepository,
   ) {}
 
@@ -29,12 +39,12 @@ export class OrganizationsController {
   async list(@Principal() principal: AuthenticatedPrincipal) {
     const organizations = await this.organizations.listForUser(principal.id);
     return {
-      data: organizations.map(({ organization, membership }) => ({
+      data: organizations.map(({ organization, role }) => ({
         id: organization.id,
         name: organization.name,
         slug: organization.slug,
         type: organization.type,
-        role: membership.role,
+        role,
         status: organization.status,
         createdAt: organization.createdAt.toISOString(),
         updatedAt: organization.updatedAt.toISOString(),
@@ -53,28 +63,79 @@ export class OrganizationsController {
     return { organization };
   }
 
+  @Get(':id/roles')
+  async roles(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param('id') organizationId: string,
+  ) {
+    return {
+      data: await this.listOrganizationRoles.execute(principal.id, organizationId),
+      availablePermissions: [{ key: ORGANIZATION_PERMISSIONS.MANAGE }],
+    };
+  }
+
+  @Post(':id/roles')
+  async createRole(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param('id') organizationId: string,
+    @Body() body: unknown,
+  ) {
+    const input = createOrganizationRoleSchema.parse(body);
+    return {
+      role: await this.createOrganizationRole.execute(principal.id, organizationId, input),
+    };
+  }
+
+  @Patch(':id/roles/:roleId')
+  async updateRole(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param('id') organizationId: string,
+    @Param('roleId') roleId: string,
+    @Body() body: unknown,
+  ) {
+    const input = updateOrganizationRoleSchema.parse(body);
+    return {
+      role: await this.updateOrganizationRole.execute(principal.id, organizationId, roleId, input),
+    };
+  }
+
+  @Delete(':id/roles/:roleId')
+  async deleteRole(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param('id') organizationId: string,
+    @Param('roleId') roleId: string,
+  ) {
+    return this.deleteOrganizationRole.execute(principal.id, organizationId, roleId);
+  }
+
   @Get(':id/members')
   async members(
     @Principal() principal: AuthenticatedPrincipal,
     @Param('id') organizationId: string,
-    @Query() query: { search?: string; role?: string; status?: string; page?: string; pageSize?: string; sortBy?: string; sortDirection?: string },
+    @Query() query: { search?: string; role?: string; roleId?: string; status?: string; page?: string; pageSize?: string; sortBy?: string; sortDirection?: string },
   ) {
     let data = await this.organizations.listMembers(principal.id, organizationId);
     const search = query.search?.trim().toLowerCase();
     if (search) data = data.filter((member) => `${member.name} ${member.email ?? ''}`.toLowerCase().includes(search));
-    if (query.role && query.role !== 'all') {
+    if (query.roleId && query.roleId !== 'all') {
+      data = data.filter((member) => member.role.id === query.roleId);
+    } else if (query.role && query.role !== 'all') {
       const roles = query.role === 'EDITOR'
         ? [OrganizationMemberRole.MEMBER]
         : query.role === 'ADMIN'
           ? [OrganizationMemberRole.ADMIN, OrganizationMemberRole.OWNER]
           : [query.role];
-      data = data.filter((member) => roles.includes(member.role));
+      data = data.filter((member) => member.role.legacyRole !== null && roles.includes(member.role.legacyRole));
     }
     if (query.status === 'active') data = data.filter((member) => member.isActive);
     if (query.status === 'inactive') data = data.filter((member) => !member.isActive);
     const direction = query.sortDirection === 'asc' ? 1 : -1;
     const sortBy = query.sortBy ?? 'createdAt';
-    data.sort((a, b) => String(a[sortBy as keyof typeof a] ?? '').localeCompare(String(b[sortBy as keyof typeof b] ?? '')) * direction);
+    data.sort((a, b) => {
+      const aValue = sortBy === 'role' ? a.role.name : a[sortBy as keyof typeof a];
+      const bValue = sortBy === 'role' ? b.role.name : b[sortBy as keyof typeof b];
+      return String(aValue ?? '').localeCompare(String(bValue ?? '')) * direction;
+    });
     const page = Math.max(Number(query.page) || 1, 1);
     const pageSize = Math.min(Math.max(Number(query.pageSize) || 10, 5), 100);
     const total = data.length;
@@ -97,7 +158,7 @@ export class OrganizationsController {
     @Param('id') organizationId: string,
     @Req() request: Request,
   ) {
-    const { organization, membership } = await this.organizations.requireMembership(principal.id, organizationId);
+    const { organization, role } = await this.organizations.requireMembership(principal.id, organizationId);
     const token = getCookie(request, 'pf_session');
     if (token) await this.sessions.setActiveOrganization(this.organizations.hashToken(token), organizationId);
     return {
@@ -106,7 +167,7 @@ export class OrganizationsController {
         name: organization.name,
         slug: organization.slug,
         type: organization.type,
-        role: membership.role,
+        role,
       },
     };
   }
@@ -123,7 +184,7 @@ export class OrganizationsController {
       principal.id,
       organizationId,
       userId,
-      input.role as OrganizationMemberRole,
+      input,
     );
     return { membership };
   }
@@ -176,14 +237,14 @@ export class OrganizationsController {
       principal.id,
       organizationId,
       input.email ?? null,
-      input.role as OrganizationMemberRole,
+      { roleId: input.roleId, role: input.role },
     );
     return {
       invitation: {
         id: result.invitation.id,
         organizationId: result.invitation.organizationId,
         email: result.invitation.email,
-        role: result.invitation.role,
+        role: result.role,
         status: result.invitation.status,
         expiresAt: result.invitation.expiresAt.toISOString(),
         createdAt: result.invitation.createdAt.toISOString(),

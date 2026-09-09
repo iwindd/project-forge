@@ -18,6 +18,7 @@ import { ConnectionOrmEntity } from './src/modules/auth/infrastructure/persisten
 import { OrganizationInvitationOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization-invitation.orm-entity.js';
 import { OrganizationMemberOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization-member.orm-entity.js';
 import { OrganizationOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization.orm-entity.js';
+import { OrganizationRoleOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization-role.orm-entity.js';
 import { UserSecurityLogOrmEntity } from './src/common/security/user-security-log.orm-entity.js';
 
 export default defineConfig({
@@ -30,6 +31,7 @@ export default defineConfig({
     OrganizationOrmEntity,
     OrganizationMemberOrmEntity,
     OrganizationInvitationOrmEntity,
+    OrganizationRoleOrmEntity,
     UserSecurityLogOrmEntity,
     OAuthAccountOrmEntity,
     SessionOrmEntity,

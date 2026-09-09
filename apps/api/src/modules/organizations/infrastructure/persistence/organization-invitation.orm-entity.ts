@@ -6,7 +6,7 @@ import { OrganizationInvitationStatus, OrganizationMemberRole } from '../../doma
 @Index({ properties: ['organizationId', 'status'] })
 @Unique({ properties: ['tokenHash'] })
 export class OrganizationInvitationOrmEntity {
-  [OptionalProps]?: 'id' | 'status' | 'acceptedBy' | 'acceptedAt' | 'createdAt';
+  [OptionalProps]?: 'id' | 'roleId' | 'status' | 'acceptedBy' | 'acceptedAt' | 'createdAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();
@@ -25,6 +25,9 @@ export class OrganizationInvitationOrmEntity {
 
   @Enum(() => OrganizationMemberRole)
   role: OrganizationMemberRole = OrganizationMemberRole.MEMBER;
+
+  @Property({ type: 'uuid', nullable: true })
+  roleId: string | null = null;
 
   @Enum(() => OrganizationInvitationStatus)
   status: OrganizationInvitationStatus = OrganizationInvitationStatus.PENDING;

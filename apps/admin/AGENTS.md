@@ -51,3 +51,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `src/admin/routes.ts` owns route metadata and `src/admin/navigation.ts` derives menu items with `routeItem(...)`. Add the route first and leave it disabled until its App Router page exists.
 - `src/admin/permissions.ts` only controls navigation visibility. The API remains the authorization boundary and applies platform plus Organization roles.
 - GitHub OAuth starts at the API endpoint `/api/v1/auth/github/start`; preserve the API-backed login link and the session refresh behavior in the Admin shell.
+
+## Forms And Validation
+
+- Use `useForm` from `@mantine/form` for every Admin form.
+- Define a local Zod schema for every form and connect it to Mantine with `schemaResolver` from `@mantine/form`.
+- Use the form's `onSubmit`, `getInputProps`, and error state instead of hand-rolled field validation.
+- Keep frontend form schemas in the Admin app; mirror the API schema's field names, required/optional rules, trimming, bounds, enum values, and permission rules without importing validation code across apps.

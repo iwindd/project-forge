@@ -1,8 +1,23 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { addOrganizationHeader } from "./organization-context";
 
-export type OrganizationMemberRole = "OWNER" | "ADMIN" | "MEMBER";
-export type OrganizationMemberStatus =
+type OrganizationMemberRole = "OWNER" | "ADMIN" | "MEMBER";
+type OrganizationPermission = "organization.manage";
+
+export type OrganizationRole = {
+  id: string | null;
+  name: string;
+  permissions: OrganizationPermission[];
+  isOwner: boolean;
+  legacyRole: OrganizationMemberRole | null;
+};
+
+export type OrganizationRoleSummary = OrganizationRole & {
+  memberCount?: number;
+  invitationCount?: number;
+};
+
+type OrganizationMemberStatus =
   | "ACTIVE"
   | "INVITED"
   | "SUSPENDED"
@@ -13,18 +28,18 @@ export type OrganizationMember = {
   membershipId: string;
   name: string;
   email: string | null;
-  role: OrganizationMemberRole;
+  role: OrganizationRole;
   status: OrganizationMemberStatus;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
 
-export type OrganizationInvitation = {
+type OrganizationInvitation = {
   id: string;
   organizationId: string;
   email: string | null;
-  role: Exclude<OrganizationMemberRole, "OWNER">;
+  role: OrganizationRole;
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
   expiresAt: string;
   createdAt: string;
@@ -32,7 +47,8 @@ export type OrganizationInvitation = {
 
 export type OrganizationMembersQuery = {
   search?: string;
-  role?: "OWNER" | "ADMIN" | "MEMBER";
+  role?: OrganizationMemberRole;
+  roleId?: string;
   status?: "active" | "inactive";
   page?: number;
   pageSize?: number;
@@ -51,6 +67,11 @@ type OrganizationInvitationsResponse = {
   data: OrganizationInvitation[];
 };
 
+type OrganizationRolesResponse = {
+  data: OrganizationRoleSummary[];
+  availablePermissions: Array<{ key: OrganizationPermission }>;
+};
+
 type CreateInvitationResponse = {
   invitation: OrganizationInvitation;
   token: string;
@@ -59,13 +80,13 @@ type CreateInvitationResponse = {
 type CreateInvitationInput = {
   organizationId: string;
   email?: string | null;
-  role: Exclude<OrganizationMemberRole, "OWNER">;
+  roleId: string;
 };
 
 type UpdateMemberRoleInput = {
   organizationId: string;
   userId: string;
-  role: OrganizationMemberRole;
+  roleId: string;
 };
 
 type UpdateMemberStatusInput = {
@@ -79,6 +100,24 @@ type RemoveMemberInput = {
   userId: string;
 };
 
+type CreateRoleInput = {
+  organizationId: string;
+  name: string;
+  permissions: OrganizationPermission[];
+};
+
+type UpdateRoleInput = {
+  organizationId: string;
+  roleId: string;
+  name?: string;
+  permissions?: OrganizationPermission[];
+};
+
+type DeleteRoleInput = {
+  organizationId: string;
+  roleId: string;
+};
+
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
 
 export const organizationMembersApi = createApi({
@@ -89,11 +128,49 @@ export const organizationMembersApi = createApi({
     cache: "no-store",
     prepareHeaders: (headers) => addOrganizationHeader(headers),
   }),
-  tagTypes: ["OrganizationMembers", "OrganizationInvitations"],
+  tagTypes: ["OrganizationMembers", "OrganizationInvitations", "OrganizationRoles"],
   refetchOnMountOrArgChange: true,
   refetchOnFocus: true,
   refetchOnReconnect: true,
   endpoints: (builder) => ({
+    getRoles: builder.query<OrganizationRolesResponse, { organizationId: string }>({
+      query: ({ organizationId }) =>
+        `organizations/${encodeURIComponent(organizationId)}/roles`,
+      providesTags: (_result, _error, { organizationId }) => [
+        { type: "OrganizationRoles", id: organizationId },
+      ],
+    }),
+    createRole: builder.mutation<{ role: OrganizationRole }, CreateRoleInput>({
+      query: ({ organizationId, name, permissions }) => ({
+        url: `organizations/${encodeURIComponent(organizationId)}/roles`,
+        method: "POST",
+        body: { name, permissions },
+      }),
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: "OrganizationRoles", id: organizationId },
+      ],
+    }),
+    updateRole: builder.mutation<{ role: OrganizationRole }, UpdateRoleInput>({
+      query: ({ organizationId, roleId, name, permissions }) => ({
+        url: `organizations/${encodeURIComponent(organizationId)}/roles/${encodeURIComponent(roleId)}`,
+        method: "PATCH",
+        body: { name, permissions },
+      }),
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: "OrganizationRoles", id: organizationId },
+        { type: "OrganizationMembers", id: organizationId },
+        { type: "OrganizationInvitations", id: organizationId },
+      ],
+    }),
+    deleteRole: builder.mutation<{ ok: true }, DeleteRoleInput>({
+      query: ({ organizationId, roleId }) => ({
+        url: `organizations/${encodeURIComponent(organizationId)}/roles/${encodeURIComponent(roleId)}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: "OrganizationRoles", id: organizationId },
+      ],
+    }),
     getMembers: builder.query<
       OrganizationMembersResponse,
       { organizationId: string; query: OrganizationMembersQuery }
@@ -116,36 +193,29 @@ export const organizationMembersApi = createApi({
         { type: "OrganizationInvitations", id: organizationId },
       ],
     }),
-    createInvitation: builder.mutation<
-      CreateInvitationResponse,
-      CreateInvitationInput
-    >({
-      query: ({ organizationId, email, role }) => ({
+    createInvitation: builder.mutation<CreateInvitationResponse, CreateInvitationInput>({
+      query: ({ organizationId, email, roleId }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/invitations`,
         method: "POST",
-        body: { email: email || null, role },
+        body: { email: email || null, roleId },
       }),
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: "OrganizationInvitations", id: organizationId },
+        { type: "OrganizationRoles", id: organizationId },
       ],
     }),
-    updateMemberRole: builder.mutation<
-      { membership: OrganizationMember },
-      UpdateMemberRoleInput
-    >({
-      query: ({ organizationId, userId, role }) => ({
+    updateMemberRole: builder.mutation<{ membership: OrganizationMember }, UpdateMemberRoleInput>({
+      query: ({ organizationId, userId, roleId }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`,
         method: "PATCH",
-        body: { role },
+        body: { roleId },
       }),
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: "OrganizationMembers", id: organizationId },
+        { type: "OrganizationRoles", id: organizationId },
       ],
     }),
-    updateMemberStatus: builder.mutation<
-      { user: OrganizationMember },
-      UpdateMemberStatusInput
-    >({
+    updateMemberStatus: builder.mutation<{ user: OrganizationMember }, UpdateMemberStatusInput>({
       query: ({ organizationId, userId, active }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}/status`,
         method: "PATCH",
@@ -162,6 +232,7 @@ export const organizationMembersApi = createApi({
       }),
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: "OrganizationMembers", id: organizationId },
+        { type: "OrganizationRoles", id: organizationId },
       ],
     }),
   }),
@@ -169,9 +240,13 @@ export const organizationMembersApi = createApi({
 
 export const {
   useCreateInvitationMutation,
+  useCreateRoleMutation,
+  useDeleteRoleMutation,
   useGetInvitationsQuery,
   useGetMembersQuery,
+  useGetRolesQuery,
   useRemoveMemberMutation,
   useUpdateMemberRoleMutation,
   useUpdateMemberStatusMutation,
+  useUpdateRoleMutation,
 } = organizationMembersApi;

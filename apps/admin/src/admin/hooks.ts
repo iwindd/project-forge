@@ -18,7 +18,11 @@ const EMPTY_NOTIFICATIONS: Readonly<Record<string, number>> = {}
 
 export function usePermissions() {
   const user = useAppSelector(state => state.auth.user)
-  const permissions = getPermissionsForUser(user?.role, user?.organizationRole)
+  const permissions = getPermissionsForUser(
+    user?.role,
+    user?.organizationPermissions,
+    user?.organizationRole?.isOwner,
+  )
 
   return {
     permissions,

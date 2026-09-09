@@ -5,11 +5,12 @@ import {
   useCreateInvitationMutation,
   useGetInvitationsQuery,
   useGetMembersQuery,
+  useGetRolesQuery,
   useRemoveMemberMutation,
   useUpdateMemberRoleMutation,
   useUpdateMemberStatusMutation,
   type OrganizationMember,
-  type OrganizationMemberRole,
+  type OrganizationRole,
 } from "@/admin/features/organization/organization-members-api";
 import { useOrganizationContext } from "@/admin/features/organization/organization-provider";
 import { formatDate } from "@/utils/format";
@@ -49,20 +50,19 @@ import { useMemo, useRef, useState } from "react";
 import classes from "./members-page.module.css";
 
 type MembersTab = "members" | "invitations";
-type MemberRoleFilter = "all" | OrganizationMemberRole;
+type MemberRoleFilter = "all" | string;
 type MemberStatusFilter = "all" | "active" | "inactive";
-type InviteRole = Exclude<OrganizationMemberRole, "OWNER">;
 
 type InviteRow = {
   id: string;
   email: string;
-  role: InviteRole;
+  roleId: string;
 };
 
 const INITIAL_INVITE_ROW: InviteRow = {
   id: "invite-0",
   email: "",
-  role: "MEMBER",
+  roleId: "",
 };
 
 function getInitial(name: string) {
@@ -75,13 +75,13 @@ export default function OrganizationMembersPage() {
   const organizationId = activeOrganization?.id ?? "";
   const canManage = Boolean(
     activeOrganization?.type === "SHARED" &&
-      (activeOrganization.role === "OWNER" ||
-        activeOrganization.role === "ADMIN"),
+      (activeOrganization.role.isOwner ||
+        activeOrganization.role.permissions.includes("organization.manage")),
   );
 
   const [activeTab, setActiveTab] = useState<MembersTab>("members");
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState<MemberRoleFilter>("all");
+  const [roleFilter, setRoleFilter] = useState<MemberRoleFilter>("all");
   const [status, setStatus] = useState<MemberStatusFilter>("all");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -94,17 +94,25 @@ export default function OrganizationMembersPage() {
   const [memberActionId, setMemberActionId] = useState<string | null>(null);
   const nextInviteRowId = useRef(1);
 
+  const legacyRoleFilter = ["OWNER", "ADMIN", "MEMBER"].includes(roleFilter)
+    ? roleFilter
+    : null;
+
   const memberQuery = useMemo(
     () => ({
       ...(search.trim() ? { search: search.trim() } : {}),
-      ...(role !== "all" ? { role } : {}),
+      ...(roleFilter !== "all"
+        ? legacyRoleFilter
+          ? { role: legacyRoleFilter as "OWNER" | "ADMIN" | "MEMBER" }
+          : { roleId: roleFilter }
+        : {}),
       ...(status !== "all" ? { status } : {}),
       page: 1,
       pageSize: 100,
       sortBy: "createdAt" as const,
       sortDirection,
     }),
-    [role, search, sortDirection, status],
+    [legacyRoleFilter, roleFilter, search, sortDirection, status],
   );
 
   const {
@@ -114,6 +122,10 @@ export default function OrganizationMembersPage() {
   } = useGetMembersQuery(
     { organizationId, query: memberQuery },
     { skip: !organizationId },
+  );
+  const { data: rolesResult } = useGetRolesQuery(
+    { organizationId },
+    { skip: !organizationId || !canManage },
   );
   const {
     data: invitationsResult,
@@ -134,6 +146,11 @@ export default function OrganizationMembersPage() {
   const memberMutationPending = rolePending || statusPending || removePending;
 
   const members = membersResult?.data ?? [];
+  const roles = useMemo(() => rolesResult?.data ?? [], [rolesResult?.data]);
+  const assignableRoles = useMemo(
+    () => roles.filter((candidate): candidate is OrganizationRole & { id: string } => Boolean(candidate.id) && !candidate.isOwner),
+    [roles],
+  );
   const invitations = invitationsResult?.data ?? [];
   const allVisibleSelected =
     members.length > 0 && members.every((member) => selectedIds.includes(member.id));
@@ -148,11 +165,12 @@ export default function OrganizationMembersPage() {
   const addInviteRow = () => {
     const id = `invite-${nextInviteRowId.current}`;
     nextInviteRowId.current += 1;
-    setInviteRows((rows) => [...rows, { id, email: "", role: "MEMBER" }]);
+    setInviteRows((rows) => [...rows, { id, email: "", roleId: assignableRoles[0]?.id ?? "" }]);
   };
 
   const submitInvitations = async () => {
     if (!organizationId || !canManage) return;
+    if (!assignableRoles.length) return;
 
     const rows = inviteRows.filter(
       (row) => row.email.trim() || inviteRows.length === 1,
@@ -165,7 +183,7 @@ export default function OrganizationMembersPage() {
           createInvitation({
             organizationId,
             email: row.email.trim() || null,
-            role: row.role,
+            roleId: row.roleId || assignableRoles[0].id,
           }).unwrap(),
         ),
       );
@@ -195,15 +213,13 @@ export default function OrganizationMembersPage() {
     }
   };
 
-  const changeRole = (member: OrganizationMember) => {
-    if (!organizationId || member.role === "OWNER") return;
-    const nextRole: OrganizationMemberRole =
-      member.role === "ADMIN" ? "MEMBER" : "ADMIN";
+  const changeRole = (member: OrganizationMember, roleId: string) => {
+    if (!organizationId || member.role.isOwner) return;
     void runMemberAction(member, () =>
       updateMemberRole({
         organizationId,
         userId: member.id,
-        role: nextRole,
+        roleId,
       }).unwrap(),
     );
   };
@@ -273,13 +289,10 @@ export default function OrganizationMembersPage() {
                     />
                     <Select
                       label={t("role")}
-                      value={row.role}
-                      data={[
-                        { value: "MEMBER", label: t("member") },
-                        { value: "ADMIN", label: t("admin") },
-                      ]}
+                      value={row.roleId || assignableRoles[0]?.id || null}
+                      data={assignableRoles.map((role) => ({ value: role.id, label: role.name }))}
                       onChange={(value) =>
-                        value && updateInviteRow(row.id, { role: value as InviteRole })
+                        value && updateInviteRow(row.id, { roleId: value })
                       }
                     />
                   </Box>
@@ -362,14 +375,15 @@ export default function OrganizationMembersPage() {
                 aria-label={t("filterPlaceholder")}
               />
               <Select
-                value={role}
+                value={roleFilter}
                 data={[
                   { value: "all", label: t("allRoles") },
-                  { value: "OWNER", label: t("owner") },
-                  { value: "ADMIN", label: t("admin") },
-                  { value: "MEMBER", label: t("member") },
+                  ...roles.map((role) => ({
+                    value: role.id ?? role.legacyRole ?? role.name,
+                    label: role.name,
+                  })),
                 ]}
-                onChange={(value) => setRole((value as MemberRoleFilter) ?? "all")}
+                onChange={(value) => setRoleFilter((value as MemberRoleFilter) ?? "all")}
                 aria-label={t("allRoles")}
               />
               <Select
@@ -454,11 +468,7 @@ export default function OrganizationMembersPage() {
                               </td>
                               <td>
                                 <Badge variant="light">
-                                  {member.role === "OWNER"
-                                    ? t("owner")
-                                    : member.role === "ADMIN"
-                                      ? t("admin")
-                                      : t("member")}
+                                  {member.role.name}
                                 </Badge>
                               </td>
                               <td>
@@ -486,17 +496,21 @@ export default function OrganizationMembersPage() {
                                       </ActionIcon>
                                     </Menu.Target>
                                     <Menu.Dropdown>
-                                      {member.role !== "OWNER" ? (
-                                        <Menu.Item onClick={() => changeRole(member)}>
-                                          {member.role === "ADMIN"
-                                            ? t("makeMember")
-                                            : t("makeAdmin")}
-                                        </Menu.Item>
-                                      ) : null}
+                                      {!member.role.isOwner
+                                        ? assignableRoles.map((roleOption) => (
+                                            <Menu.Item
+                                              key={roleOption.id}
+                                              disabled={member.role.id === roleOption.id}
+                                              onClick={() => changeRole(member, roleOption.id)}
+                                            >
+                                              {roleOption.name}
+                                            </Menu.Item>
+                                          ))
+                                        : null}
                                       <Menu.Item onClick={() => changeStatus(member)}>
                                         {member.isActive ? t("suspend") : t("activate")}
                                       </Menu.Item>
-                                      {member.role !== "OWNER" ? (
+                                      {!member.role.isOwner ? (
                                         <Menu.Item color="red" onClick={() => remove(member)}>
                                           {t("remove")}
                                         </Menu.Item>
@@ -553,7 +567,7 @@ export default function OrganizationMembersPage() {
                       </Text>
                     </Stack>
                     <Badge variant="light">
-                      {invitation.role === "ADMIN" ? t("admin") : t("member")}
+                      {invitation.role.name}
                     </Badge>
                     <Text size="sm" c="dimmed">
                       {t("expiresAt")} {formatDate(invitation.expiresAt)}

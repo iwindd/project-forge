@@ -85,12 +85,29 @@ const adminRoutes = ROUTER({
     path: '/:organizationSlug/settings',
     label: 'ตั้งค่า',
     hiddenBreadcrumb: true,
-    permission: 'manageUsers',
+    permission: 'manageOrganization',
     children: {
       members: {
         path: '/:organizationSlug/settings/members',
         label: 'สมาชิก',
-        permission: 'manageUsers'
+        permission: 'manageOrganization'
+      },
+      roles: {
+        path: '/:organizationSlug/settings/roles',
+        label: 'บทบาท',
+        permission: 'manageOrganization',
+        children: {
+          new: {
+            path: '/:organizationSlug/settings/roles/new',
+            label: 'สร้างบทบาท',
+            permission: 'manageOrganization'
+          },
+          edit: {
+            path: '/:organizationSlug/settings/roles/:roleId',
+            label: 'แก้ไขบทบาท',
+            permission: 'manageOrganization'
+          }
+        }
       }
     }
   }

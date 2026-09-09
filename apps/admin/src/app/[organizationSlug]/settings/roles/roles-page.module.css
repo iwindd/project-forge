@@ -1,0 +1,54 @@
+.page {
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+.card {
+  overflow: hidden;
+  border-color: var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.table th {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: var(--mantine-font-size-sm);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.emptyState {
+  min-height: 12rem;
+  padding: var(--mantine-spacing-xl);
+}
+
+@media (max-width: 48em) {
+  .page {
+    max-width: none;
+  }
+}

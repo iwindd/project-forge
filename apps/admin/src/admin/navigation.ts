@@ -83,11 +83,15 @@ export const adminNavigation: AdminNavigationGroup[] = [
   {
     id: 'settings',
     label: 'ตั้งค่า',
-    permissionKey: 'manageUsers',
+    permissionKey: 'manageOrganization',
     items: [
       routeItem('settings.members', {
         icon: IconUsers,
-        permissionKey: 'manageUsers'
+        permissionKey: 'manageOrganization'
+      }),
+      routeItem('settings.roles', {
+        icon: IconUsers,
+        permissionKey: 'manageOrganization'
       })
     ]
   }

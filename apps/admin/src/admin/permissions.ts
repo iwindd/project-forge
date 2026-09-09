@@ -1,5 +1,5 @@
 const PERMISSIONS = {
-  viewDashboard: "dashboard.view",
+  manageOrganization: "organization.manage",
   manageUsers: "users.manage",
   viewAuditLogs: "audit-logs.view",
 } as const;
@@ -10,14 +10,15 @@ export type GrantedPermission = (typeof PERMISSIONS)[PermissionKey] | "*";
 
 export function getPermissionsForUser(
   platformRole: "ADMIN" | "EDITOR" | undefined,
-  organizationRole: "OWNER" | "ADMIN" | "MEMBER" | null | undefined,
+  organizationPermissions: readonly string[] | null | undefined,
+  organizationIsOwner = false,
 ): readonly GrantedPermission[] {
   if (platformRole === "ADMIN") {
     return ["*"];
   }
 
-  if (organizationRole === "OWNER" || organizationRole === "ADMIN") {
-    return [PERMISSIONS.viewDashboard, PERMISSIONS.manageUsers, PERMISSIONS.viewAuditLogs];
+  if (organizationIsOwner || organizationPermissions?.includes(PERMISSIONS.manageOrganization)) {
+    return [PERMISSIONS.manageOrganization];
   }
 
   return [];

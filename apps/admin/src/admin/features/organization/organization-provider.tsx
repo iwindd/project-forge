@@ -25,7 +25,13 @@ export type Organization = {
   name: string;
   slug: string;
   type: "PERSONAL" | "SHARED";
-  role: "OWNER" | "ADMIN" | "MEMBER";
+  role: {
+    id: string | null;
+    name: string;
+    permissions: string[];
+    isOwner: boolean;
+    legacyRole: "OWNER" | "ADMIN" | "MEMBER" | null;
+  };
 };
 
 type OrganizationContextValue = {

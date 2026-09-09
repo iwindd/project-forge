@@ -22,6 +22,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
+import { useGetRolesQuery } from "./organization-members-api";
 import {
   useOrganizationContext,
   type Organization,
@@ -42,7 +43,8 @@ function canInviteMembers(organization: Organization | undefined) {
   return Boolean(
     organization &&
       organization.type === "SHARED" &&
-      ["OWNER", "ADMIN"].includes(organization.role),
+      (organization.role.isOwner ||
+        organization.role.permissions.includes("organization.manage")),
   );
 }
 
@@ -55,15 +57,24 @@ export function OrganizationSwitcher() {
     loadOrganizations,
     switchOrganization,
   } = useOrganizationContext();
+  const { data: rolesResult } = useGetRolesQuery(
+    { organizationId: activeOrganization?.id ?? "" },
+    { skip: !activeOrganization || !canInviteMembers(activeOrganization) },
+  );
   const [createOpened, setCreateOpened] = useState(false);
   const [inviteOpened, setInviteOpened] = useState(false);
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
+  const [inviteRoleId, setInviteRoleId] = useState("");
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState(false);
   const pending = switchPending || actionPending;
+  const inviteRoles = useMemo(
+    () => (rolesResult?.data ?? []).filter((role) => Boolean(role.id) && !role.isOwner),
+    [rolesResult?.data],
+  );
+  const selectedInviteRoleId = inviteRoleId || inviteRoles[0]?.id || "";
 
   const createOrganization = async () => {
     if (!name.trim()) return;
@@ -92,7 +103,7 @@ export function OrganizationSwitcher() {
   };
 
   const createInvitation = async () => {
-    if (!activeOrganization) return;
+    if (!activeOrganization || !selectedInviteRoleId) return;
 
     setActionPending(true);
     try {
@@ -104,7 +115,7 @@ export function OrganizationSwitcher() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             email: inviteEmail || null,
-            role: inviteRole,
+            roleId: selectedInviteRoleId,
           }),
         },
       );
@@ -298,16 +309,13 @@ export function OrganizationSwitcher() {
           />
           <Select
             label="บทบาท"
-            value={inviteRole}
+            value={selectedInviteRoleId || null}
             onChange={(value) =>
-              value && setInviteRole(value as "ADMIN" | "MEMBER")
+              value && setInviteRoleId(value)
             }
-            data={[
-              { value: "MEMBER", label: "สมาชิก" },
-              { value: "ADMIN", label: "ผู้ดูแล" },
-            ]}
+            data={inviteRoles.map((role) => ({ value: role.id as string, label: role.name }))}
           />
-          <Button onClick={() => void createInvitation()} loading={pending}>
+          <Button onClick={() => void createInvitation()} loading={pending} disabled={!selectedInviteRoleId}>
             สร้างลิงก์เชิญ
           </Button>
           {inviteLink ? (
