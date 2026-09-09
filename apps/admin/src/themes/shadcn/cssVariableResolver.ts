@@ -18,13 +18,13 @@ export const shadcnCssVariableResolver: CSSVariablesResolver = () => ({
     // all variables that depend on light color scheme
     '--mantine-primary-color-contrast': 'var(--mantine-color-neutral-0)', // used as primary color contrast
     '--mantine-color-text': 'var(--mantine-color-secondary-9)', // used as text color
-    '--mantine-color-body': 'var(--mantine-color-white)', // used as body color
+    '--mantine-color-body': '#FAFAFA', // used as body color
     '--mantine-color-error': 'var(--mantine-color-error-10)', // used as error color
     '--mantine-color-placeholder': 'var(--mantine-color-secondary-10)', // used as placeholder color
     '--mantine-color-anchor': 'var(--mantine-color-secondary-10)', // used as anchor color
 
     '--mantine-color-default': 'var(--mantine-color-secondary-0)', // used as default surface color
-    '--mantine-color-default-hover': 'var(--mantine-color-secondary-1)', // used as default hover color
+    '--mantine-color-default-hover': 'var(--mantine-color-secondary-2)', // used as default hover color
     '--mantine-color-default-color': 'var(--mantine-color-secondary-9)', // used as default text color
     '--mantine-color-default-border': 'var(--mantine-color-secondary-2)', // used as default border color
     '--mantine-color-dimmed': 'var(--mantine-color-secondary-10)', // used as dimmed text color

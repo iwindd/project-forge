@@ -77,6 +77,7 @@
 
 .navbarItem[data-active="true"] {
   background-color: var(--nav-item-hover-bg-color);
+  color: var(--nav-item-active-text-color);
 }
 
 .navbarItem[data-disabled] {
@@ -86,7 +87,7 @@
 
 .itemInfo {
   font-size: 0.6875rem;
-  color: var(--mantine-color-dimmed);
+  color: var(--nav-muted-text-color);
 }
 
 .icon {

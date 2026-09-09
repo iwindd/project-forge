@@ -5,7 +5,7 @@
   gap: 0.75rem;
   padding: 0.475rem 0.875rem;
   border-radius: var(--mantine-radius-xs);
-  color: var(--mantine-color-dimmed);
+  color: var(--nav-muted-text-color);
   text-decoration: none;
   user-select: none;
   border: none;

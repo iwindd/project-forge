@@ -1,19 +1,25 @@
 .mobileDrawerContent {
   --nav-surface-bg-color: var(--mantine-color-body);
   --nav-surface-border-color: var(--mantine-color-default-border);
-  --nav-item-text-color: var(--mantine-color-text);
+  --nav-item-text-color: var(--mantine-color-secondary-10);
   --nav-item-hover-bg-color: var(--mantine-color-default-hover);
   --nav-item-active-bg-color: var(--mantine-primary-color-light);
-  --nav-item-active-text-color: var(--mantine-primary-color-light-color);
-  --nav-nested-item-text-color: var(--mantine-color-text);
+  --nav-item-active-text-color: var(--mantine-color-text);
+  --nav-nested-item-text-color: var(--mantine-color-secondary-10);
   --nav-nested-item-hover-bg-color: var(--mantine-color-default-hover);
   --nav-nested-item-active-bg-color: var(--mantine-primary-color-light);
-  --nav-nested-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-item-active-text-color: var(--mantine-color-text);
   --nav-nested-line-color: var(--mantine-color-default-border);
-  --nav-muted-text-color: var(--mantine-color-dimmed);
+  --nav-muted-text-color: var(--mantine-color-secondary-10);
   display: flex !important;
   flex-direction: column;
   overflow: hidden !important;
+}
+
+:global([data-mantine-color-scheme='dark']) .mobileDrawerContent {
+  --nav-item-text-color: var(--mantine-color-secondary-4);
+  --nav-nested-item-text-color: var(--mantine-color-secondary-4);
+  --nav-muted-text-color: var(--mantine-color-secondary-4);
 }
 
 .mobileDrawerBody {
