@@ -28,7 +28,7 @@ export class AuthenticateSessionUseCase implements SessionAuthenticator {
       if (!user?.isActive) return null;
       session.lastSeenAt = new Date();
       await this.sessions.save(session);
-      return { ...toPrincipal(user), activeOrganizationId: session.activeOrganizationId };
+      return toPrincipal(user);
     });
   }
 }

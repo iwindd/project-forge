@@ -3,6 +3,7 @@
 import { getPath } from '@/routes'
 import { useAppDispatch } from '@/hooks'
 import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation'
+import { useLogoutMutation } from '@/lib/features/auth/auth-api'
 import { setUser } from '@/lib/features/auth/auth-slice'
 import type { AdminUser } from '@/session'
 import { Avatar, Menu, Stack, Text, UnstyledButton } from '@mantine/core'
@@ -16,19 +17,21 @@ export function SidebarUserMenu({ user }: { user: AdminUser }) {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { resetAllAdminApiCaches } = useAdminCacheInvalidation()
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation()
   const t = useTranslations('Navigation')
   const common = useTranslations('Common')
   const displayName = user.name || user.email || common('admin')
 
   const handleLogout = async () => {
-    const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'
-    await fetch(`${apiOrigin}/api/v1/auth/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    })
-    dispatch(setUser(null))
-    resetAllAdminApiCaches()
-    router.push('/admin/login')
+    try {
+      await logout().unwrap()
+    } catch {
+      // Clear the local session even if the server session is already gone.
+    } finally {
+      dispatch(setUser(null))
+      resetAllAdminApiCaches()
+      router.push('/admin/login')
+    }
   }
 
   return (
@@ -68,6 +71,7 @@ export function SidebarUserMenu({ user }: { user: AdminUser }) {
         <Menu.Item
           color='red'
           leftSection={<IconLogout size={17} />}
+          disabled={isLoggingOut}
           onClick={() => void handleLogout()}
         >
           {t('logout')}

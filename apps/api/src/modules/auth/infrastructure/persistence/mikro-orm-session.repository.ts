@@ -17,7 +17,6 @@ export class MikroOrmSessionRepository implements SessionRepository {
     const entity = await this.em.findOne(SessionOrmEntity, { id: session.id });
     if (!entity) return;
     entity.userId = session.userId;
-    entity.activeOrganizationId = session.activeOrganizationId;
     entity.tokenHash = session.tokenHash;
     entity.expiresAt = session.expiresAt;
     entity.revokedAt = session.revokedAt;
@@ -30,7 +29,6 @@ export class MikroOrmSessionRepository implements SessionRepository {
     const entity = this.em.create(SessionOrmEntity, {
       id: session.id,
       userId: session.userId,
-      activeOrganizationId: session.activeOrganizationId,
       tokenHash: session.tokenHash,
       expiresAt: session.expiresAt,
       revokedAt: session.revokedAt,
@@ -52,20 +50,12 @@ export class MikroOrmSessionRepository implements SessionRepository {
     await this.em.nativeUpdate(SessionOrmEntity, { userId, revokedAt: null }, { revokedAt: new Date() });
   }
 
-  async setActiveOrganization(tokenHash: string, organizationId: string): Promise<void> {
-    const session = await this.em.findOne(SessionOrmEntity, { tokenHash, revokedAt: null });
-    if (!session) return;
-    session.activeOrganizationId = organizationId;
-    this.em.persist(session);
-    await this.em.flush();
-  }
 }
 
 function toRecord(session: SessionOrmEntity): SessionRecord {
   return {
     id: session.id,
     userId: session.userId,
-    activeOrganizationId: session.activeOrganizationId,
     tokenHash: session.tokenHash,
     expiresAt: session.expiresAt,
     revokedAt: session.revokedAt,

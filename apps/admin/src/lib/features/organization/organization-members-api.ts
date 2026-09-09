@@ -1,16 +1,8 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { addOrganizationHeader } from "./organization-context";
+import { api } from '@/lib/api/api'
+import type { OrganizationMemberRole, OrganizationRole } from './types'
+export type { OrganizationRole } from './types'
 
-type OrganizationMemberRole = "OWNER" | "ADMIN" | "MEMBER";
 type OrganizationPermission = "organization.manage";
-
-export type OrganizationRole = {
-  id: string | null;
-  name: string;
-  permissions: OrganizationPermission[];
-  isOwner: boolean;
-  legacyRole: OrganizationMemberRole | null;
-};
 
 export type OrganizationRoleSummary = OrganizationRole & {
   memberCount?: number;
@@ -61,10 +53,6 @@ type OrganizationMembersResponse = {
   total: number;
   page: number;
   pageSize: number;
-};
-
-type OrganizationInvitationsResponse = {
-  data: OrganizationInvitation[];
 };
 
 type OrganizationRolesResponse = {
@@ -118,20 +106,7 @@ type DeleteRoleInput = {
   roleId: string;
 };
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
-
-export const organizationMembersApi = createApi({
-  reducerPath: "organizationMembersApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${apiOrigin}/api/v1/`,
-    credentials: "include",
-    cache: "no-store",
-    prepareHeaders: (headers) => addOrganizationHeader(headers),
-  }),
-  tagTypes: ["OrganizationMembers", "OrganizationInvitations", "OrganizationRoles"],
-  refetchOnMountOrArgChange: true,
-  refetchOnFocus: true,
-  refetchOnReconnect: true,
+export const organizationMembersApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getRoles: builder.query<OrganizationRolesResponse, { organizationId: string }>({
       query: ({ organizationId }) =>
@@ -184,7 +159,7 @@ export const organizationMembersApi = createApi({
       ],
     }),
     getInvitations: builder.query<
-      OrganizationInvitationsResponse,
+      OrganizationInvitation[],
       { organizationId: string }
     >({
       query: ({ organizationId }) =>
@@ -236,6 +211,7 @@ export const organizationMembersApi = createApi({
       ],
     }),
   }),
+  overrideExisting: false
 });
 
 export const {

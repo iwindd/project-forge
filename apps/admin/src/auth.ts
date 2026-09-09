@@ -1,77 +1,82 @@
 import { cookies } from 'next/headers'
+import { z } from 'zod'
+import { apiServerFetch } from '@/lib/api-server'
+import type { AdminSession } from '@/session'
 
-type ApiPrincipal = {
-  id: string
-  githubLogin: string
-  name: string | null
-  role: 'ADMIN' | 'USER'
-  isActive: boolean
-  accessStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
-  createdAt: string
-  updatedAt: string
-  activeOrganizationId: string | null
-}
+const organizationRoleSchema = z.object({
+  id: z.string().nullable(),
+  name: z.string().min(1),
+  permissions: z.array(z.string()),
+  isOwner: z.boolean(),
+  legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable()
+})
 
-type ApiSessionResponse = {
-  user: ApiPrincipal
-  profile?: { displayName?: string | null; avatarUrl?: string | null } | null
-  organizations?: Array<{
-    id: string
-    name: string
-    slug: string
-    type: 'PERSONAL' | 'SHARED'
-    role: {
-      id: string | null
-      name: string
-      permissions: string[]
-      isOwner: boolean
-      legacyRole: 'OWNER' | 'ADMIN' | 'MEMBER' | null
-    }
-  }>
-}
+const authMeSchema = z.object({
+  user: z.object({
+    id: z.string().min(1),
+    githubUserId: z.string().min(1),
+    githubLogin: z.string().min(1),
+    name: z.string().nullable(),
+    avatarUrl: z.string().nullable(),
+    role: z.enum(['ADMIN', 'USER']),
+    accessStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']),
+    isActive: z.boolean(),
+    createdAt: z.string().min(1),
+    updatedAt: z.string().min(1)
+  }),
+  profile: z
+    .object({
+      id: z.string().min(1),
+      displayName: z.string().nullable(),
+      avatarUrl: z.string().nullable(),
+      bio: z.string().nullable(),
+      timezone: z.string().nullable(),
+      updatedAt: z.string().min(1)
+    })
+    .nullable(),
+  organizations: z.array(
+    z.object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+      slug: z.string().min(1),
+      type: z.enum(['PERSONAL', 'SHARED']),
+      role: organizationRoleSchema
+    })
+  )
+})
 
 const apiOrigin =
   process.env.API_INTERNAL_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
   'http://localhost:5050'
 
-export async function auth() {
+export async function auth(): Promise<AdminSession | null> {
   const cookieStore = await cookies()
   if (!cookieStore.has('pf_session')) return null
 
-  let response: Response
   try {
-    response = await fetch(`${apiOrigin}/api/v1/auth/me`, {
+    const data = await apiServerFetch('auth/me', authMeSchema, {
       headers: { cookie: cookieStore.toString() },
       cache: 'no-store'
     })
+
+    const { user } = data
+    if (!user.isActive || user.accessStatus !== 'APPROVED') return null
+
+    return {
+      user: {
+        id: user.id,
+        name: data.profile?.displayName ?? user.name ?? user.githubLogin,
+        email: null,
+        role: user.role === 'ADMIN' ? 'ADMIN' : 'EDITOR',
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      },
+      organizations: data.organizations
+    }
   } catch {
     return null
   }
-
-  if (!response.ok) return null
-
-  const data = (await response.json()) as ApiSessionResponse
-  const { user } = data
-  if (!user.isActive || user.accessStatus !== 'APPROVED') return null
-
-  const activeOrganization =
-    (data.organizations ?? []).find(
-      organization => organization.id === user.activeOrganizationId
-    ) ?? data.organizations?.[0]
-
-  return {
-    user: {
-      id: user.id,
-      name: data.profile?.displayName ?? user.name ?? user.githubLogin,
-      email: null,
-      role: user.role === 'ADMIN' ? 'ADMIN' : 'EDITOR',
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      activeOrganizationId: user.activeOrganizationId,
-      organizationRole: activeOrganization?.role ?? null,
-      organizationPermissions: activeOrganization?.role.permissions ?? []
-    },
-    organizations: data.organizations ?? []
-  } as const
 }
+
+export { apiOrigin }

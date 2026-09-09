@@ -1,79 +1,77 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { api } from '@/lib/api/api'
 import type {
   AuditLogListQuery,
-  AuditLogListResult,
-} from "@/servers/audit-log/types";
-import { addOrganizationHeader, getActiveOrganizationId } from "../organization/organization-context";
+  AuditLogListResult
+} from '@/servers/audit-log/types'
 
 /** Which timeline to read. The server re-derives every scope it can. */
 export type AuditLogScopeArg =
-  | { kind: "all" }
-  | { kind: "user"; userId: string }
-  | { kind: "own" };
+  | { kind: 'all' }
+  | { kind: 'user'; userId: string }
+  | { kind: 'own' }
 
-function getAuditLogListUrl(scope: AuditLogScopeArg) {
-  const organizationId = getActiveOrganizationId();
-  if (organizationId && scope.kind === "user") {
-    return `audit-logs/organization/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(scope.userId)}`;
+function getAuditLogListUrl(
+  scope: AuditLogScopeArg,
+  organizationId?: string
+) {
+  if (organizationId && scope.kind === 'user') {
+    return `audit-logs/organization/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(scope.userId)}`
   }
-  if (organizationId && scope.kind === "all") {
-    return `audit-logs/organization/${encodeURIComponent(organizationId)}`;
+  if (organizationId && scope.kind === 'all') {
+    return `audit-logs/organization/${encodeURIComponent(organizationId)}`
   }
-  if (scope.kind === "user") {
-    return `audit-logs/users/${encodeURIComponent(scope.userId)}`;
+  if (scope.kind === 'user') {
+    return `audit-logs/users/${encodeURIComponent(scope.userId)}`
   }
 
-  return scope.kind === "own" ? "audit-logs/me" : "audit-logs";
+  return scope.kind === 'own' ? 'audit-logs/me' : 'audit-logs'
 }
 
-export function getAuditLogExportUrl(scope: AuditLogScopeArg, id: string) {
-  const organizationId = getActiveOrganizationId();
-  const base = scope.kind === "own"
-    ? "audit-logs/me"
-    : organizationId
+export function getAuditLogExportUrl(
+  scope: AuditLogScopeArg,
+  id: string,
+  organizationId?: string
+) {
+  const base = scope.kind === 'own'
+    ? 'audit-logs/me'
+      : organizationId
       ? `audit-logs/organization/${encodeURIComponent(organizationId)}`
-      : "audit-logs";
+      : 'audit-logs'
 
-  return `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050"}/api/v1/${base}/${encodeURIComponent(id)}/export`;
+  return `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'}/api/v1/${base}/${encodeURIComponent(id)}/export`
 }
 
 /** Multi-value filters travel as comma-separated lists. */
 function toRequestParams(query: AuditLogListQuery) {
-  const { actions, resourceTypes, ...rest } = query;
+  const { actions, resourceTypes, ...rest } = query
 
   return {
     ...rest,
-    ...(actions?.length ? { actions: actions.join(",") } : {}),
+    ...(actions?.length ? { actions: actions.join(',') } : {}),
     ...(resourceTypes?.length
-      ? { resourceTypes: resourceTypes.join(",") }
-      : {}),
-  };
+      ? { resourceTypes: resourceTypes.join(',') }
+      : {})
+  }
 }
 
-export const auditLogsApi = createApi({
-  reducerPath: "auditLogsApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050"}/api/v1/`,
-    credentials: "include",
-    cache: "no-store",
-    prepareHeaders: (headers) => addOrganizationHeader(headers),
-  }),
-  tagTypes: ["AuditLogs"],
-  refetchOnMountOrArgChange: true,
-  refetchOnFocus: true,
-  refetchOnReconnect: true,
-  endpoints: (builder) => ({
+export const auditLogsApi = api.injectEndpoints({
+  endpoints: builder => ({
     getAuditLogs: builder.query<
       AuditLogListResult,
-      { scope: AuditLogScopeArg; query: AuditLogListQuery }
+      {
+        scope: AuditLogScopeArg
+        query: AuditLogListQuery
+        organizationId?: string
+      }
     >({
-      query: ({ scope, query }) => ({
-        url: getAuditLogListUrl(scope),
-        params: toRequestParams(query),
+      query: ({ scope, query, organizationId }) => ({
+        url: getAuditLogListUrl(scope, organizationId),
+        params: toRequestParams(query)
       }),
-      providesTags: ["AuditLogs"],
-    }),
+      providesTags: ['AuditLogs']
+    })
   }),
-});
+  overrideExisting: false
+})
 
-export const { useGetAuditLogsQuery } = auditLogsApi;
+export const { useGetAuditLogsQuery } = auditLogsApi

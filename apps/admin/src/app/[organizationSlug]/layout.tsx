@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { AppProvider } from '@/components/providers/app-provider'
-import { apiServerFetch } from '@/lib/api-server'
+import { scopeUserToOrganization } from '@/session'
 import { fontClasses } from '@/themes/shadcn/font'
 import { mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
@@ -43,19 +43,9 @@ export default async function OrganizationLayout({
     notFound()
   }
 
-  if (session.user.activeOrganizationId !== organization.id) {
-    try {
-      await apiServerFetch(
-        `organizations/${encodeURIComponent(organization.id)}/switch`,
-        { method: 'POST' }
-      )
-    } catch {
-      notFound()
-    }
-  }
-
   const locale = await getLocale()
   const messages = await getMessages()
+  const user = scopeUserToOrganization(session.user, organization)
 
   return (
     <html
@@ -71,12 +61,13 @@ export default async function OrganizationLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AppProvider
             preloadedState={{
-              auth: { user: session.user }
+              auth: { user }
             }}
           >
             <AdminShell
-              user={session.user}
+              user={user}
               organizationSlug={organization.slug}
+              organizationId={organization.id}
             >
               {children}
             </AdminShell>

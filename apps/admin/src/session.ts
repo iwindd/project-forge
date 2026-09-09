@@ -1,9 +1,12 @@
+import type { Organization } from './lib/features/organization/types'
+
 export type AdminUser = {
   id: string
   name?: string | null
   email?: string | null
   role: 'ADMIN' | 'EDITOR'
-  activeOrganizationId?: string | null
+  createdAt?: string
+  updatedAt?: string
   organizationRole?: {
     id: string | null
     name: string
@@ -12,4 +15,20 @@ export type AdminUser = {
     legacyRole: 'OWNER' | 'ADMIN' | 'MEMBER' | null
   } | null
   organizationPermissions?: string[]
+}
+
+export type AdminSession = {
+  user: AdminUser
+  organizations: Organization[]
+}
+
+export function scopeUserToOrganization(
+  user: AdminUser,
+  organization: Organization
+): AdminUser {
+  return {
+    ...user,
+    organizationRole: organization.role,
+    organizationPermissions: organization.role.permissions
+  }
 }

@@ -10,7 +10,7 @@ import { FilterTrigger } from "@/components/filter-trigger";
 import TableActionMenu from "@/components/table-action-menu";
 import TableSearchInput from "@/components/table-search-input";
 import { useGetUsersQuery } from "@/lib/features/user/users-api";
-import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
+import { useOptionalOrganizationContext } from "@/lib/features/organization/organization-provider";
 import { getPath } from "@/routes";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";
@@ -50,7 +50,8 @@ export function UsersTable() {
   const { organizationSlug: routeOrganizationSlug } = useParams<{
     organizationSlug?: string;
   }>();
-  const { activeOrganization } = useOrganizationContext();
+  const organizationContext = useOptionalOrganizationContext();
+  const activeOrganization = organizationContext?.activeOrganization;
   const organizationSlug =
     routeOrganizationSlug ?? activeOrganization?.slug ?? null;
   const getUserProfilePath = useCallback(
@@ -158,7 +159,15 @@ export function UsersTable() {
     sortableFields: SORTABLE_FIELDS,
   });
   const { query, setSearchValue, updateQuery } = datatable;
-  const { data, isFetching, isError } = useGetUsersQuery(query);
+  const { data, isFetching, isError } = useGetUsersQuery(
+    {
+      organizationId: routeOrganizationSlug
+        ? activeOrganization?.id
+        : undefined,
+      query,
+    },
+    { skip: Boolean(routeOrganizationSlug && !activeOrganization) },
+  );
   const roleCombobox = useCombobox();
   const statusCombobox = useCombobox();
 

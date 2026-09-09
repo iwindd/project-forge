@@ -78,7 +78,7 @@ export class CompleteGithubLoginUseCase {
         await this.accessRequests.save(createAccessRequest(user.id, null));
       }
 
-      const sessionToken = await this.issueSession.issueWithinTransaction(user.id, personalWorkspace.id);
+      const sessionToken = await this.issueSession.issueWithinTransaction(user.id);
       await this.security.record({
         organizationId: personalWorkspace.id,
         userId: user.id,

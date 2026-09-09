@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { apiSuccess } from '../../../common/http/api-response.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
@@ -9,9 +9,6 @@ import { CreateOrganizationRoleUseCase } from '../application/use-cases/create-o
 import { DeleteOrganizationRoleUseCase } from '../application/use-cases/delete-organization-role-use-case.js';
 import { ListOrganizationRolesUseCase } from '../application/use-cases/list-organization-roles-use-case.js';
 import { UpdateOrganizationRoleUseCase } from '../application/use-cases/update-organization-role-use-case.js';
-import { getCookie } from '../../../common/http/request-context.js';
-import { SESSION_REPOSITORY } from '../../auth/application/ports/session.repository.js';
-import type { SessionRepository } from '../../auth/application/ports/session.repository.js';
 import {
   createInvitationSchema,
   createOrganizationSchema,
@@ -22,6 +19,7 @@ import {
   createOrganizationRoleSchema,
   updateOrganizationRoleSchema,
 } from './dto/organization.schemas.js';
+import { organizationListSchema } from './dto/organization-response.schemas.js';
 
 @Controller('organizations')
 @UseGuards(SessionGuard)
@@ -32,14 +30,12 @@ export class OrganizationsController {
     private readonly createOrganizationRole: CreateOrganizationRoleUseCase,
     private readonly updateOrganizationRole: UpdateOrganizationRoleUseCase,
     private readonly deleteOrganizationRole: DeleteOrganizationRoleUseCase,
-    @Inject(SESSION_REPOSITORY) private readonly sessions: SessionRepository,
   ) {}
 
   @Get()
   async list(@Principal() principal: AuthenticatedPrincipal) {
     const organizations = await this.organizations.listForUser(principal.id);
-    return {
-      data: organizations.map(({ organization, role }) => ({
+    const data = organizations.map(({ organization, role }) => ({
         id: organization.id,
         name: organization.name,
         slug: organization.slug,
@@ -48,8 +44,8 @@ export class OrganizationsController {
         status: organization.status,
         createdAt: organization.createdAt.toISOString(),
         updatedAt: organization.updatedAt.toISOString(),
-      })),
-    };
+      }));
+    return apiSuccess(organizationListSchema.parse(data));
   }
 
   @Post()
@@ -60,7 +56,14 @@ export class OrganizationsController {
       input.name,
       input.slug,
     );
-    return { organization };
+    return apiSuccess({
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        slug: organization.slug,
+        type: organization.type,
+      },
+    });
   }
 
   @Get(':id/roles')
@@ -152,26 +155,6 @@ export class OrganizationsController {
     return { organization: await this.organizations.updateOrganization(principal.id, organizationId, input.name) };
   }
 
-  @Post(':id/switch')
-  async switch(
-    @Principal() principal: AuthenticatedPrincipal,
-    @Param('id') organizationId: string,
-    @Req() request: Request,
-  ) {
-    const { organization, role } = await this.organizations.requireMembership(principal.id, organizationId);
-    const token = getCookie(request, 'pf_session');
-    if (token) await this.sessions.setActiveOrganization(this.organizations.hashToken(token), organizationId);
-    return {
-      organization: {
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-        type: organization.type,
-        role,
-      },
-    };
-  }
-
   @Patch(':id/members/:userId')
   async updateMember(
     @Principal() principal: AuthenticatedPrincipal,
@@ -195,7 +178,9 @@ export class OrganizationsController {
     @Param('id') organizationId: string,
     @Param('userId') userId: string,
   ) {
-    return { user: await this.organizations.getMember(principal.id, organizationId, userId) };
+    return apiSuccess({
+      user: await this.organizations.getMember(principal.id, organizationId, userId),
+    });
   }
 
   @Patch(':id/members/:userId/name')

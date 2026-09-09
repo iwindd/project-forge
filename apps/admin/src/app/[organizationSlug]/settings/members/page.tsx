@@ -154,7 +154,7 @@ export default function OrganizationMembersPage() {
       ),
     [roles]
   )
-  const invitations = invitationsResult?.data ?? []
+  const invitations = invitationsResult ?? []
   const allVisibleSelected =
     members.length > 0 &&
     members.every(member => selectedIds.includes(member.id))

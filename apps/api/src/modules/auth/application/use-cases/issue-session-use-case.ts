@@ -17,15 +17,14 @@ export class IssueSessionUseCase {
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
-  execute(userId: string, activeOrganizationId?: string | null): Promise<string> {
-    return this.unitOfWork.run(() => this.issueWithinTransaction(userId, activeOrganizationId));
+  execute(userId: string): Promise<string> {
+    return this.unitOfWork.run(() => this.issueWithinTransaction(userId));
   }
 
-  issueWithinTransaction(userId: string, activeOrganizationId?: string | null): Promise<string> {
+  issueWithinTransaction(userId: string): Promise<string> {
     const token = this.tokens.base64Url(32);
     const expiresAt = new Date(Date.now() + this.config.sessionTtlSeconds * 1000);
     const session = createSession({ userId, tokenHash: this.hasher.hash(token), expiresAt });
-    session.activeOrganizationId = activeOrganizationId ?? null;
     return this.sessions.create(session).then(() => token);
   }
 }

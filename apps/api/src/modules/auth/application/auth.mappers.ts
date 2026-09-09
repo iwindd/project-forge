@@ -13,6 +13,5 @@ export function toPrincipal(user: UserRecord): AuthenticatedPrincipal {
     isActive: user.isActive,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    activeOrganizationId: null,
   };
 }

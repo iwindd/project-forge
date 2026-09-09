@@ -29,13 +29,13 @@ export function ProfileDetailsForm() {
       });
       if (!response.ok) throw new Error("ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้");
       const result = (await response.json()) as {
-        profile: { bio: string | null; timezone: string | null; updatedAt: string };
+        data: { profile: { bio: string | null; timezone: string | null; updatedAt: string } };
       };
       updateProfile({
         ...profile,
-        bio: result.profile.bio,
-        timezone: result.profile.timezone,
-        updatedAt: result.profile.updatedAt,
+        bio: result.data.profile.bio,
+        timezone: result.data.profile.timezone,
+        updatedAt: result.data.profile.updatedAt,
       });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้");

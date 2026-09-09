@@ -1,38 +1,17 @@
 'use client'
 
-import { useAppDispatch } from '@/hooks'
-import { auditLogsApi } from '@/lib/features/audit-log/audit-logs-api'
-import { organizationMembersApi } from '@/lib/features/organization/organization-members-api'
-import { usersApi } from '@/lib/features/user/users-api'
+import { useGetOrganizationsQuery } from './organization-api'
+import { resolveOrganizationFromRoute } from './organization-context'
+import type { Organization } from './types'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode
 } from 'react'
-import {
-  addOrganizationHeader,
-  getActiveOrganizationId,
-  setActiveOrganizationId
-} from './organization-context'
-
-export type Organization = {
-  id: string
-  name: string
-  slug: string
-  type: 'PERSONAL' | 'SHARED'
-  role: {
-    id: string | null
-    name: string
-    permissions: string[]
-    isOwner: boolean
-    legacyRole: 'OWNER' | 'ADMIN' | 'MEMBER' | null
-  }
-}
 
 type OrganizationContextValue = {
   organizations: Organization[]
@@ -44,121 +23,75 @@ type OrganizationContextValue = {
 }
 
 const OrganizationContext = createContext<OrganizationContextValue | null>(null)
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'
 
 export function OrganizationProvider({
   children,
-  organizationSlug
-}: Readonly<{ children: ReactNode; organizationSlug: string }>) {
-  const dispatch = useAppDispatch()
+  organizationSlug,
+  organizationId
+}: Readonly<{
+  children: ReactNode
+  organizationSlug: string
+  organizationId?: string
+}>) {
   const pathname = usePathname()
   const router = useRouter()
-  const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
+  const [switchPending, setSwitchPending] = useState(false)
+  const {
+    data: organizations = [],
+    isFetching,
+    refetch
+  } = useGetOrganizationsQuery()
+
+  const activeOrganization = useMemo(
+    () =>
+      resolveOrganizationFromRoute(
+        organizations,
+        organizationSlug,
+        organizationId
+      ),
+    [organizationId, organizationSlug, organizations]
+  )
 
   const loadOrganizations = useCallback(async () => {
-    const response = await fetch(`${apiOrigin}/api/v1/organizations`, {
-      credentials: 'include',
-      cache: 'no-store',
-      headers: addOrganizationHeader(new Headers())
-    })
-
-    if (!response.ok) return
-
-    const result = (await response.json()) as { data: Organization[] }
-    setOrganizations(result.data)
-
-    const stored = getActiveOrganizationId()
-    const selected =
-      result.data.find(
-        organization => organization.slug === organizationSlug
-      ) ??
-      result.data.find(organization => organization.id === stored) ??
-      result.data[0]
-
-    if (selected && selected.id !== stored) {
-      setActiveOrganizationId(selected.id)
-    }
-
-    setActiveId(selected?.id ?? null)
-  }, [organizationSlug])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadOrganizations()
-    }, 0)
-
-    return () => window.clearTimeout(timer)
-  }, [loadOrganizations])
+    await refetch().unwrap()
+  }, [refetch])
 
   const switchOrganization = useCallback(
     async (id: string | null) => {
-      if (!id || id === activeId) return
+      if (!id || id === activeOrganization?.id) return
 
-      setPending(true)
+      const organization = organizations.find(candidate => candidate.id === id)
+      if (!organization) return
+
+      setSwitchPending(true)
       try {
-        const response = await fetch(
-          `${apiOrigin}/api/v1/organizations/${encodeURIComponent(id)}/switch`,
-          {
-            method: 'POST',
-            credentials: 'include'
-          }
+        const suffix = pathname.split('/').filter(Boolean).slice(1).join('/')
+        router.push(
+          `/${encodeURIComponent(organization.slug)}${suffix ? `/${suffix}` : ''}`
         )
-
-        if (!response.ok) return
-
-        const result = (await response.json()) as {
-          organization: Organization
-        }
-        setActiveOrganizationId(id)
-        setActiveId(id)
-        dispatch(usersApi.util.resetApiState())
-        dispatch(auditLogsApi.util.resetApiState())
-        dispatch(organizationMembersApi.util.resetApiState())
-        const organization =
-          organizations.find(candidate => candidate.id === id) ??
-          result.organization
-
-        if (pathname === '/account' || pathname.startsWith('/account/')) {
-          router.refresh()
-          return
-        }
-
-        if (organization) {
-          const suffix = pathname.split('/').filter(Boolean).slice(1).join('/')
-          router.push(
-            `/${encodeURIComponent(organization.slug)}${suffix ? `/${suffix}` : ''}`
-          )
-        } else {
-          router.refresh()
-        }
       } finally {
-        setPending(false)
+        setSwitchPending(false)
       }
     },
-    [activeId, dispatch, organizations, pathname, router]
+    [activeOrganization?.id, organizations, pathname, router]
   )
 
-  const activeOrganization = organizations.find(
-    organization => organization.id === activeId
-  )
   const value = useMemo(
     () => ({
       organizations,
-      activeId,
+      activeId: activeOrganization?.id ?? null,
       activeOrganization,
-      pending,
+      pending: isFetching || switchPending,
       loadOrganizations,
       switchOrganization
     }),
     [
-      activeId,
       activeOrganization,
+      isFetching,
       loadOrganizations,
       organizations,
-      pending,
-      switchOrganization
+      switchOrganization,
+      switchPending
     ]
   )
 
@@ -169,8 +102,12 @@ export function OrganizationProvider({
   )
 }
 
+export function useOptionalOrganizationContext() {
+  return useContext(OrganizationContext)
+}
+
 export function useOrganizationContext() {
-  const context = useContext(OrganizationContext)
+  const context = useOptionalOrganizationContext()
 
   if (!context) {
     throw new Error(

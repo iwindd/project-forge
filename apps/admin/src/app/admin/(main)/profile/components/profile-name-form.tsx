@@ -27,12 +27,12 @@ export function ProfileNameForm() {
       })
       if (!response.ok) throw new Error('ไม่สามารถบันทึกชื่อได้')
       const result = (await response.json()) as {
-        profile: { displayName: string; updatedAt: string }
+        data: { profile: { displayName: string; updatedAt: string } }
       }
       updateProfile({
         ...profile,
-        name: result.profile.displayName,
-        updatedAt: result.profile.updatedAt
+        name: result.data.profile.displayName,
+        updatedAt: result.data.profile.updatedAt
       })
       invalidateAdminCaches({ resources: ['users'] })
     } catch (saveError) {

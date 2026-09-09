@@ -23,15 +23,16 @@ import {
   IconUsers
 } from '@tabler/icons-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { useGetRolesQuery } from './organization-members-api'
 import {
-  useOrganizationContext,
-  type Organization
-} from './organization-provider'
+  useCreateInvitationMutation,
+  useGetRolesQuery
+} from './organization-members-api'
+import { useCreateOrganizationMutation } from './organization-api'
+import { useOrganizationContext } from './organization-provider'
+import type { Organization } from './types'
 import classes from './organization-switcher.module.css'
-
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'
 
 function getOrganizationInitial(name: string) {
   return name.trim().charAt(0).toUpperCase() || 'O'
@@ -59,6 +60,11 @@ export function OrganizationSwitcher() {
     loadOrganizations,
     switchOrganization
   } = useOrganizationContext()
+  const router = useRouter()
+  const [createOrganizationMutation, { isLoading: organizationCreating }] =
+    useCreateOrganizationMutation()
+  const [createInvitationMutation, { isLoading: invitationCreating }] =
+    useCreateInvitationMutation()
   const { data: rolesResult } = useGetRolesQuery(
     { organizationId: activeOrganization?.id ?? '' },
     { skip: !activeOrganization || !canInviteMembers(activeOrganization) }
@@ -71,7 +77,8 @@ export function OrganizationSwitcher() {
   const [inviteRoleId, setInviteRoleId] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [actionPending, setActionPending] = useState(false)
-  const pending = switchPending || actionPending
+  const pending =
+    switchPending || actionPending || organizationCreating || invitationCreating
   const inviteRoles = useMemo(
     () =>
       (rolesResult?.data ?? []).filter(
@@ -86,22 +93,11 @@ export function OrganizationSwitcher() {
 
     setActionPending(true)
     try {
-      const response = await fetch(`${apiOrigin}/api/v1/organizations`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name })
-      })
-
-      if (!response.ok) return
-
-      const result = (await response.json()) as {
-        organization: Organization
-      }
+      const result = await createOrganizationMutation({ name }).unwrap()
       setName('')
       setCreateOpened(false)
       await loadOrganizations()
-      await switchOrganization(result.organization.id)
+      router.push(`/${encodeURIComponent(result.organization.slug)}`)
     } finally {
       setActionPending(false)
     }
@@ -112,22 +108,11 @@ export function OrganizationSwitcher() {
 
     setActionPending(true)
     try {
-      const response = await fetch(
-        `${apiOrigin}/api/v1/organizations/${activeOrganization.id}/invitations`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            email: inviteEmail || null,
-            roleId: selectedInviteRoleId
-          })
-        }
-      )
-
-      if (!response.ok) return
-
-      const result = (await response.json()) as { token: string }
+      const result = await createInvitationMutation({
+        organizationId: activeOrganization.id,
+        email: inviteEmail || null,
+        roleId: selectedInviteRoleId
+      }).unwrap()
       setInviteLink(
         `${window.location.origin}/admin/invitations/${result.token}`
       )

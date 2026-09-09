@@ -10,10 +10,7 @@ export default async function AdminLoginPage() {
   const session = await auth();
 
   if (session?.user?.id) {
-    const organization =
-      session.organizations.find(
-        (candidate) => candidate.id === session.user.activeOrganizationId,
-      ) ?? session.organizations[0];
+    const organization = session.organizations[0];
 
     if (organization) {
       redirect(`/${encodeURIComponent(organization.slug)}`);

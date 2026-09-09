@@ -14,10 +14,12 @@ export class PublicErrorFilter implements ExceptionFilter {
 
     const mapped = this.map(exception);
     response.status(mapped.status).json({
-      code: mapped.code,
-      message: mapped.message,
-      requestId,
-      details: mapped.details,
+      error: {
+        code: mapped.code,
+        message: mapped.message,
+        requestId,
+        details: mapped.details,
+      },
     });
   }
 

@@ -23,11 +23,13 @@ import type { SidebarNavigationMode } from "./navigation/navigation-utils";
 export function AdminShell({
   user,
   organizationSlug,
+  organizationId,
   navigationMode = "app",
   children,
 }: Readonly<{
   user: AdminUser;
   organizationSlug: string;
+  organizationId?: string;
   navigationMode?: SidebarNavigationMode;
   children: ReactNode;
 }>) {
@@ -107,7 +109,10 @@ export function AdminShell({
   }
 
   return (
-    <OrganizationProvider organizationSlug={organizationSlug}>
+    <OrganizationProvider
+      organizationSlug={organizationSlug}
+      organizationId={organizationId}
+    >
       {shell}
     </OrganizationProvider>
   );

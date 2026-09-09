@@ -5,6 +5,7 @@ import { AppColorSchemaScript } from '@/components/providers/app-color-schema-sc
 import { PageHeader } from '@/components/page-header'
 import { AppProvider } from '@/components/providers/app-provider'
 import { getProfile } from '@/servers/profile/queries/get-profile'
+import { scopeUserToOrganization } from '@/session'
 import { fontClasses } from '@/themes/shadcn/font'
 import { Container, mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
@@ -30,9 +31,7 @@ export default async function AccountLayout({
   }
 
   const organization =
-    session.organizations.find(
-      candidate => candidate.id === session.user.activeOrganizationId
-    ) ?? session.organizations[0]
+    session.organizations[0]
 
   if (!organization) {
     redirect('/admin/login?error=organization_unavailable')
@@ -46,6 +45,7 @@ export default async function AccountLayout({
 
   const locale = await getLocale()
   const messages = await getMessages()
+  const user = scopeUserToOrganization(session.user, organization)
 
   return (
     <html
@@ -61,12 +61,13 @@ export default async function AccountLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AppProvider
             preloadedState={{
-              auth: { user: session.user }
+              auth: { user }
             }}
           >
             <AdminShell
-              user={session.user}
+              user={user}
               organizationSlug={organization.slug}
+              organizationId={organization.id}
               navigationMode='account'
             >
               <ProfileProvider profile={profile}>

@@ -2,7 +2,8 @@
 
 import { Alert, Loader, Paper, Table, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { addOrganizationHeader, getActiveOrganizationId } from "../organization/organization-context";
+import { addOrganizationHeader } from "../organization/organization-context";
+import { useOptionalOrganizationContext } from "../organization/organization-provider";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
 
@@ -16,13 +17,14 @@ type SecurityLog = {
 };
 
 export function SecurityLogsTable({ userId }: { userId?: string }) {
+  const organizationContext = useOptionalOrganizationContext();
+  const organizationId = organizationContext?.activeId;
   const [logs, setLogs] = useState<SecurityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let active = true;
-    const organizationId = getActiveOrganizationId();
     const endpoint = userId
       ? organizationId
         ? `/api/v1/audit-logs/security/organization/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(userId)}`
@@ -43,7 +45,7 @@ export function SecurityLogsTable({ userId }: { userId?: string }) {
     void fetch(`${apiOrigin}${endpoint}`, {
       credentials: "include",
       cache: "no-store",
-      headers: addOrganizationHeader(new Headers()),
+      headers: addOrganizationHeader(new Headers(), organizationId),
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("security logs request failed");
@@ -61,7 +63,7 @@ export function SecurityLogsTable({ userId }: { userId?: string }) {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [organizationId, userId]);
 
   if (loading) return <Loader />;
   if (error) return <Alert color="red">ไม่สามารถโหลด security logs ได้</Alert>;

@@ -11,6 +11,7 @@ import {
   UseGuards
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
+import { apiSuccess } from '../../../common/http/api-response.js'
 import { z } from 'zod'
 import type { AuditLogPort } from '../../../common/audit/audit.port.js'
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js'
@@ -31,10 +32,16 @@ import { CompleteGithubLoginUseCase } from '../application/use-cases/complete-gi
 import { LogoutUseCase } from '../application/use-cases/logout-use-case.js'
 import { StartGithubLoginUseCase } from '../application/use-cases/start-github-login-use-case.js'
 import { ProfileConnectionRepository } from '../infrastructure/persistence/profile-connection.repository.js'
+import { authMeDataSchema } from './dto/auth.schemas.js'
 
 const updateProfileSchema = z.object({
   name: z.string().trim().min(1).max(200),
   reason: z.string().trim().max(1000).optional().default('')
+})
+
+const githubCallbackQuerySchema = z.object({
+  code: z.string().trim().min(1),
+  state: z.string().trim().min(1)
 })
 
 @Controller('auth')
@@ -71,19 +78,19 @@ export class AuthController {
 
   @Get('github/callback')
   async callback(
-    @Query('code') code: string | undefined,
-    @Query('state') state: string | undefined,
+    @Query() query: unknown,
     @Req() request: Request,
     @Res() response: Response
   ) {
+    const parsedQuery = githubCallbackQuerySchema.safeParse(query)
     const expected = getCookie(request, 'pf_oauth_state')
-    if (!code || !state || state !== expected) {
+    if (!parsedQuery.success || parsedQuery.data.state !== expected) {
       return response.redirect(
         this.adminRedirect('/admin/login?error=invalid_oauth_state')
       )
     }
     try {
-      const result = await this.completeGithubLogin.execute(code)
+      const result = await this.completeGithubLogin.execute(parsedQuery.data.code)
       response.clearCookie('pf_oauth_state', { path: '/' })
       response.cookie('pf_session', result.sessionToken, {
         httpOnly: true,
@@ -113,8 +120,12 @@ export class AuthController {
   async me(@Principal() principal: AuthenticatedPrincipal) {
     const profile = await this.profileConnections.findProfile(principal.id)
     const organizations = await this.organizations.listForUser(principal.id)
-    return {
-      user: principal,
+    const data = {
+      user: {
+        ...principal,
+        createdAt: principal.createdAt.toISOString(),
+        updatedAt: principal.updatedAt.toISOString(),
+      },
       profile: profile
         ? {
             id: principal.id,
@@ -134,6 +145,7 @@ export class AuthController {
         role
       }))
     }
+    return apiSuccess(authMeDataSchema.parse(data))
   }
 
   @Patch('me')
@@ -143,7 +155,7 @@ export class AuthController {
     @Body() body: unknown
   ) {
     const input = updateProfileSchema.parse(body)
-    return this.unitOfWork.run(async () => {
+    const data = await this.unitOfWork.run(async () => {
       const user = await this.users.findById(principal.id)
       if (!user) return { user: principal }
       const name = input.name.trim()
@@ -170,6 +182,7 @@ export class AuthController {
       }
       return { user: { ...user } }
     })
+    return apiSuccess(data)
   }
 
   @Post('logout')
@@ -180,11 +193,11 @@ export class AuthController {
     ).principal
     await this.logout.execute(getCookie(request, 'pf_session'))
     await this.security.record({
-      organizationId: principal?.activeOrganizationId ?? null,
+      organizationId: null,
       userId: principal?.id ?? null,
       event: 'LOGOUT'
     })
     response.clearCookie('pf_session', { path: '/' })
-    return response.status(204).send()
+    return response.status(200).json(apiSuccess(null))
   }
 }

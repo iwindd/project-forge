@@ -40,6 +40,7 @@ import {
   useGetAuditLogsQuery,
   type AuditLogScopeArg
 } from './audit-logs-api'
+import { useOptionalOrganizationContext } from '../organization/organization-provider'
 import {
   AuditLogsFilterDrawer,
   RELATIONSHIP_LABELS
@@ -83,10 +84,12 @@ function UserCell({
 
 function AuditLogExportMenuItem({
   scope,
-  auditLogId
+  auditLogId,
+  organizationId
 }: {
   scope: AuditLogScopeArg
   auditLogId: string
+  organizationId?: string
 }) {
   const { invalidateAdminCaches } = useAdminCacheInvalidation()
   const [downloading, setDownloading] = useState(false)
@@ -94,9 +97,12 @@ function AuditLogExportMenuItem({
   const downloadExport = async () => {
     setDownloading(true)
     try {
-      const response = await fetch(getAuditLogExportUrl(scope, auditLogId), {
+      const response = await fetch(
+        getAuditLogExportUrl(scope, auditLogId, organizationId),
+        {
         cache: 'no-store'
-      })
+        }
+      )
       if (!response.ok) throw new Error('audit export failed')
 
       const objectUrl = URL.createObjectURL(await response.blob())
@@ -166,6 +172,8 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         : { kind: scope },
     [scope, userId]
   )
+  const organizationContext = useOptionalOrganizationContext()
+  const organizationId = organizationContext?.activeId ?? undefined
   const isPersonalTimeline = scope !== 'all'
 
   const columns = useMemo<DataTableColumn<AuditLogListItem>[]>(
@@ -237,6 +245,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
                   <AuditLogExportMenuItem
                     scope={scopeArg}
                     auditLogId={record.id}
+                    organizationId={organizationId}
                   />
                 </Menu.Dropdown>
               </Menu>
@@ -245,7 +254,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         }
       }
     ],
-    [formatDateTime, scopeArg]
+    [formatDateTime, organizationId, scopeArg]
   )
 
   const datatable = useDatatable<AuditLogListItem, AuditLogListQuery>({
@@ -256,8 +265,12 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
   })
   const { query, setSearchValue, updateQuery } = datatable
   const { data, isFetching, isError } = useGetAuditLogsQuery(
-    { scope: scopeArg, query },
-    { skip: scope === 'user' && !userId }
+    { scope: scopeArg, query, organizationId },
+    {
+      skip:
+        (scope === 'user' && !userId) ||
+        (scope !== 'own' && !organizationId)
+    }
   )
   const [filtersOpened, { close: closeFilters, open: openFilters }] =
     useDisclosure(false)

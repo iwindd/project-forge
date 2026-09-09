@@ -1,21 +1,10 @@
 import { apiServerFetch } from "@/lib/api-server";
+import { profileResponseSchema } from "../schemas";
 import type { Profile } from "../types";
 
 export async function getProfile(): Promise<Profile | null> {
   try {
-    const result = await apiServerFetch<{
-      profile: {
-        id: string;
-        displayName: string;
-        avatarUrl: string | null;
-        bio: string | null;
-        timezone: string | null;
-        platformRole: "ADMIN" | "USER";
-        createdAt: string;
-        updatedAt: string;
-      };
-      connections: NonNullable<Profile["connections"]>;
-    }>("profile");
+    const result = await apiServerFetch("profile", profileResponseSchema);
     return {
       id: result.profile.id,
       name: result.profile.displayName,
