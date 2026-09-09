@@ -1,63 +1,27 @@
 .appShell {
-  --shell-main-bg-color: light-dark(
-    var(--mantine-color-gray-0),
-    var(--mantine-color-dark-9)
+  --app-shell-border-color: var(--mantine-color-default-border);
+  --shell-main-bg-color: var(--mantine-color-body);
+  --nav-surface-bg-color: var(--mantine-color-default);
+  --nav-surface-border-color: var(--mantine-color-default-border);
+  --nav-header-bg-color: color-mix(
+    in srgb,
+    var(--mantine-color-body) 86%,
+    transparent
   );
-  --nav-surface-bg-color: light-dark(
-    var(--mantine-color-white),
-    var(--mantine-color-dark-9)
-  );
-  --nav-surface-border-color: light-dark(
-    var(--mantine-color-gray-2),
-    var(--mantine-color-dark-7)
-  );
-  --nav-header-bg-color: light-dark(
-    color-mix(in srgb, var(--mantine-color-white) 85%, transparent),
-    color-mix(in srgb, var(--mantine-color-dark-9) 85%, transparent)
-  );
-  --nav-item-text-color: light-dark(
-    var(--mantine-color-dark-3),
-    var(--mantine-color-dark-1)
-  );
-  --nav-item-hover-bg-color: light-dark(
-    color-mix(in srgb, var(--mantine-color-gray-1) 75%, transparent),
-    var(--mantine-color-dark-6)
-  );
-  --nav-item-active-bg-color: light-dark(
-    color-mix(in srgb, var(--mantine-primary-color-1) 50%, transparent),
-    color-mix(in srgb, var(--mantine-primary-color-9) 15%, transparent)
-  );
-  --nav-item-active-text-color: light-dark(
-    var(--mantine-primary-color-6),
-    var(--mantine-primary-color-3)
-  );
-  --nav-nested-item-text-color: light-dark(
-    var(--mantine-color-dark-3),
-    var(--mantine-color-dark-1)
-  );
-  --nav-nested-item-hover-bg-color: light-dark(
-    var(--mantine-color-gray-1),
-    var(--mantine-color-dark-6)
-  );
-  --nav-nested-item-active-bg-color: light-dark(
-    var(--mantine-color-gray-1),
-    var(--mantine-color-dark-6)
-  );
-  --nav-nested-item-active-text-color: light-dark(
-    var(--mantine-color-black),
-    var(--mantine-color-white)
-  );
-  --nav-nested-line-color: light-dark(
-    var(--mantine-color-gray-2),
-    var(--mantine-color-dark-4)
-  );
-  --nav-muted-text-color: light-dark(
-    var(--mantine-color-gray-6),
-    var(--mantine-color-dark-2)
-  );
+  --nav-item-text-color: var(--mantine-color-text);
+  --nav-item-hover-bg-color: var(--mantine-color-default-hover);
+  --nav-item-active-bg-color: var(--mantine-primary-color-light);
+  --nav-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-item-text-color: var(--mantine-color-text);
+  --nav-nested-item-hover-bg-color: var(--mantine-color-default-hover);
+  --nav-nested-item-active-bg-color: var(--mantine-primary-color-light);
+  --nav-nested-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-line-color: var(--mantine-color-default-border);
+  --nav-muted-text-color: var(--mantine-color-dimmed);
 }
 
 .navbar {
+  --app-shell-border-color: var(--nav-surface-border-color) !important;
   background: var(--nav-surface-bg-color);
   border-color: var(--nav-surface-border-color);
 }
@@ -70,9 +34,10 @@
 }
 
 .header {
+  --app-shell-border-color: var(--nav-surface-border-color) !important;
   background: var(--nav-header-bg-color);
   backdrop-filter: blur(20px);
-  border-bottom-color: transparent;
+  border-bottom-color: var(--nav-surface-border-color);
   transition:
     background-color 150ms ease,
     box-shadow 150ms ease;

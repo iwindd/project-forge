@@ -215,7 +215,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
               <Menu shadow='md' position='bottom-end'>
                 <Menu.Target>
                   <ActionIcon
-                    variant='default-subtle'
+                    variant='subtle'
                     aria-label={`เมนูของรายการ ${AUDIT_ACTION_LABELS[record.action]}`}
                   >
                     <IconDotsVertical size={18} />
@@ -382,7 +382,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
           />
           <Button
             type='button'
-            variant='default-subtle'
+            variant='subtle'
             leftSection={<IconFilter size={18} />}
             rightSection={
               activeFilterCount > 0 ? (

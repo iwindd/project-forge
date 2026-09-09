@@ -46,7 +46,7 @@ export function AdminHeader({
       <Group gap='xs' wrap='nowrap'>
         <Tooltip label={t('settings')}>
           <ActionIcon
-            variant='default-subtle'
+            variant='subtle'
             radius='lg'
             size='lg'
             aria-label={t('openSettings')}

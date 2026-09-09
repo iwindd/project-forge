@@ -86,7 +86,7 @@ export function UsersTable() {
         render: (record: UserListItem) => (
           <Badge
             variant="light"
-            color={record.role === "ADMIN" ? "brand" : "gray"}
+            color={record.role === "ADMIN" ? "blue" : "gray"}
           >
             {record.role === "ADMIN" ? common("admin") : common("editor")}
           </Badge>
@@ -97,7 +97,7 @@ export function UsersTable() {
         title: common("status"),
         sortable: true,
         render: (record: UserListItem) => (
-          <Badge color={record.isActive ? "green" : "danger"} variant="light">
+          <Badge color={record.isActive ? "green" : "red"} variant="light">
             {record.isActive ? t("active") : t("inactive")}
           </Badge>
         ),

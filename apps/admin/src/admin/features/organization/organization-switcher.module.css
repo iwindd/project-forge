@@ -16,14 +16,8 @@
 
 .control:hover,
 .control:focus-visible {
-  background-color: light-dark(
-    var(--mantine-color-gray-1),
-    var(--mantine-color-dark-7)
-  );
-  border-color: light-dark(
-    var(--mantine-color-gray-3),
-    var(--mantine-color-dark-5)
-  );
+  background-color: var(--mantine-color-default-hover);
+  border-color: var(--mantine-color-default-border);
 }
 
 .controlAvatar {
@@ -46,10 +40,7 @@
 
 .dropdown {
   padding: var(--mantine-spacing-xs);
-  border-color: light-dark(
-    var(--mantine-color-gray-3),
-    var(--mantine-color-dark-5)
-  );
+  border-color: var(--mantine-color-default-border);
 }
 
 .organizationItem {

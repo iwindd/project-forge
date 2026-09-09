@@ -1,18 +1,15 @@
-// Container size constants in pixels
-const CONTAINER_SIZE_XS = 570;
-const CONTAINER_SIZE_SM = 770;
-const CONTAINER_SIZE_MD = 970;
-const CONTAINER_SIZE_LG = 1170;
-const CONTAINER_SIZE_XL = 1470;
+import { rem } from '@mantine/core'
 
-export type ContainerSizeKey = "xs" | "sm" | "md" | "lg" | "xl";
+export type ContainerSizeKey = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl'
 
-const CONTAINER_SIZES: Record<ContainerSizeKey, number> = {
-  xs: CONTAINER_SIZE_XS,
-  sm: CONTAINER_SIZE_SM,
-  md: CONTAINER_SIZE_MD,
-  lg: CONTAINER_SIZE_LG,
-  xl: CONTAINER_SIZE_XL,
-};
+const CONTAINER_SIZES: Record<ContainerSizeKey, string> = {
+  xxs: rem('200px'),
+  xs: rem('300px'),
+  sm: rem('400px'),
+  md: rem('500px'),
+  lg: rem('600px'),
+  xl: rem('1400px'),
+  xxl: rem('1600px')
+}
 
-export default CONTAINER_SIZES;
+export default CONTAINER_SIZES

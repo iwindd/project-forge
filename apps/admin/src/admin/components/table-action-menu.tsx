@@ -13,14 +13,14 @@ type TableActionItem = {
 type TableActionMenuProps = {
   label?: string
   displayType?: 'menu' | 'icon' | 'button'
-  variant?: 'default' | 'default-subtle'
+  variant?: 'default' | 'subtle'
   actions: TableActionItem[]
 }
 
 function TableActionMenu({
   label = 'Actions',
   displayType = 'menu',
-  variant = 'default-subtle',
+  variant = 'subtle',
   actions
 }: TableActionMenuProps) {
   if (displayType === 'button') {

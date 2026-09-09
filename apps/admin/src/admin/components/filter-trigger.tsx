@@ -30,7 +30,7 @@ export const FilterTrigger = forwardRef<HTMLButtonElement, FilterTriggerProps>(
       <Button
         ref={ref}
         type="button"
-        variant="default-subtle"
+        variant="subtle"
         color="gray"
         className={classes.root}
         fullWidth={fullWidth}

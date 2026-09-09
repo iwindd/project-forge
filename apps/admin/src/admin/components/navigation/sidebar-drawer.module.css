@@ -11,50 +11,18 @@
 
 .mobileDrawerSidebar {
   height: 100%;
-  --nav-surface-bg-color: light-dark(
-    var(--mantine-color-white),
-    var(--mantine-color-dark-9)
-  );
-  --nav-item-text-color: light-dark(
-    var(--mantine-color-dark-3),
-    var(--mantine-color-dark-1)
-  );
-  --nav-item-hover-bg-color: light-dark(
-    color-mix(in srgb, var(--mantine-color-gray-1) 75%, transparent),
-    var(--mantine-color-dark-6)
-  );
-  --nav-item-active-bg-color: light-dark(
-    color-mix(in srgb, var(--mantine-primary-color-1) 50%, transparent),
-    color-mix(in srgb, var(--mantine-primary-color-9) 15%, transparent)
-  );
-  --nav-item-active-text-color: light-dark(
-    var(--mantine-primary-color-6),
-    var(--mantine-primary-color-3)
-  );
-  --nav-nested-item-text-color: light-dark(
-    var(--mantine-color-dark-3),
-    var(--mantine-color-dark-1)
-  );
-  --nav-nested-item-hover-bg-color: light-dark(
-    var(--mantine-color-gray-1),
-    var(--mantine-color-dark-6)
-  );
-  --nav-nested-item-active-bg-color: light-dark(
-    var(--mantine-color-gray-1),
-    var(--mantine-color-dark-6)
-  );
-  --nav-nested-item-active-text-color: light-dark(
-    var(--mantine-color-black),
-    var(--mantine-color-white)
-  );
-  --nav-nested-line-color: light-dark(
-    var(--mantine-color-gray-2),
-    var(--mantine-color-dark-4)
-  );
-  --nav-muted-text-color: light-dark(
-    var(--mantine-color-gray-6),
-    var(--mantine-color-dark-2)
-  );
+  --nav-surface-bg-color: var(--mantine-color-default);
+  --nav-surface-border-color: var(--mantine-color-default-border);
+  --nav-item-text-color: var(--mantine-color-text);
+  --nav-item-hover-bg-color: var(--mantine-color-default-hover);
+  --nav-item-active-bg-color: var(--mantine-primary-color-light);
+  --nav-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-item-text-color: var(--mantine-color-text);
+  --nav-nested-item-hover-bg-color: var(--mantine-color-default-hover);
+  --nav-nested-item-active-bg-color: var(--mantine-primary-color-light);
+  --nav-nested-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-line-color: var(--mantine-color-default-border);
+  --nav-muted-text-color: var(--mantine-color-dimmed);
   background-color: var(--nav-surface-bg-color);
   display: flex;
   flex-direction: column;
@@ -96,18 +64,8 @@
   border-radius: 999px;
   background-color: color-mix(
     in srgb,
-    var(--mantine-color-gray-5) 24%,
+    var(--mantine-color-dimmed) 32%,
     transparent
   ) !important;
   transition: none;
-}
-
-[data-mantine-color-scheme="dark"] .navigationScrollbarThumb,
-[data-mantine-color-scheme="dark"] .navigationScrollbarThumb:hover,
-[data-mantine-color-scheme="dark"] .navigationScrollbarThumb:active {
-  background-color: color-mix(
-    in srgb,
-    var(--mantine-color-gray-6) 26%,
-    transparent
-  ) !important;
 }

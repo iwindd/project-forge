@@ -44,13 +44,13 @@
 .controlStart[data-orientation="vertical"] {
   top: 0;
   box-shadow: 0 0.625rem 1rem -0.875rem
-    light-dark(var(--mantine-color-dark-9), var(--mantine-color-black));
+    color-mix(in srgb, var(--mantine-color-text) 24%, transparent);
 }
 
 .controlEnd[data-orientation="vertical"] {
   bottom: 0;
   box-shadow: 0 -0.625rem 1rem -0.875rem
-    light-dark(var(--mantine-color-dark-9), var(--mantine-color-black));
+    color-mix(in srgb, var(--mantine-color-text) 24%, transparent);
 }
 
 .controlStart[data-hidden="true"][data-orientation="vertical"] {

@@ -1,7 +1,6 @@
 .root {
   position: relative;
-  border: 1px solid
-    light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6));
+  border: 1px solid var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-lg);
 }
 
@@ -11,24 +10,21 @@
   left: var(--setting-set-offset);
   transform: translateY(-53%);
   border-radius: var(--mantine-radius-xl);
-  background-color: light-dark(
-    var(--mantine-color-dark-6),
-    var(--mantine-color-white)
-  );
+  background-color: var(--mantine-primary-color-filled);
 }
 
 .reset {
-  color: var(--mantine-color-gray-3);
+  color: var(--mantine-color-dimmed);
 }
 
 .title {
   line-height: 1;
-  color: light-dark(var(--mantine-color-white), var(--mantine-color-gray-9));
+  color: var(--mantine-primary-color-contrast);
 }
 
 .info {
   display: inline-flex;
   align-items: center;
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-dimmed);
   outline-offset: rem(2px);
 }

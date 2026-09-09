@@ -208,7 +208,7 @@ function FilterSectionLabel({
         {label}
       </Text>
       {count > 0 ? (
-        <Badge size='sm' variant='light' color='brand'>
+        <Badge size='sm' variant='light' color='blue'>
           {count}
         </Badge>
       ) : null}
@@ -398,7 +398,7 @@ export function AuditLogsFilterDrawer({
           <Button
             type='button'
             variant='subtle'
-            color='danger'
+            color='red'
             mt='md'
             disabled={
               activeFilterCount === 0 &&

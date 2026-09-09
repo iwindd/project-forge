@@ -43,7 +43,7 @@ export function PageHeader({
         <Button
           component={Link}
           href={backTo}
-          variant="default-subtle"
+          variant="subtle"
           className={classes.backButton}
           leftSection={<IconArrowLeft size={17} aria-hidden="true" />}
           w="fit-content"

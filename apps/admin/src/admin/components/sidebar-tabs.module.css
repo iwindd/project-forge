@@ -23,18 +23,12 @@
 }
 
 .tab:hover {
-  background-color: light-dark(
-    var(--mantine-color-gray-2),
-    var(--mantine-color-dark-7)
-  );
+  background-color: var(--mantine-color-default-hover);
 }
 
 .tab[data-active] {
-  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
-  background-color: light-dark(
-    var(--mantine-color-gray-3),
-    var(--mantine-color-dark-6)
-  );
+  color: var(--mantine-primary-color-light-color);
+  background-color: var(--mantine-primary-color-light);
 }
 
 .tabSection[data-position="left"] {

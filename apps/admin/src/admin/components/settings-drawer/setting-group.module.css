@@ -9,7 +9,7 @@
 }
 
 .dirty {
-  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+  color: var(--mantine-color-text);
   cursor: pointer;
 }
 

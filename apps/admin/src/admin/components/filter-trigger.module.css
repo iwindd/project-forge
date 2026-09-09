@@ -12,7 +12,7 @@
 }
 
 .root[data-active] {
-  color: light-dark(black, white);
+  color: var(--mantine-primary-color-contrast);
   font-weight: 900 !important;
 }
 

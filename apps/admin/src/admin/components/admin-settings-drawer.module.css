@@ -38,9 +38,10 @@
 }
 
 .settingsScrollbarThumb {
-  background-color: light-dark(
-    var(--mantine-color-gray-4),
-    var(--mantine-color-dark-4)
+  background-color: color-mix(
+    in srgb,
+    var(--mantine-color-dimmed) 32%,
+    transparent
   );
 }
 
@@ -51,7 +52,6 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--mantine-color-red-5);
-  border: 1.5px solid
-    light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+  background-color: var(--mantine-color-red-filled);
+  border: 1.5px solid var(--mantine-color-body);
 }

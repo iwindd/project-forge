@@ -166,7 +166,6 @@ export function OrganizationSwitcher() {
             aria-label="เลือก Organization"
           >
             <Avatar
-              color="brand"
               radius="xl"
               size={32}
               className={classes.controlAvatar}
@@ -210,7 +209,7 @@ export function OrganizationSwitcher() {
                   key={organization.id}
                   className={classes.organizationItem}
                   leftSection={
-                    <Avatar color="brand" radius="xl" size={28}>
+                    <Avatar radius="xl" size={28}>
                       {getOrganizationInitial(organization.name)}
                     </Avatar>
                   }

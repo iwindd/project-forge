@@ -61,7 +61,7 @@ export function FilterResult({
         <Button
           type="button"
           variant="subtle"
-          color="danger"
+          color="red"
           className={classes.clear}
           leftSection={<IconTrash size={16} />}
           onClick={onClearAllAction}

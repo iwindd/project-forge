@@ -1,47 +1,24 @@
-@import "@mantine/core/styles.css";
-@import "@mantine/dates/styles.css";
-@import "@mantine/notifications/styles.css";
-@import "mantine-datatable/styles.css";
-@layer mantine, mantine-datatable;
-
-:root,
-[data-mantine-color-scheme="light"] {
-  --shadow-xs: 0 1px 2px rgba(145, 158, 171, 0.2);
-  --shadow-sm: 0 8px 16px rgba(145, 158, 171, 0.16);
-  --shadow-md:
-    0 0 2px rgba(145, 158, 171, 0.2), 0 12px 24px -4px rgba(145, 158, 171, 0.12);
-  --shadow-lg:
-    0 0 2px rgba(145, 158, 171, 0.2), 0 16px 32px -4px rgba(145, 158, 171, 0.12);
-  --shadow-xl: -40px 40px 80px -8px rgba(145, 158, 171, 0.24);
-}
-
-[data-mantine-color-scheme="dark"] {
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
-  --shadow-sm: 0 8px 16px rgba(0, 0, 0, 0.24);
-  --shadow-md: 0 0 2px rgba(0, 0, 0, 0.2), 0 12px 24px -4px rgba(0, 0, 0, 0.24);
-  --shadow-lg: 0 0 2px rgba(0, 0, 0, 0.2), 0 16px 32px -4px rgba(0, 0, 0, 0.24);
-  --shadow-xl: -40px 40px 80px -8px rgba(0, 0, 0, 0.24);
-}
-
-body {
-  margin: 0;
-  min-height: 100dvh;
-  background: var(--mantine-color-body);
-}
-
-button,
-input,
-textarea,
-select {
-  font-family: inherit;
-}
-
 /*
  * Keep the navigation layout stable even when a client CSS-module chunk is
  * loaded after the organization layout. These data attributes are rendered
  * by both the desktop sidebar and the mobile drawer, so the critical layout
  * does not depend on a route-specific Turbopack CSS chunk.
  */
+[data-admin-sidebar] {
+  --nav-surface-bg-color: var(--mantine-color-default);
+  --nav-surface-border-color: var(--mantine-color-default-border);
+  --nav-item-text-color: var(--mantine-color-text);
+  --nav-item-hover-bg-color: var(--mantine-color-default-hover);
+  --nav-item-active-bg-color: var(--mantine-primary-color-light);
+  --nav-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-item-text-color: var(--mantine-color-text);
+  --nav-nested-item-hover-bg-color: var(--mantine-color-default-hover);
+  --nav-nested-item-active-bg-color: var(--mantine-primary-color-light);
+  --nav-nested-item-active-text-color: var(--mantine-primary-color-light-color);
+  --nav-nested-line-color: var(--mantine-color-default-border);
+  --nav-muted-text-color: var(--mantine-color-dimmed);
+}
+
 [data-admin-sidebar] [data-sidebar-content] {
   min-height: 100%;
 }
@@ -53,20 +30,14 @@ select {
   padding: 1rem 1rem 0.5rem;
   background: transparent;
   border: 0;
-  color: var(
-    --nav-muted-text-color,
-    light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-2))
-  );
+  color: var(--nav-muted-text-color);
   cursor: pointer;
   text-align: left;
   transition: color 300ms ease;
 }
 
 [data-admin-sidebar] [data-sidebar-group-heading]:hover {
-  color: var(
-    --nav-item-text-color,
-    light-dark(var(--mantine-color-dark-3), var(--mantine-color-dark-1))
-  );
+  color: var(--nav-item-text-color);
 }
 
 [data-admin-sidebar] [data-sidebar-group-icon] {
@@ -78,7 +49,8 @@ select {
   transition: all 300ms ease;
 }
 
-[data-admin-sidebar] [data-sidebar-group-heading]:hover
+[data-admin-sidebar]
+  [data-sidebar-group-heading]:hover
   [data-sidebar-group-icon] {
   width: 18px;
   opacity: 1;
@@ -105,10 +77,7 @@ select {
   border: 0;
   border-radius: 0.5rem;
   background: transparent;
-  color: var(
-    --nav-item-text-color,
-    light-dark(var(--mantine-color-dark-3), var(--mantine-color-dark-1))
-  );
+  color: var(--nav-item-text-color);
   cursor: pointer;
   text-decoration: none;
   user-select: none;
@@ -116,24 +85,12 @@ select {
 
 [data-admin-sidebar]
   [data-sidebar-item]:hover:not([data-active="true"]):not([data-disabled]) {
-  background-color: var(
-    --nav-item-hover-bg-color,
-    light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))
-  );
+  background-color: var(--nav-item-hover-bg-color);
 }
 
 [data-admin-sidebar] [data-sidebar-item][data-active="true"] {
-  background-color: var(
-    --nav-item-active-bg-color,
-    light-dark(
-      color-mix(in srgb, var(--mantine-primary-color-1) 50%, transparent),
-      color-mix(in srgb, var(--mantine-primary-color-9) 15%, transparent)
-    )
-  );
-  color: var(
-    --nav-item-active-text-color,
-    light-dark(var(--mantine-primary-color-6), var(--mantine-primary-color-3))
-  );
+  background-color: var(--nav-item-active-bg-color);
+  color: var(--nav-item-active-text-color);
   font-weight: 600;
 }
 
@@ -155,10 +112,7 @@ select {
   [data-sidebar-item][data-active="true"]
   [data-sidebar-icon] {
   opacity: 1;
-  color: var(
-    --nav-item-active-text-color,
-    light-dark(var(--mantine-primary-color-6), var(--mantine-primary-color-3))
-  );
+  color: var(--nav-item-active-text-color);
 }
 
 [data-admin-sidebar] [data-sidebar-item-info] {
@@ -190,10 +144,7 @@ select {
   margin-left: 0.625rem;
   padding: 0.5rem 0.875rem 0.5rem 0.5rem;
   border-radius: 0.375rem;
-  color: var(
-    --nav-nested-item-text-color,
-    light-dark(var(--mantine-color-dark-3), var(--mantine-color-dark-1))
-  );
+  color: var(--nav-nested-item-text-color);
   font-size: 0.8125rem;
 }
 
@@ -201,22 +152,13 @@ select {
   [data-sidebar-item][data-sidebar-level="nested"]:hover:not(
     [data-active="true"]
   ):not([data-disabled]) {
-  background-color: var(
-    --nav-nested-item-hover-bg-color,
-    light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))
-  );
+  background-color: var(--nav-nested-item-hover-bg-color);
 }
 
 [data-admin-sidebar]
   [data-sidebar-item][data-sidebar-level="nested"][data-active="true"] {
-  background-color: var(
-    --nav-nested-item-active-bg-color,
-    light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))
-  );
-  color: var(
-    --nav-nested-item-active-text-color,
-    light-dark(var(--mantine-color-black), var(--mantine-color-white))
-  );
+  background-color: var(--nav-nested-item-active-bg-color);
+  color: var(--nav-nested-item-active-text-color);
 }
 
 [data-admin-sidebar]
@@ -227,8 +169,8 @@ select {
   top: 1.125rem;
   width: 0.625rem;
   height: 0.625rem;
-  border-left: 2px solid var(--nav-nested-line-color, var(--mantine-color-dark-4));
-  border-bottom: 2px solid var(--nav-nested-line-color, var(--mantine-color-dark-4));
+  border-left: 2px solid var(--nav-nested-line-color);
+  border-bottom: 2px solid var(--nav-nested-line-color);
   border-bottom-left-radius: 0.3125rem;
   transform: translateY(-50%);
   pointer-events: none;
@@ -241,7 +183,7 @@ select {
   left: -1px;
   top: 0;
   width: 2px;
-  background-color: var(--nav-nested-line-color, var(--mantine-color-dark-4));
+  background-color: var(--nav-nested-line-color);
   pointer-events: none;
 }
 
@@ -273,36 +215,59 @@ select {
     font-weight: 600;
     font-size: var(--mantine-font-size-xs);
   }
+
+  th,
+  td {
+    padding-block: var(--mantine-spacing-md);
+  }
 }
 
 .mantine-datatable {
-  border-radius: var(--paper-radius) !important;
+  --mantine-datatable-color: var(--mantine-color-text) !important;
+  --mantine-datatable-background-color: var(--mantine-color-body) !important;
+  --mantine-datatable-border-color: var(--mantine-color-default-border) !important;
+  --mantine-datatable-row-border-color: var(--mantine-color-default-border) !important;
+  --mantine-datatable-highlight-on-hover-color: var(
+    --mantine-color-default-hover
+  ) !important;
+
+  overflow: hidden;
+  border: 1px solid var(--mantine-datatable-border-color);
+  border-radius: var(--mantine-radius-default) !important;
+  background-color: var(--mantine-datatable-background-color) !important;
 }
 
-thead th,
+.mantine-datatable-table thead th,
 .mantine-datatable-header th {
-  background-color: var(--mantine-color-gray-0) !important;
-}
-
-[data-mantine-color-scheme="dark"] thead th,
-[data-mantine-color-scheme="dark"] .mantine-datatable-header th {
-  background-color: var(--mantine-color-dark-6) !important;
+  color: var(--mantine-color-text);
+  background-color: transparent !important;
+  border-bottom-color: var(--mantine-datatable-border-color) !important;
 }
 
 .mantine-datatable-row[data-with-row-border]:not(:last-of-type) td {
-  border-bottom-style: dashed !important;
+  border-bottom-style: solid !important;
 }
 
 .mantine-datatable-pagination {
-  border-top-style: dashed !important;
+  background-color: transparent !important;
+  border-top-style: solid !important;
+  border-top-color: var(--mantine-datatable-border-color) !important;
+}
+
+.mantine-datatable-header-cell-sortable:hover:not(:has(button:hover)),
+.mantine-datatable-header-cell-draggable:hover:not(:has(button:hover)) {
+  background-color: var(--mantine-color-default-hover) !important;
+}
+
+.mantine-datatable-empty-state {
+  color: var(--mantine-color-dimmed);
+}
+
+.mantine-datatable-empty-state-icon {
+  background-color: var(--mantine-color-default-hover);
 }
 
 .mantine-Table-tbody
   .mantine-Table-tr[data-with-row-border]:not(:last-of-type) {
-  border-bottom: 1px dashed var(--table-border-color);
-}
-
-[data-mantine-color-scheme="dark"] .mantine-datatable {
-  background-color: var(--mantine-color-dark-7) !important;
-  --mantine-datatable-background-color: var(--mantine-color-dark-7) !important;
+  border-bottom: 1px solid var(--mantine-color-default-border);
 }

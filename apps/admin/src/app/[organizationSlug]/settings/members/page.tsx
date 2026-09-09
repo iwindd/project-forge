@@ -455,7 +455,7 @@ export default function OrganizationMembersPage() {
                               </td>
                               <td>
                                 <Group className={classes.memberIdentity} gap="sm" wrap="nowrap">
-                                  <Avatar color="brand" radius="xl" size={34}>
+                                  <Avatar radius="xl" size={34}>
                                     {getInitial(member.name)}
                                   </Avatar>
                                   <Stack gap={0}>

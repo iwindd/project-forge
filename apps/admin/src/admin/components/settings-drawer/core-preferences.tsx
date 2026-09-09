@@ -36,7 +36,7 @@ export default function CorePreferences() {
             {isThemeModified && (
               <ActionIcon
                 type="button"
-                variant="default-subtle"
+                variant="subtle"
                 size="sm"
                 aria-label="รีเซ็ตธีม"
                 onClick={() => setColorScheme("auto")}

@@ -46,23 +46,14 @@
 }
 
 .filterOption:hover {
-  background-color: light-dark(
-    var(--mantine-color-gray-0),
-    var(--mantine-color-dark-5)
-  );
+  background-color: var(--mantine-color-default-hover);
 }
 
 .filterOption[data-checked] {
-  background-color: light-dark(
-    var(--mantine-color-gray-0),
-    var(--mantine-color-dark-5)
-  );
+  background-color: var(--mantine-primary-color-light);
   color: var(--mantine-color-text);
 }
 
 .filterOption[data-checked]:hover {
-  background-color: light-dark(
-    var(--mantine-color-gray-0),
-    var(--mantine-color-dark-5)
-  );
+  background-color: var(--mantine-primary-color-light-hover);
 }

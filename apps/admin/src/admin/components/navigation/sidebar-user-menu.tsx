@@ -51,7 +51,7 @@ export function SidebarUserMenu({ user }: { user: AdminUser }) {
     >
       <Menu.Target>
         <UnstyledButton className={classes.control} aria-label={displayName}>
-          <Avatar color="brand" radius="xl" size={34}>
+          <Avatar radius="xl" size={34}>
             {displayName.charAt(0).toUpperCase()}
           </Avatar>
           <Stack className={classes.details} gap={0}>

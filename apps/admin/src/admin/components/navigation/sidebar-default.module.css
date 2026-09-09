@@ -52,18 +52,8 @@
   border-radius: 999px;
   background-color: color-mix(
     in srgb,
-    var(--mantine-color-gray-5) 24%,
+    var(--mantine-color-dimmed) 32%,
     transparent
   ) !important;
   transition: none;
-}
-
-[data-mantine-color-scheme="dark"] .navigationScrollbarThumb,
-[data-mantine-color-scheme="dark"] .navigationScrollbarThumb:hover,
-[data-mantine-color-scheme="dark"] .navigationScrollbarThumb:active {
-  background-color: color-mix(
-    in srgb,
-    var(--mantine-color-gray-6) 26%,
-    transparent
-  ) !important;
 }

@@ -86,7 +86,7 @@ export function AdminSettingsDrawer({
         <Text
           fw={700}
           size="lg"
-          c="light-dark(var(--mantine-color-dark-6), var(--mantine-color-white))"
+          c="var(--mantine-color-text)"
         >
           {t("title")}
         </Text>
@@ -97,7 +97,7 @@ export function AdminSettingsDrawer({
           >
             <ActionIcon
               onClick={toggleFullscreen}
-              variant="default-subtle"
+              variant="subtle"
               radius="md"
               size="lg"
               aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")}
@@ -114,7 +114,7 @@ export function AdminSettingsDrawer({
             <Box pos="relative">
               <ActionIcon
                 onClick={resetAll}
-                variant="default-subtle"
+                variant="subtle"
                 radius="md"
                 size="lg"
                 aria-label={t("reset")}
@@ -127,7 +127,7 @@ export function AdminSettingsDrawer({
 
           <ActionIcon
             onClick={onCloseAction}
-            variant="default-subtle"
+            variant="subtle"
             radius="md"
             size="lg"
             aria-label={t("close")}
