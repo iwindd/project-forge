@@ -2,7 +2,6 @@ import { ADMIN_COLOR_SCHEME_KEY } from "@/admin/constants";
 import { AdminShell } from "@/admin/components/admin-shell";
 import { PageHeader } from "@/admin/components/page-header";
 import { AdminUIProvider } from "@/admin/providers/admin-ui-provider";
-import { UiCustomizeProvider } from "@/admin/providers/ui-customize-provider";
 import { ProfileProvider } from "@/app/admin/(main)/profile/components/profile-context";
 import { auth } from "@/auth";
 import { getProfile } from "@/servers/profile/queries/get-profile";
@@ -84,20 +83,18 @@ export default async function AccountLayout({
               auth: { user: session.user },
             }}
           >
-            <UiCustomizeProvider>
-              <AdminShell
-                user={session.user}
-                organizationSlug={organization.slug}
-                navigationMode="account"
-              >
-                <ProfileProvider profile={profile}>
-                  <Container w="100%" size="xl">
-                    <PageHeader title="บัญชีของฉัน" />
-                    {children}
-                  </Container>
-                </ProfileProvider>
-              </AdminShell>
-            </UiCustomizeProvider>
+            <AdminShell
+              user={session.user}
+              organizationSlug={organization.slug}
+              navigationMode="account"
+            >
+              <ProfileProvider profile={profile}>
+                <Container w="100%" size="xl">
+                  <PageHeader title="บัญชีของฉัน" />
+                  {children}
+                </Container>
+              </ProfileProvider>
+            </AdminShell>
           </AdminUIProvider>
         </NextIntlClientProvider>
       </body>

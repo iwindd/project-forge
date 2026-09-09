@@ -1,3 +1,7 @@
+:global(:root) {
+  --admin-sidebar-width: 260px;
+}
+
 .appShell {
   --app-shell-border-color: var(--mantine-color-default-border);
   --shell-main-bg-color: var(--mantine-color-body);
@@ -61,11 +65,4 @@
   .mainContent {
     padding-inline: var(--mantine-spacing-3xl);
   }
-}
-
-.hydrationCover {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: var(--shell-main-bg-color);
 }

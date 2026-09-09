@@ -19,11 +19,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useAppSelector } from "../hooks";
-import { resetSettings } from "../features/layout/layout-slice";
-import { useAppDispatch } from "../hooks";
 import CorePreferences from "./settings-drawer/core-preferences";
-import FontGroup from "./settings-drawer/font-group";
 import { useScrollbarVisibility } from "./settings-drawer/use-scrollbar-visibility";
 import classes from "./admin-settings-drawer.module.css";
 
@@ -36,14 +32,12 @@ export function AdminSettingsDrawer({
 }) {
   const t = useTranslations("Settings");
   const [fullscreen, setFullscreen] = useState(false);
-  const dispatch = useAppDispatch();
-  const { fontScale } = useAppSelector((state) => state.layout);
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.settingsScrollbar} ${
     scrollbar.visible ? classes.settingsScrollbarVisible : ""
   }`;
-  const hasAnyChanges = colorScheme !== "auto" || fontScale !== 1;
+  const hasAnyChanges = colorScheme !== "auto";
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -65,7 +59,6 @@ export function AdminSettingsDrawer({
   };
 
   const resetAll = () => {
-    dispatch(resetSettings());
     setColorScheme("auto");
   };
 
@@ -153,7 +146,6 @@ export function AdminSettingsDrawer({
       >
         <Stack className={classes.drawerContentInner} px="md" gap="xl" pb="xl">
           <CorePreferences />
-          <FontGroup />
         </Stack>
       </ScrollArea>
     </Drawer>

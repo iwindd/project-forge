@@ -12,12 +12,12 @@ import { IconArrowUp } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import type { AdminUser } from "../../session";
 import { OrganizationProvider } from "../features/organization/organization-provider";
-import { useAppSelector } from "../hooks";
 import { AdminHeader } from "./admin-header";
 import { AdminSettingsDrawer } from "./admin-settings-drawer";
 import classes from "./admin-shell.module.css";
 import SidebarDefault from "./navigation/sidebar-default";
 import SidebarDrawer from "./navigation/sidebar-drawer";
+import { SIDEBAR_WIDTH } from "./navigation/sidebar-constants";
 import type { SidebarNavigationMode } from "./navigation/navigation-utils";
 
 export function AdminShell({
@@ -31,7 +31,6 @@ export function AdminShell({
   navigationMode?: SidebarNavigationMode;
   children: ReactNode;
 }>) {
-  const hydrated = useAppSelector((state) => state.layout.isHydrated);
   const [mobileOpened, mobileHandlers] = useDisclosure(false);
   const [settingsOpened, settingsHandlers] = useDisclosure(false);
   const [scroll, scrollTo] = useWindowScroll();
@@ -42,7 +41,7 @@ export function AdminShell({
       layout="alt"
       header={{ height: 72 }}
       navbar={{
-        width: 300,
+        width: SIDEBAR_WIDTH,
         breakpoint: "sm",
         collapsed: { mobile: true },
       }}
@@ -100,7 +99,6 @@ export function AdminShell({
         )}
       </Transition>
 
-      {!hydrated && <Box className={classes.hydrationCover} />}
     </AppShell>
   );
 

@@ -8,6 +8,7 @@ import NavigationScrollControls from "./navigation-scroll-controls";
 import type { SidebarNavigationMode } from "./navigation-utils";
 import classes from "./sidebar-drawer.module.css";
 import { SidebarBackButton } from "./sidebar-back-button";
+import { SIDEBAR_WIDTH } from "./sidebar-constants";
 import SidebarNavContent from "./sidebar-nav-content";
 import { SidebarUserMenu } from "./sidebar-user-menu";
 import { useScrollbarVisibility } from "./use-scrollbar-visibility";
@@ -39,7 +40,7 @@ export default function SidebarDrawer({
       onClose={onCloseAction}
       padding={0}
       position="left"
-      size={300}
+      size={SIDEBAR_WIDTH}
       title={
         showBackButton ? (
           <SidebarBackButton organizationSlug={organizationSlug} />

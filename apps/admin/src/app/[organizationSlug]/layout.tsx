@@ -1,7 +1,6 @@
 import { ADMIN_COLOR_SCHEME_KEY } from "@/admin/constants";
 import { AdminShell } from "@/admin/components/admin-shell";
 import { AdminUIProvider } from "@/admin/providers/admin-ui-provider";
-import { UiCustomizeProvider } from "@/admin/providers/ui-customize-provider";
 import { apiServerFetch } from "@/lib/api-server";
 import { auth } from "@/auth";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
@@ -93,14 +92,12 @@ export default async function OrganizationLayout({
               auth: { user: session.user },
             }}
           >
-            <UiCustomizeProvider>
-              <AdminShell
-                user={session.user}
-                organizationSlug={organization.slug}
-              >
-                {children}
-              </AdminShell>
-            </UiCustomizeProvider>
+            <AdminShell
+              user={session.user}
+              organizationSlug={organization.slug}
+            >
+              {children}
+            </AdminShell>
           </AdminUIProvider>
         </NextIntlClientProvider>
       </body>
