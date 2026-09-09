@@ -1,10 +1,10 @@
 import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
+import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { AdminUIProvider } from '@/components/providers/mantine-provider'
 import { apiServerFetch } from '@/lib/api-server'
-import { ADMIN_COLOR_SCHEME_KEY } from '@/lib/constants'
 import { fontClasses } from '@/themes/shadcn/font'
-import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core'
+import { mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
@@ -65,10 +65,7 @@ export default async function OrganizationLayout({
       className={fontClasses}
     >
       <head>
-        <ColorSchemeScript
-          defaultColorScheme='auto'
-          localStorageKey={ADMIN_COLOR_SCHEME_KEY}
-        />
+        <AppColorSchemaScript />
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>

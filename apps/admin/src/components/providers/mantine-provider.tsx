@@ -14,11 +14,11 @@ import buddhistEra from 'dayjs/plugin/buddhistEra'
 import type { ReactNode } from 'react'
 // Keep sidebar navigation CSS in the shared admin CSS entry for production.
 import '../navigation/sidebar-nav-content.module.css'
-import { ADMIN_COLOR_SCHEME_KEY } from '../../lib/constants'
+import { APP_COLOR_SCHEME_KEY } from '../../lib/constants'
 import { StoreProvider } from './store-provider'
 
 const colorSchemeManager = localStorageColorSchemeManager({
-  key: ADMIN_COLOR_SCHEME_KEY
+  key: APP_COLOR_SCHEME_KEY
 })
 
 dayjs.extend(buddhistEra)

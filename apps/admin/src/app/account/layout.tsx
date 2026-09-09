@@ -1,12 +1,12 @@
 import { ProfileProvider } from '@/app/admin/(main)/profile/components/profile-context'
 import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
+import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { PageHeader } from '@/components/page-header'
 import { AdminUIProvider } from '@/components/providers/mantine-provider'
-import { ADMIN_COLOR_SCHEME_KEY } from '@/lib/constants'
 import { getProfile } from '@/servers/profile/queries/get-profile'
 import { fontClasses } from '@/themes/shadcn/font'
-import { ColorSchemeScript, Container, mantineHtmlProps } from '@mantine/core'
+import { Container, mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
@@ -55,10 +55,7 @@ export default async function AccountLayout({
       className={fontClasses}
     >
       <head>
-        <ColorSchemeScript
-          defaultColorScheme='auto'
-          localStorageKey={ADMIN_COLOR_SCHEME_KEY}
-        />
+        <AppColorSchemaScript />
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
