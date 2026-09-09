@@ -69,7 +69,7 @@ export default async function OrganizationLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-            <AppProvider
+          <AppProvider
             preloadedState={{
               auth: { user: session.user }
             }}
@@ -80,7 +80,7 @@ export default async function OrganizationLayout({
             >
               {children}
             </AdminShell>
-            </AppProvider>
+          </AppProvider>
         </NextIntlClientProvider>
       </body>
     </html>

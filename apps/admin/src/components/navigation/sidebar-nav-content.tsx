@@ -35,6 +35,13 @@ type SidebarNavContentProps = {
   navigationMode?: SidebarNavigationMode
 }
 
+function getNavigationLabel(
+  item: { label: string; labelKey?: string },
+  translate: ReturnType<typeof useTranslations>
+) {
+  return item.labelKey ? translate(item.labelKey) : item.label
+}
+
 export default function SidebarNavContent({
   onNavigateAction,
   navigationMode = 'admin'
@@ -93,17 +100,7 @@ function SidebarGroup({
             />
           </div>
           <Text className={classes.groupHeadingText} size='xs' fw='bold'>
-            {translate(
-              group.id === 'overview'
-                ? 'overview'
-                : group.id === 'content'
-                  ? 'content'
-                  : group.id === 'settings'
-                    ? 'settings'
-                    : group.id === 'profile'
-                      ? 'profile'
-                      : 'system'
-            )}
+            {getNavigationLabel(group, translate)}
           </Text>
         </UnstyledButton>
       )}
@@ -182,29 +179,7 @@ function SidebarItem({
             </span>
           )}
           <Text size='sm' fw={600} style={{ flexGrow: 1 }}>
-            {translate(
-              item.routeName === 'overview'
-                ? 'overview'
-                : item.routeName === 'dashboard'
-                  ? 'dashboard'
-                  : item.routeName === 'system.users'
-                    ? 'users'
-                    : item.routeName === 'system.auditLogs'
-                      ? 'auditLogs'
-                      : item.routeName === 'settings.members'
-                        ? 'members'
-                        : item.routeName === 'settings.roles'
-                          ? 'roles'
-                          : item.routeName === 'admin.users'
-                            ? 'users'
-                            : item.routeName === 'admin.activities'
-                              ? 'auditLogs'
-                              : item.routeName === 'account.settings'
-                                ? 'account'
-                                : item.routeName === 'account.activity'
-                                  ? 'activity'
-                                  : item.label
-            )}
+            {getNavigationLabel(item, translate)}
           </Text>
           <IconChevronRight
             size={16}
@@ -242,29 +217,7 @@ function SidebarItem({
       )}
       <Stack gap={0} style={{ flexGrow: 1, alignItems: 'flex-start' }}>
         <Text size='sm' fw={600}>
-          {translate(
-            item.routeName === 'overview'
-              ? 'overview'
-              : item.routeName === 'dashboard'
-                ? 'dashboard'
-                : item.routeName === 'system.users'
-                  ? 'users'
-                  : item.routeName === 'system.auditLogs'
-                    ? 'auditLogs'
-                    : item.routeName === 'settings.members'
-                      ? 'members'
-                      : item.routeName === 'settings.roles'
-                        ? 'roles'
-                        : item.routeName === 'admin.users'
-                          ? 'users'
-                          : item.routeName === 'admin.activities'
-                            ? 'auditLogs'
-                            : item.routeName === 'account.settings'
-                              ? 'account'
-                              : item.routeName === 'account.activity'
-                                ? 'activity'
-                                : item.label
-          )}
+          {getNavigationLabel(item, translate)}
         </Text>
         {item.info && <Text className={classes.itemInfo}>{item.info}</Text>}
       </Stack>

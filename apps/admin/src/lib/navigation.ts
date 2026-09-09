@@ -12,6 +12,7 @@ export type AdminNavigationItem = {
   id: string
   routeName?: string
   label: string
+  labelKey?: string
   icon?: TablerIcon
   href?: string
   notification?: string
@@ -34,6 +35,7 @@ export type AdminNavigationItem = {
 export type AdminNavigationGroup = {
   id: string
   label: string
+  labelKey?: string
   items: AdminNavigationItem[]
   hideHeading?: boolean
   permissionKey?: PermissionKey | readonly PermissionKey[]
@@ -73,24 +75,29 @@ export const adminNavigation: AdminNavigationGroup[] = [
   {
     id: 'overview',
     label: 'ภาพรวม',
+    labelKey: 'overview',
     hideHeading: true,
     items: [
       routeItem('overview', {
-        icon: IconLayoutDashboard
+        icon: IconLayoutDashboard,
+        labelKey: 'overview'
       })
     ]
   },
   {
     id: 'settings',
     label: 'ตั้งค่า',
+    labelKey: 'settings',
     permissionKey: 'manageOrganization',
     items: [
       routeItem('settings.members', {
         icon: IconUsers,
+        labelKey: 'members',
         permissionKey: 'manageOrganization'
       }),
       routeItem('settings.roles', {
         icon: IconUsers,
+        labelKey: 'roles',
         permissionKey: 'manageOrganization'
       })
     ]
@@ -101,15 +108,18 @@ export const adminRootNavigation: AdminNavigationGroup[] = [
   {
     id: 'system',
     label: 'ระบบ',
+    labelKey: 'system',
     permissionKey: ['manageUsers', 'viewAuditLogs'],
     permissionMode: 'any',
     items: [
       routeItem('admin.users', {
         icon: IconUsers,
+        labelKey: 'users',
         permissionKey: 'manageUsers'
       }),
       routeItem('admin.activities', {
         icon: IconHistory,
+        labelKey: 'auditLogs',
         permissionKey: 'viewAuditLogs'
       })
     ]
@@ -120,12 +130,15 @@ export const accountNavigation: AdminNavigationGroup[] = [
   {
     id: 'profile',
     label: 'โปรไฟล์',
+    labelKey: 'profile',
     items: [
       routeItem('account.settings', {
-        icon: IconUser
+        icon: IconUser,
+        labelKey: 'account'
       }),
       routeItem('account.activity', {
-        icon: IconHistory
+        icon: IconHistory,
+        labelKey: 'activity'
       })
     ]
   }
