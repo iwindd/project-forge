@@ -3,6 +3,7 @@
 }
 
 .appShell {
+  --admin-header-height: 58px;
   --app-shell-border-color: var(--mantine-color-default-border);
   --shell-main-bg-color: var(--mantine-color-body);
   --nav-surface-bg-color: var(--mantine-color-body);

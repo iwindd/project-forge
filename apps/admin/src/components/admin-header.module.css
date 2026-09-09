@@ -1,5 +1,5 @@
 .headerInner {
-  height: 72px;
+  height: var(--admin-header-height, 58px);
   padding: 0 var(--mantine-spacing-lg);
 }
 

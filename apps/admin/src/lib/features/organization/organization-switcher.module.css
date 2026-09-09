@@ -4,20 +4,34 @@
   display: flex;
   align-items: center;
   gap: var(--mantine-spacing-sm);
-  padding: 0.5rem 0.625rem;
-  border: 1px solid transparent;
-  border-radius: var(--mantine-radius-md);
   color: var(--mantine-color-text);
   text-align: left;
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease;
 }
 
-.control:hover,
-.control:focus-visible {
+.projectLink {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.projectLink:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.toggle {
+  flex: 0 0 auto;
+}
+
+.toggle:hover,
+.toggle:focus-visible,
+.toggle[aria-expanded="true"] {
   background-color: var(--mantine-color-default-hover);
-  border-color: var(--mantine-color-default-border);
 }
 
 .controlAvatar {

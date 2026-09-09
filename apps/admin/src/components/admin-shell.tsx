@@ -39,7 +39,7 @@ export function AdminShell({
     <AppShell
       padding={0}
       layout="alt"
-      header={{ height: 72 }}
+      header={{ height: 58 }}
       navbar={{
         width: SIDEBAR_WIDTH,
         breakpoint: "sm",
