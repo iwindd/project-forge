@@ -1,7 +1,7 @@
 .appShell {
   --app-shell-border-color: var(--mantine-color-default-border);
   --shell-main-bg-color: var(--mantine-color-body);
-  --nav-surface-bg-color: var(--mantine-color-default);
+  --nav-surface-bg-color: var(--mantine-color-body);
   --nav-surface-border-color: var(--mantine-color-default-border);
   --nav-header-bg-color: color-mix(
     in srgb,

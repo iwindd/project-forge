@@ -466,14 +466,14 @@
 
 /* Hover Card */
 .mantine-HoverCard-dropdown {
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-default);
   border-color: var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-default);
 }
 
 /* Menu Dropdown */
 .mantine-Menu-dropdown {
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-default);
   border-color: var(--mantine-color-default-border);
 
   .mantine-Menu-item {
@@ -496,7 +496,7 @@
 
 /* Select and Combobox Options */
 .mantine-Combobox-dropdown {
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-default);
   border-color: var(--mantine-color-default-border);
 }
 
@@ -531,7 +531,7 @@
 /* Popover Start*/
 .mantine-Popover-dropdown {
   --popover-border-color: var(--mantine-color-default-border);
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-default);
 }
 .mantine-Popover-arrow {
   --popover-border-color: var(--mantine-color-default-border);

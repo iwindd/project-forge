@@ -5,7 +5,7 @@
  * does not depend on a route-specific Turbopack CSS chunk.
  */
 [data-admin-sidebar] {
-  --nav-surface-bg-color: var(--mantine-color-default);
+  --nav-surface-bg-color: var(--mantine-color-body);
   --nav-surface-border-color: var(--mantine-color-default-border);
   --nav-item-text-color: var(--mantine-color-text);
   --nav-item-hover-bg-color: var(--mantine-color-default-hover);
@@ -225,8 +225,18 @@
 .mantine-datatable {
   --mantine-datatable-color: var(--mantine-color-text) !important;
   --mantine-datatable-background-color: var(--mantine-color-body) !important;
-  --mantine-datatable-border-color: var(--mantine-color-default-border) !important;
-  --mantine-datatable-row-border-color: var(--mantine-color-default-border) !important;
+  --mantine-datatable-row-background-color-light: var(
+    --mantine-color-default
+  ) !important;
+  --mantine-datatable-row-background-color-dark: var(
+    --mantine-color-default
+  ) !important;
+  --mantine-datatable-border-color: var(
+    --mantine-color-default-border
+  ) !important;
+  --mantine-datatable-row-border-color: var(
+    --mantine-color-default-border
+  ) !important;
   --mantine-datatable-highlight-on-hover-color: var(
     --mantine-color-default-hover
   ) !important;

@@ -441,7 +441,7 @@ export const shadcnCssVariableResolver: CSSVariablesResolver = () => ({
     // all variables that depend on dark color scheme
     '--mantine-primary-color-contrast': 'var(--mantine-color-neutral-8)', // used as primary color contrast
     '--mantine-color-text': 'var(--mantine-color-secondary-0)', // used as text color
-    '--mantine-color-body': 'var(--mantine-color-secondary-9)', // used as body color
+    '--mantine-color-body': 'var(--mantine-color-black)', // used as body color
     '--mantine-color-error': 'var(--mantine-color-error-10)', // used as error color
     '--mantine-color-placeholder': 'var(--mantine-color-secondary-4)', // used as placeholder color
     '--mantine-color-anchor': 'var(--mantine-color-secondary-4)', // used as anchor color

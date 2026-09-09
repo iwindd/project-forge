@@ -11,7 +11,7 @@
 
 .mobileDrawerSidebar {
   height: 100%;
-  --nav-surface-bg-color: var(--mantine-color-default);
+  --nav-surface-bg-color: var(--mantine-color-body);
   --nav-surface-border-color: var(--mantine-color-default-border);
   --nav-item-text-color: var(--mantine-color-text);
   --nav-item-hover-bg-color: var(--mantine-color-default-hover);
