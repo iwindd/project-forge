@@ -103,6 +103,25 @@ describe('projects HTTP contracts', () => {
       records.find(
         (record) => record.organizationId === scopedOrganizationId && record.githubUrl === githubUrl,
       ) ?? null,
+    transitionStatus: async ({
+      organizationId: scopedOrganizationId,
+      id,
+      from,
+      to,
+      archivedAt,
+      updatedAt,
+    }) => {
+      const record = records.find(
+        (candidate) =>
+          candidate.organizationId === scopedOrganizationId && candidate.id === id,
+      );
+      if (!record) return null;
+      if (record.status !== from) return { applied: false, project: { ...record } };
+      record.status = to;
+      record.archivedAt = archivedAt;
+      record.updatedAt = updatedAt;
+      return { applied: true, project: { ...record } };
+    },
     save: async (project: ProjectRecord) => {
       const index = records.findIndex((record) => record.id === project.id);
       if (index === -1) records.push(project);

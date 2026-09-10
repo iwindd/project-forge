@@ -26,27 +26,33 @@ export class RestoreProjectUseCase {
   ) {
     return this.unitOfWork.run(async () => {
       await this.organizations.requireProjectManager(actorId, organizationId);
-      const project = await this.projects.findByOrganizationAndId(organizationId, id);
-      if (!project) throw new NotFoundError('Project was not found');
-      if (project.status === ProjectStatus.ACTIVE) return project;
+      const now = new Date();
+      // Mirror image of archive: the conditional write clears `archivedAt` only for the request
+      // that actually moved the row from ARCHIVED to ACTIVE, and only that request audits, so a
+      // repeated restore cannot produce a duplicate PROJECT_RESTORED row.
+      const transition = await this.projects.transitionStatus({
+        organizationId,
+        id,
+        from: ProjectStatus.ARCHIVED,
+        to: ProjectStatus.ACTIVE,
+        archivedAt: null,
+        updatedAt: now,
+      });
+      if (!transition) throw new NotFoundError('Project was not found');
+      if (!transition.applied) return transition.project;
 
-      const before = { status: project.status };
-      project.status = ProjectStatus.ACTIVE;
-      project.archivedAt = null;
-      project.updatedAt = new Date();
-      await this.projects.save(project);
       await this.audit.record({
         actorId,
         organizationId,
         action: 'PROJECT_RESTORED',
         resourceType: 'PROJECT',
-        resourceId: project.id,
-        before,
-        after: { status: project.status },
+        resourceId: transition.project.id,
+        before: { status: ProjectStatus.ARCHIVED },
+        after: { status: ProjectStatus.ACTIVE },
         requestId: options.requestId,
         ...(options.reason ? { reason: options.reason } : {}),
       });
-      return project;
+      return transition.project;
     });
   }
 }

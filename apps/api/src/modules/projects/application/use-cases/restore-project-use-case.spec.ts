@@ -14,6 +14,15 @@ type ProjectFixture = {
   updatedAt: Date;
 };
 
+type TransitionInput = {
+  organizationId: string;
+  id: string;
+  from: ProjectStatus;
+  to: ProjectStatus;
+  archivedAt: Date | null;
+  updatedAt: Date;
+};
+
 function archivedProject(): ProjectFixture {
   return {
     id: 'project-id',
@@ -24,11 +33,28 @@ function archivedProject(): ProjectFixture {
   };
 }
 
-function setup(project: ProjectFixture | null) {
-  const projects = {
-    findByOrganizationAndId: vi.fn(async () => project),
-    save: vi.fn(async () => undefined),
+/**
+ * In-memory stand-in for the conditional write: the transition applies only while the stored
+ * status still equals `from`, so of two callers that both pass the guard exactly one wins. The
+ * body runs synchronously, which is what makes the concurrent regression deterministic.
+ */
+function repository(project: ProjectFixture | null) {
+  const state: ProjectFixture | null = project ? { ...project } : null;
+  return {
+    state,
+    transitionStatus: vi.fn(async (input: TransitionInput) => {
+      if (!state) return null;
+      if (state.status !== input.from) return { applied: false, project: { ...state } };
+      state.status = input.to;
+      state.archivedAt = input.archivedAt;
+      state.updatedAt = input.updatedAt;
+      return { applied: true, project: { ...state } };
+    }),
   };
+}
+
+function setup(project: ProjectFixture | null = archivedProject()) {
+  const projects = repository(project);
   const audit = { record: vi.fn(async () => undefined) };
   const organizations = { requireProjectManager: vi.fn(async () => undefined) };
   const unitOfWork = { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
@@ -42,14 +68,22 @@ function setup(project: ProjectFixture | null) {
 }
 
 describe('RestoreProjectUseCase', () => {
-  it('restores an archived project and writes one audit record', async () => {
-    const { useCase, projects, audit, organizations } = setup(archivedProject());
+  it('restores an archived project through the conditional transition and writes one audit record', async () => {
+    const { useCase, projects, audit, organizations } = setup();
 
     const result = await useCase.execute('actor-id', 'organization-id', 'project-id');
 
     expect(result.status).toBe(ProjectStatus.ACTIVE);
     expect(result.archivedAt).toBeNull();
-    expect(projects.save).toHaveBeenCalledOnce();
+    expect(projects.transitionStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'organization-id',
+        id: 'project-id',
+        from: ProjectStatus.ARCHIVED,
+        to: ProjectStatus.ACTIVE,
+        archivedAt: null,
+      }),
+    );
     expect(organizations.requireProjectManager).toHaveBeenCalledWith(
       'actor-id',
       'organization-id',
@@ -69,7 +103,7 @@ describe('RestoreProjectUseCase', () => {
   });
 
   it('records the optional reason and request ID when supplied', async () => {
-    const { useCase, audit } = setup(archivedProject());
+    const { useCase, audit } = setup();
 
     await useCase.execute('actor-id', 'organization-id', 'project-id', {
       reason: 'restored by mistake',
@@ -87,23 +121,41 @@ describe('RestoreProjectUseCase', () => {
 
     const result = await useCase.execute('actor-id', 'organization-id', 'project-id');
 
-    expect(result).toBe(project);
-    expect(projects.save).not.toHaveBeenCalled();
+    expect(result.status).toBe(ProjectStatus.ACTIVE);
+    expect(result.archivedAt).toBeNull();
+    // The transition was attempted (that is the atomic guard) but did not apply, so nothing is
+    // written: a repeated restore must not add a second PROJECT_RESTORED row.
+    expect(projects.transitionStatus).toHaveBeenCalledOnce();
     expect(audit.record).not.toHaveBeenCalled();
   });
 
+  it('writes no second audit row when a concurrent restore loses the transition race', async () => {
+    const { useCase, audit } = setup();
+
+    const [first, second] = await Promise.all([
+      useCase.execute('actor-id', 'organization-id', 'project-id', { requestId: 'first-request' }),
+      useCase.execute('actor-id', 'organization-id', 'project-id', { requestId: 'second-request' }),
+    ]);
+
+    expect(first.status).toBe(ProjectStatus.ACTIVE);
+    expect(second.status).toBe(ProjectStatus.ACTIVE);
+    expect(audit.record).toHaveBeenCalledOnce();
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ requestId: 'first-request' }),
+    );
+  });
+
   it('throws NotFoundError when the project does not exist', async () => {
-    const { useCase, projects, audit } = setup(null);
+    const { useCase, audit } = setup(null);
 
     await expect(
       useCase.execute('actor-id', 'organization-id', 'project-id'),
     ).rejects.toBeInstanceOf(NotFoundError);
-    expect(projects.save).not.toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
   });
 
   it('enforces project management before touching the repository', async () => {
-    const { useCase, projects, organizations } = setup(archivedProject());
+    const { useCase, projects, organizations } = setup();
     organizations.requireProjectManager.mockRejectedValueOnce(
       new ForbiddenError('Project management access is required'),
     );
@@ -117,6 +169,6 @@ describe('RestoreProjectUseCase', () => {
 
     expect(error).toBeInstanceOf(ForbiddenError);
     expect(error).toMatchObject({ code: 'FORBIDDEN', status: 403 });
-    expect(projects.findByOrganizationAndId).not.toHaveBeenCalled();
+    expect(projects.transitionStatus).not.toHaveBeenCalled();
   });
 });
