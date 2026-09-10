@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { z } from 'zod'
-import { apiServerFetch } from '@/lib/api-server'
+import { ApiServerError, apiServerFetch } from '@/lib/api-server'
 import type { AdminSession } from '@/session'
 
 const authMeSchema = z.object({
@@ -56,8 +56,12 @@ export async function auth(): Promise<AdminSession | null> {
         updatedAt: user.updatedAt
       }
     }
-  } catch {
-    return null
+  } catch (error) {
+    if (error instanceof ApiServerError && error.status === 401) {
+      return null
+    }
+
+    throw error
   }
 }
 

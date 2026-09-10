@@ -1,50 +1,75 @@
 import { api } from '@/lib/api/api'
 import type { BrowserApiMeta } from '@/lib/api/api'
+import {
+  normalizeUserRole,
+  userRoleSchema
+} from '@/servers/user/schemas'
 import type { UserListQuery, UserListResult } from '@/servers/user/types'
+import { z } from 'zod'
 
-type ApiUserListItem = {
-  id: string
-  name: string | null
-  email: string | null
-  role:
-    | 'ADMIN'
-    | 'EDITOR'
-    | 'OWNER'
-    | 'MEMBER'
-    | {
-        legacyRole: 'OWNER' | 'ADMIN' | 'MEMBER' | null
-        isOwner: boolean
-      }
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
+const apiUserListItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().nullable(),
+  email: z.string().nullable(),
+  role: userRoleSchema,
+  isActive: z.boolean(),
+  accessStatus: z.string().optional(),
+  githubLogin: z.string().optional(),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1).optional()
+})
 
-type ApiOrganizationMemberListResult = {
-  data: ApiUserListItem[]
-  total: number
-  page: number
-  pageSize: number
-}
+const legacyPaginatedUsersSchema = z.object({
+  data: z.array(apiUserListItemSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  pageSize: z.number().int().positive()
+})
+
+const apiUserListResponseSchema = z.union([
+  z.array(apiUserListItemSchema),
+  legacyPaginatedUsersSchema
+])
+
+const apiPaginationMetaSchema = z
+  .object({ total: z.number().int().nonnegative() })
+  .passthrough()
 
 type GetUsersArg = {
   organizationId?: string
   query: UserListQuery
 }
 
-function toUserListItem(user: ApiUserListItem): UserListResult['data'][number] {
-  const isAdmin =
-    typeof user.role === 'string'
-      ? user.role === 'ADMIN' || user.role === 'OWNER'
-      : user.role.isOwner || user.role.legacyRole === 'ADMIN'
-
+function toUserListItem(
+  user: z.infer<typeof apiUserListItemSchema>
+): UserListResult['data'][number] {
   return {
     id: user.id,
     name: user.name ?? user.email ?? user.id,
     email: user.email ?? '',
-    role: isAdmin ? 'ADMIN' : 'EDITOR',
+    role: normalizeUserRole(user.role),
     isActive: user.isActive,
     createdAt: user.createdAt
+  }
+}
+
+export function parseUsersResponse(
+  response: unknown,
+  meta: Pick<BrowserApiMeta, 'apiMeta'> | undefined
+): UserListResult {
+  const parsed = apiUserListResponseSchema.parse(response)
+
+  if (Array.isArray(parsed)) {
+    const parsedMeta = apiPaginationMetaSchema.safeParse(meta?.apiMeta)
+    return {
+      data: parsed.map(toUserListItem),
+      total: parsedMeta.success ? parsedMeta.data.total : parsed.length
+    }
+  }
+
+  return {
+    data: parsed.data.map(toUserListItem),
+    total: parsed.total
   }
 }
 
@@ -57,23 +82,7 @@ export const usersApi = api.injectEndpoints({
           : 'admin/users',
         params: query
       }),
-      transformResponse: (
-        response: ApiUserListItem[] | ApiOrganizationMemberListResult,
-        meta: BrowserApiMeta | undefined
-      ): UserListResult => {
-        if (Array.isArray(response)) {
-          const total =
-            typeof meta?.apiMeta?.total === 'number'
-              ? meta.apiMeta.total
-              : response.length
-          return { data: response.map(toUserListItem), total }
-        }
-
-        return {
-          data: response.data.map(toUserListItem),
-          total: response.total
-        }
-      },
+      transformResponse: parseUsersResponse,
       providesTags: ['Users']
     })
   }),

@@ -7,18 +7,15 @@ import {
   type FilterResultRemoveEvent,
 } from "@/components/filter-result";
 import { FilterTrigger } from "@/components/filter-trigger";
-import TableActionMenu from "@/components/table-action-menu";
 import TableSearchInput from "@/components/table-search-input";
 import { useGetUsersQuery } from "@/lib/features/user/users-api";
 import { useOptionalOrganizationContext } from "@/lib/features/organization/organization-provider";
-import { getPath } from "@/routes";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";
 import type { UserListItem, UserListQuery } from "@/servers/user/types";
 import {
   Alert,
   Badge,
-  Box,
   Combobox,
   Group,
   Paper,
@@ -26,13 +23,12 @@ import {
   Text,
   useCombobox,
 } from "@mantine/core";
-import { IconCheck, IconEye } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import Link from "next/link";
 import { useFormatter } from "next-intl";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import classes from "./users-table.style.module.css";
 
 const SORTABLE_FIELDS = [
@@ -52,18 +48,6 @@ export function UsersTable() {
   }>();
   const organizationContext = useOptionalOrganizationContext();
   const activeOrganization = organizationContext?.activeOrganization;
-  const organizationSlug =
-    routeOrganizationSlug ?? activeOrganization?.slug ?? null;
-  const getUserProfilePath = useCallback(
-    (userId: string) =>
-      organizationSlug
-        ? getPath("system.users.profile", {
-            organizationSlug,
-            userId,
-          })
-        : "/admin/users",
-    [organizationSlug],
-  );
   const columns = useMemo(
     () => [
       {
@@ -71,11 +55,7 @@ export function UsersTable() {
         title: common("name"),
         sortable: true,
         render: (record: UserListItem) => (
-          <Text
-            component={Link}
-            href={getUserProfilePath(record.id)}
-            className={classes.nameLink}
-          >
+          <Text className={classes.nameLink}>
             {record.name}
           </Text>
         ),
@@ -114,43 +94,8 @@ export function UsersTable() {
           </Text>
         ),
       },
-      {
-        accessor: "actions",
-        title: "",
-        width: "60px",
-        textAlign: "right" as const,
-        render: (record: UserListItem) => (
-          <Group gap="xs" justify="flex-end" wrap="nowrap">
-            <Box visibleFrom="sm">
-              <TableActionMenu
-                displayType="button"
-                actions={[
-                  {
-                    label: common("open"),
-                    action: getUserProfilePath(record.id),
-                    icon: IconEye,
-                  },
-                ]}
-              />
-            </Box>
-            <Box hiddenFrom="sm">
-              <TableActionMenu
-                label={t("view", { name: record.name })}
-                displayType="menu"
-                actions={[
-                  {
-                    label: common("open"),
-                    action: getUserProfilePath(record.id),
-                    icon: IconEye,
-                  },
-                ]}
-              />
-            </Box>
-          </Group>
-        ),
-      },
     ],
-    [common, format, getUserProfilePath, t],
+    [common, format, t],
   );
 
   const datatable = useDatatable<UserListItem, UserListQuery>({

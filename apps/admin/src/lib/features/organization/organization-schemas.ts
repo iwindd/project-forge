@@ -22,6 +22,20 @@ export const organizationSchema = z.object({
 
 export const organizationListSchema = z.array(organizationSchema)
 
+const acceptedOrganizationSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  type: z.enum(['PERSONAL', 'SHARED']),
+  status: z.enum(['ACTIVE', 'ARCHIVED', 'SUSPENDED']),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1)
+})
+
+export const acceptInvitationResponseSchema = z.object({
+  organization: acceptedOrganizationSchema
+})
+
 export const organizationRoleSummarySchema = organizationRoleSchema.extend({
   memberCount: z.number().optional(),
   invitationCount: z.number().optional()
@@ -37,6 +51,24 @@ export const organizationMemberSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1)
+})
+
+export const organizationMemberUserSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).nullable(),
+  email: z.string().nullable(),
+  role: organizationRoleSchema,
+  isActive: z.boolean(),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1)
+})
+
+export const organizationMemberUserResponseSchema = z.object({
+  user: organizationMemberUserSchema
+})
+
+export const organizationMemberRoleResponseSchema = z.object({
+  membership: organizationMemberUserSchema
 })
 
 export const organizationInvitationSchema = z.object({

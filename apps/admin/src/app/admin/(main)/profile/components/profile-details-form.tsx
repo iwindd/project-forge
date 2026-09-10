@@ -1,32 +1,54 @@
 "use client";
 
 import { Alert, Button, Group, Stack, Textarea, TextInput } from "@mantine/core";
+import { schemaResolver, useForm } from "@mantine/form";
 import { useState } from "react";
+import { z } from "zod";
 import { getBrowserApiErrorMessage } from "@/lib/api/api";
 import { useUpdateProfileMutation } from "@/lib/features/profile/profile-api";
 import { ProfileEditCard } from "./profile-edit-card";
 import { useProfile } from "./profile-context";
 
+const profileDetailsFormSchema = z.object({
+  bio: z.string().trim().max(1000, "แนะนำตัวต้องไม่เกิน 1000 ตัวอักษร"),
+  timezone: z.string().trim().max(80, "เขตเวลาต้องไม่เกิน 80 ตัวอักษร"),
+});
+
+type ProfileDetailsFormValues = z.infer<typeof profileDetailsFormSchema>;
+
 export function ProfileDetailsForm() {
   const { profile, updateProfile } = useProfile();
   const [updateProfileRequest, { isLoading: pending }] = useUpdateProfileMutation();
-  const [bio, setBio] = useState(profile.bio ?? "");
-  const [timezone, setTimezone] = useState(profile.timezone ?? "");
+  const form = useForm<ProfileDetailsFormValues>({
+    initialValues: {
+      bio: profile.bio ?? "",
+      timezone: profile.timezone ?? "",
+    },
+    validate: schemaResolver(profileDetailsFormSchema),
+    validateInputOnBlur: true,
+  });
   const [error, setError] = useState<string | null>(null);
 
-  const save = async () => {
+  const save = async (values: ProfileDetailsFormValues) => {
     setError(null);
     try {
       const result = await updateProfileRequest({
-        bio: bio.trim() || null,
-        timezone: timezone.trim() || null,
+        bio: values.bio || null,
+        timezone: values.timezone || null,
       }).unwrap();
+      const nextValues = {
+        bio: result.profile.bio ?? "",
+        timezone: result.profile.timezone ?? "",
+      };
       updateProfile({
         ...profile,
-        bio: result.profile.bio,
-        timezone: result.profile.timezone,
+        bio: nextValues.bio || null,
+        timezone: nextValues.timezone || null,
         updatedAt: result.profile.updatedAt,
       });
+      form.setValues(nextValues);
+      form.setInitialValues(nextValues);
+      form.resetDirty();
     } catch (saveError) {
       setError(
         getBrowserApiErrorMessage(
@@ -37,20 +59,20 @@ export function ProfileDetailsForm() {
     }
   };
 
-  const unchanged = bio === (profile.bio ?? "") && timezone === (profile.timezone ?? "");
-
   return (
     <ProfileEditCard title="ข้อมูลโปรไฟล์" description="จัดการข้อมูลเพิ่มเติมที่แสดงในบัญชีของคุณ">
-      <Stack gap="md">
-        <Textarea label="แนะนำตัว" value={bio} onChange={(event) => setBio(event.currentTarget.value)} maxLength={1000} />
-        <TextInput label="เขตเวลา" placeholder="Asia/Bangkok" value={timezone} onChange={(event) => setTimezone(event.currentTarget.value)} maxLength={80} />
-        <Group>
-          <Button onClick={() => void save()} loading={pending} disabled={unchanged}>
-            บันทึก
-          </Button>
-        </Group>
-        {error ? <Alert color="red">{error}</Alert> : null}
-      </Stack>
+      <form onSubmit={form.onSubmit(save)}>
+        <Stack gap="md">
+          <Textarea label="แนะนำตัว" maxLength={1000} {...form.getInputProps("bio")} />
+          <TextInput label="เขตเวลา" placeholder="Asia/Bangkok" maxLength={80} {...form.getInputProps("timezone")} />
+          <Group>
+            <Button type="submit" loading={pending || form.submitting} disabled={!form.isDirty()}>
+              บันทึก
+            </Button>
+          </Group>
+          {error ? <Alert color="red">{error}</Alert> : null}
+        </Stack>
+      </form>
     </ProfileEditCard>
   );
 }

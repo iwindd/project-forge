@@ -23,7 +23,21 @@ const profileSchema = z.object({
   updatedAt: z.string().min(1),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  reason: z.string().trim().max(1000).optional().default(''),
+});
+
+export const githubCallbackQuerySchema = z.object({
+  code: z.string().trim().min(1),
+  state: z.string().trim().min(1),
+});
+
 export const authMeDataSchema = z.object({
   user: identitySchema,
   profile: profileSchema.nullable(),
+}).strict();
+
+export const authMeResponseSchema = z.object({
+  data: authMeDataSchema,
 }).strict();

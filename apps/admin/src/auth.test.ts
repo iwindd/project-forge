@@ -6,11 +6,13 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('next/headers', () => ({ cookies: mocks.cookies }))
-vi.mock('@/lib/api-server', () => ({
-  apiServerFetch: mocks.apiServerFetch
-}))
+vi.mock('@/lib/api-server', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/lib/api-server')>()
+  return { ...actual, apiServerFetch: mocks.apiServerFetch }
+})
 
 import { auth } from './auth'
+import { ApiServerError } from '@/lib/api-server'
 
 const authResponse = {
   user: {
@@ -53,12 +55,51 @@ describe('auth session contract', () => {
     })
   })
 
-  it('rejects organization context in auth/me responses', async () => {
+  it('propagates organization context contract violations', async () => {
     mocks.apiServerFetch.mockImplementation(
       async (_path: string, schema: { parse: (value: unknown) => unknown }) =>
         schema.parse({ ...authResponse, organizations: [] })
     )
 
+    await expect(auth()).rejects.toThrow()
+  })
+
+  it('maps an unauthenticated API response to an empty session', async () => {
+    const error = new ApiServerError(
+      401,
+      'UNAUTHENTICATED',
+      'Please sign in with GitHub',
+      {},
+      'request-401'
+    )
+    mocks.apiServerFetch.mockRejectedValue(error)
+
     await expect(auth()).resolves.toBeNull()
+  })
+
+  it('propagates server failures instead of turning them into login redirects', async () => {
+    const error = new ApiServerError(
+      500,
+      'INTERNAL_SERVER_ERROR',
+      'Internal server error',
+      {},
+      'request-500'
+    )
+    mocks.apiServerFetch.mockRejectedValue(error)
+
+    await expect(auth()).rejects.toBe(error)
+  })
+
+  it('propagates invalid API contracts instead of turning them into login redirects', async () => {
+    const error = new ApiServerError(
+      200,
+      'INVALID_API_RESPONSE',
+      'The API returned an invalid response contract',
+      [],
+      'request-contract'
+    )
+    mocks.apiServerFetch.mockRejectedValue(error)
+
+    await expect(auth()).rejects.toBe(error)
   })
 })

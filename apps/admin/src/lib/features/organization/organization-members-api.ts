@@ -1,8 +1,11 @@
 import { api, type BrowserApiMeta } from '@/lib/api/api'
 import { z } from 'zod'
 import {
+  acceptInvitationResponseSchema,
   organizationInvitationSchema,
   organizationMemberSchema,
+  organizationMemberRoleResponseSchema,
+  organizationMemberUserResponseSchema,
   organizationMembersMetaSchema,
   organizationRoleSchema,
   organizationRolesMetaSchema,
@@ -18,6 +21,10 @@ export type OrganizationRoleSummary = z.infer<
 >
 
 export type OrganizationMember = z.infer<typeof organizationMemberSchema>
+
+export type OrganizationMemberUser = z.infer<
+  typeof organizationMemberUserResponseSchema
+>['user']
 
 export type OrganizationInvitation = z.infer<typeof organizationInvitationSchema>
 
@@ -49,6 +56,12 @@ type CreateInvitationResponse = {
   token: string
 }
 
+type AcceptInvitationInput = {
+  token: string
+}
+
+type AcceptInvitationResponse = z.infer<typeof acceptInvitationResponseSchema>
+
 type CreateInvitationInput = {
   organizationId: string
   email?: string | null
@@ -58,7 +71,8 @@ type CreateInvitationInput = {
 type UpdateMemberRoleInput = {
   organizationId: string
   userId: string
-  roleId: string
+  roleId?: string
+  role?: OrganizationMemberRole
 }
 
 type UpdateMemberStatusInput = {
@@ -108,6 +122,24 @@ export function parseMembersResponse(
   const members = z.array(organizationMemberSchema).parse(response)
   const parsedMeta = organizationMembersMetaSchema.parse(meta?.apiMeta)
   return { data: members, ...parsedMeta }
+}
+
+export function parseAcceptInvitationResponse(
+  response: unknown
+): AcceptInvitationResponse {
+  return acceptInvitationResponseSchema.parse(response)
+}
+
+export function parseMemberUserResponse(response: unknown): {
+  user: OrganizationMemberUser
+} {
+  return organizationMemberUserResponseSchema.parse(response)
+}
+
+export function parseMemberRoleResponse(response: unknown): {
+  membership: OrganizationMemberUser
+} {
+  return organizationMemberRoleResponseSchema.parse(response)
 }
 
 export const organizationMembersApi = api.injectEndpoints({
@@ -191,21 +223,22 @@ export const organizationMembersApi = api.injectEndpoints({
       ]
     }),
     updateMemberRole: builder.mutation<
-      { membership: OrganizationMember },
+      { membership: OrganizationMemberUser },
       UpdateMemberRoleInput
     >({
-      query: ({ organizationId, userId, roleId }) => ({
+      query: ({ organizationId, userId, roleId, role }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`,
         method: 'PATCH',
-        body: { roleId }
+        body: { roleId, role }
       }),
+      transformResponse: parseMemberRoleResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationMembers', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }
       ]
     }),
     updateMemberStatus: builder.mutation<
-      { user: OrganizationMember },
+      { user: OrganizationMemberUser },
       UpdateMemberStatusInput
     >({
       query: ({ organizationId, userId, active }) => ({
@@ -213,6 +246,7 @@ export const organizationMembersApi = api.injectEndpoints({
         method: 'PATCH',
         body: { active }
       }),
+      transformResponse: parseMemberUserResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationMembers', id: organizationId }
       ]
@@ -226,6 +260,17 @@ export const organizationMembersApi = api.injectEndpoints({
         { type: 'OrganizationMembers', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }
       ]
+    }),
+    acceptInvitation: builder.mutation<
+      AcceptInvitationResponse,
+      AcceptInvitationInput
+    >({
+      query: ({ token }) => ({
+        url: `organizations/invitations/${encodeURIComponent(token)}/accept`,
+        method: 'POST'
+      }),
+      transformResponse: parseAcceptInvitationResponse,
+      invalidatesTags: ['Organizations', 'OrganizationInvitations']
     })
   }),
   overrideExisting: false
@@ -235,6 +280,7 @@ export const {
   useCreateInvitationMutation,
   useCreateRoleMutation,
   useDeleteRoleMutation,
+  useAcceptInvitationMutation,
   useGetInvitationsQuery,
   useGetMembersQuery,
   useGetRolesQuery,

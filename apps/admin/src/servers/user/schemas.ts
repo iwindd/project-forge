@@ -1,5 +1,28 @@
 import { z } from 'zod'
 
+const userRoleObjectSchema = z
+  .object({
+    legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable(),
+    isOwner: z.boolean()
+  })
+  .passthrough()
+
+export const userRoleSchema = z.union([
+  z.enum(['ADMIN', 'USER', 'OWNER', 'MEMBER', 'EDITOR']),
+  userRoleObjectSchema
+])
+
+export type UserRoleValue = z.infer<typeof userRoleSchema>
+
+export function normalizeUserRole(role: UserRoleValue): 'ADMIN' | 'EDITOR' {
+  const isAdmin =
+    typeof role === 'string'
+      ? role === 'ADMIN' || role === 'OWNER'
+      : role.isOwner || role.legacyRole === 'ADMIN'
+
+  return isAdmin ? 'ADMIN' : 'EDITOR'
+}
+
 export const userListItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -34,13 +57,7 @@ export const userDetailResponseSchema = z.object({
     id: z.string().min(1),
     name: z.string().nullable(),
     email: z.string().nullable(),
-    role: z.union([
-      z.enum(['ADMIN', 'USER', 'OWNER', 'MEMBER', 'EDITOR']),
-      z.object({
-        legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable(),
-        isOwner: z.boolean()
-      })
-    ]),
+    role: userRoleSchema,
     isActive: z.boolean(),
     accessStatus: z.string().optional(),
     githubLogin: z.string().optional(),

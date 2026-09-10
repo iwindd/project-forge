@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
 import { apiSuccess } from '../../../common/http/api-response.js'
-import { z } from 'zod'
 import type { AuditLogPort } from '../../../common/audit/audit.port.js'
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js'
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
@@ -31,17 +30,12 @@ import { CompleteGithubLoginUseCase } from '../application/use-cases/complete-gi
 import { LogoutUseCase } from '../application/use-cases/logout-use-case.js'
 import { StartGithubLoginUseCase } from '../application/use-cases/start-github-login-use-case.js'
 import { ProfileConnectionRepository } from '../infrastructure/persistence/profile-connection.repository.js'
-import { authMeDataSchema } from './dto/auth.schemas.js'
-
-const updateProfileSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  reason: z.string().trim().max(1000).optional().default('')
-})
-
-const githubCallbackQuerySchema = z.object({
-  code: z.string().trim().min(1),
-  state: z.string().trim().min(1)
-})
+import {
+  authMeDataSchema,
+  authMeResponseSchema,
+  githubCallbackQuerySchema,
+  updateProfileSchema,
+} from './dto/auth.schemas.js'
 
 @Controller('auth')
 export class AuthController {
@@ -135,7 +129,7 @@ export class AuthController {
           }
         : null,
     }
-    return apiSuccess(authMeDataSchema.parse(data))
+    return authMeResponseSchema.parse(apiSuccess(authMeDataSchema.parse(data)))
   }
 
   @Patch('me')
