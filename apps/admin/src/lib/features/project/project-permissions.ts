@@ -1,5 +1,5 @@
 /** Organization permission that governs Project mutations. */
-export const PROJECT_MANAGE_PERMISSION = 'project.manage' as const
+const PROJECT_MANAGE_PERMISSION = 'project.manage' as const
 
 type OrganizationRoleAuthority = {
   isOwner: boolean
