@@ -68,7 +68,11 @@ export function createProjectFormSchema(messages: ProjectFormMessages) {
       .min(1, messages.targetBranchRequired)
       .max(120, messages.branchMax),
     nodeVersion: z.string().trim().max(40, messages.nodeVersionMax),
-    environmentVariables: z.string()
+    /**
+     * Newline-separated environment variable names, mirroring the API field
+     * name. `toProjectRequestBody` converts the names into the request record.
+     */
+    environmentMetadata: z.string()
   })
 }
 
@@ -82,7 +86,7 @@ export const EMPTY_PROJECT_FORM_VALUES: ProjectFormValues = {
   sourceBranch: 'main',
   targetBranch: 'main',
   nodeVersion: '',
-  environmentVariables: ''
+  environmentMetadata: ''
 }
 
 export function toProjectFormValues(project: Project): ProjectFormValues {
@@ -92,14 +96,14 @@ export function toProjectFormValues(project: Project): ProjectFormValues {
     sourceBranch: project.sourceBranch,
     targetBranch: project.targetBranch,
     nodeVersion: project.nodeVersion ?? '',
-    environmentVariables: project.environmentMetadata
+    environmentMetadata: project.environmentMetadata
       ? Object.keys(project.environmentMetadata).join('\n')
       : ''
   }
 }
 
 /** Environment variable names only; the API masks every supplied value. */
-export function parseEnvironmentVariables(value: string) {
+export function parseEnvironmentMetadata(value: string) {
   const keys = value
     .split(/\r?\n/)
     .map(line => line.trim())
@@ -120,6 +124,6 @@ export function toProjectRequestBody(values: ProjectFormValues) {
     sourceBranch: values.sourceBranch.trim(),
     targetBranch: values.targetBranch.trim(),
     nodeVersion: values.nodeVersion.trim(),
-    environmentMetadata: parseEnvironmentVariables(values.environmentVariables)
+    environmentMetadata: parseEnvironmentMetadata(values.environmentMetadata)
   }
 }
