@@ -44,8 +44,15 @@ export class UpdateProjectUseCase {
       if (project.status !== ProjectStatus.ACTIVE) {
         throw new ConflictError('Archived projects cannot be updated');
       }
+      // The repository fields define project identity and drive the duplicate rule, so a
+      // repository-only PATCH must still show a visible change in the audit record.
+      // `environmentMetadata` stays out of both projections: it is the field that can carry
+      // secret material, and the audit log must never persist it.
       const before = {
         name: project.name,
+        githubUrl: project.githubUrl,
+        githubOwner: project.githubOwner,
+        githubRepo: project.githubRepo,
         sourceBranch: project.sourceBranch,
         targetBranch: project.targetBranch,
         nodeVersion: project.nodeVersion,
@@ -88,6 +95,9 @@ export class UpdateProjectUseCase {
         before,
         after: {
           name: project.name,
+          githubUrl: project.githubUrl,
+          githubOwner: project.githubOwner,
+          githubRepo: project.githubRepo,
           sourceBranch: project.sourceBranch,
           targetBranch: project.targetBranch,
           nodeVersion: project.nodeVersion,
