@@ -4,19 +4,43 @@ import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema
 /** Environment metadata keys may only ever be variable names, never values. */
 const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-export const createProjectSchema = z.object({
-  name: z.string().trim().max(120).optional().default(''),
+/**
+ * Validated field shapes shared by create and update, declared once and WITHOUT defaults.
+ * Create layers its defaults on top; update keeps every field bare `.optional()`.
+ */
+const projectFields = {
+  name: z.string().trim().max(120),
   githubUrl: z.string().trim().url(),
-  sourceBranch: z.string().trim().min(1).max(120).default('main'),
-  targetBranch: z.string().trim().min(1).max(120).default('main'),
-  nodeVersion: z.string().trim().max(40).optional().default(''),
-  environmentMetadata: z
-    .record(z.string().regex(ENVIRONMENT_VARIABLE_NAME_PATTERN), z.unknown())
-    .optional()
-    .default({}),
+  sourceBranch: z.string().trim().min(1).max(120),
+  targetBranch: z.string().trim().min(1).max(120),
+  nodeVersion: z.string().trim().max(40),
+  environmentMetadata: z.record(z.string().regex(ENVIRONMENT_VARIABLE_NAME_PATTERN), z.unknown()),
+};
+
+export const createProjectSchema = z.object({
+  name: projectFields.name.optional().default(''),
+  githubUrl: projectFields.githubUrl,
+  sourceBranch: projectFields.sourceBranch.default('main'),
+  targetBranch: projectFields.targetBranch.default('main'),
+  nodeVersion: projectFields.nodeVersion.optional().default(''),
+  environmentMetadata: projectFields.environmentMetadata.optional().default({}),
 });
 
-export const updateProjectSchema = createProjectSchema.partial();
+/**
+ * Update carries NO defaults: an omitted key must parse to `undefined` so the use case can tell
+ * "leave unchanged" from "set to the default value". Do not build this with `.partial()` over
+ * `createProjectSchema` — zod keeps the inner `.default()` active, which stamps create-time
+ * defaults (`''`, `'main'`, `{}`) onto every partial PATCH body and silently overwrites fields
+ * the client never sent.
+ */
+export const updateProjectSchema = z.object({
+  name: projectFields.name.optional(),
+  githubUrl: projectFields.githubUrl.optional(),
+  sourceBranch: projectFields.sourceBranch.optional(),
+  targetBranch: projectFields.targetBranch.optional(),
+  nodeVersion: projectFields.nodeVersion.optional(),
+  environmentMetadata: projectFields.environmentMetadata.optional(),
+});
 
 export const organizationIdParamSchema = z.object({
   organizationId: databaseUuidSchema,

@@ -50,14 +50,16 @@ function projectRecord(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
   return {
     id: activeProjectId,
     organizationId,
-    name: 'Demo',
+    // Deliberately distinctive values so a PATCH that silently re-applies create-time defaults
+    // (name -> '', branches -> 'main', nodeVersion -> null, environmentMetadata -> {}) is visible.
+    name: 'My Application',
     githubUrl: 'https://github.com/acme/demo',
     githubOwner: 'acme',
     githubRepo: 'demo',
-    sourceBranch: 'main',
-    targetBranch: 'main',
-    nodeVersion: null,
-    environmentMetadata: null,
+    sourceBranch: 'release',
+    targetBranch: 'production',
+    nodeVersion: '20.11.0',
+    environmentMetadata: { DATABASE_URL: 'configured' },
     status: ProjectStatus.ACTIVE,
     createdAt,
     updatedAt,
@@ -317,5 +319,121 @@ describe('projects HTTP contracts', () => {
         }),
       },
     });
+  });
+
+  it('applies a single-field PATCH without resetting the fields the client omitted', async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders('projects-patch-single-field'),
+        body: JSON.stringify({ nodeVersion: '22.0.0' }),
+      },
+    );
+    const body = (await response.json()) as { data: { project: Record<string, unknown> } };
+
+    expect(response.status).toBe(200);
+
+    const persisted = records.find((record) => record.id === activeProjectId);
+    expect(persisted).toMatchObject({
+      name: 'My Application',
+      sourceBranch: 'release',
+      targetBranch: 'production',
+      nodeVersion: '22.0.0',
+      environmentMetadata: { DATABASE_URL: 'configured' },
+    });
+    expect(body.data.project).toMatchObject({
+      name: 'My Application',
+      sourceBranch: 'release',
+      targetBranch: 'production',
+      nodeVersion: '22.0.0',
+      environmentMetadata: { DATABASE_URL: 'configured' },
+    });
+
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'PROJECT_UPDATED',
+        resourceId: activeProjectId,
+        requestId: 'projects-patch-single-field',
+        before: {
+          name: 'My Application',
+          sourceBranch: 'release',
+          targetBranch: 'production',
+          nodeVersion: '20.11.0',
+        },
+        after: {
+          name: 'My Application',
+          sourceBranch: 'release',
+          targetBranch: 'production',
+          nodeVersion: '22.0.0',
+        },
+      }),
+    );
+  });
+
+  it('leaves the project unchanged for an empty-body PATCH', async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders('projects-patch-empty'),
+        body: JSON.stringify({}),
+      },
+    );
+
+    expect(response.status).toBe(200);
+
+    const persisted = records.find((record) => record.id === activeProjectId);
+    expect(persisted).toMatchObject({
+      name: 'My Application',
+      githubUrl: 'https://github.com/acme/demo',
+      sourceBranch: 'release',
+      targetBranch: 'production',
+      nodeVersion: '20.11.0',
+      environmentMetadata: { DATABASE_URL: 'configured' },
+      status: ProjectStatus.ACTIVE,
+      archivedAt: null,
+    });
+
+    // The use case always refreshes updatedAt, so the audit before/after must be identical.
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'PROJECT_UPDATED',
+        requestId: 'projects-patch-empty',
+        before: {
+          name: 'My Application',
+          sourceBranch: 'release',
+          targetBranch: 'production',
+          nodeVersion: '20.11.0',
+        },
+        after: {
+          name: 'My Application',
+          sourceBranch: 'release',
+          targetBranch: 'production',
+          nodeVersion: '20.11.0',
+        },
+      }),
+    );
+  });
+
+  it('does not rewrite the project name from the repository name on a branch-only PATCH', async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders('projects-patch-branch-only'),
+        body: JSON.stringify({ sourceBranch: 'release-2' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+
+    const persisted = records.find((record) => record.id === activeProjectId);
+    expect(persisted?.sourceBranch).toBe('release-2');
+    expect(persisted?.name).toBe('My Application');
+    expect(persisted?.name).not.toBe('demo');
+    expect(persisted?.targetBranch).toBe('production');
+    expect(persisted?.nodeVersion).toBe('20.11.0');
+    expect(persisted?.environmentMetadata).toEqual({ DATABASE_URL: 'configured' });
   });
 });
