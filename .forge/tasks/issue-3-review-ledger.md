@@ -15,16 +15,15 @@ Rows are never deleted, only appended and re-statused.
 > `features.md`). They were working-tree-only during review round 1, which is why they are absent
 > from the per-finding commits.
 >
-> Branch `issue/3-organization-scoped-project-lifecycle` was pushed and opened as draft Pull
-> Request **#13** (https://github.com/iwindd/project-forge/pull/13). This file is mirrored as the
+> Branch `issue/3-organization-scoped-project-lifecycle` is pushed and open as draft Pull Request
+> **#13** (https://github.com/iwindd/project-forge/pull/13). This file is mirrored as the
 > `forge-review-ledger` comment on that Pull Request.
 >
-> **Correction (PROC-002):** earlier revisions of this file described the CI-verified commit as
-> "identical to the local branch HEAD". That was true when written and became stale as the ledger
-> itself was committed. The accurate statement is that CI is verified green on `233826e`, and the
-> current HEAD differs from it **only** by documentation changes under `.forge/tasks/` — no source
-> file differs between the two. Verified with
-> `git diff --name-only 233826e <HEAD> -- . ':!.forge/tasks'` returning nothing.
+> **Correction (PROC-002):** earlier revisions described the CI-verified commit as "identical to the
+> local branch HEAD". That was true when written and became stale. The accurate statement is that
+> CI is verified green on `233826e`, and later commits change **only** `.forge/tasks/` documentation
+> plus the round-3 corrections listed below; nothing under `apps/` is shared with `233826e` other
+> than the code those commits themselves changed.
 
 ---
 
@@ -67,7 +66,7 @@ Rows are never deleted, only appended and re-statused.
 | --- | --- |
 | Spec | No high or medium defect; all 10 criteria PASS; all 18 prior IDs verified resolved, deferred or dismissed. **4 new low findings**: SPEC-101 (PROJECT_UPDATED audit omits repository fields), SPEC-102 (Project list returns no pagination metadata), SPEC-103 (repeated archive/restore is a no-op only sequentially), SPEC-104 (dead project-scoped cache-tag invalidation) |
 | Standard | Pass with findings; no blocker, no hard rule violation, no regression. **4 new low findings**: STD-011 (a bare pasted identifier-shaped secret is stored as an environment key name), STD-012 (the ledger overstated API lint cleanliness, and Biome's `useImportType` "safe fix" would break NestJS DI), STD-013 (the deferred-CSS evidence claimed "byte-identical" copies that are only near-identical), STD-014 (no HTTP-level test for the archive/restore routes) |
-| Follow-up | **No regressions.** All 17 prior findings preserved in their recorded status; the two commits since round 2 (`eb35dc6`, `aa0823a`) are documentation-only, with `git diff --name-only e9a9128 aa0823a` containing no source file. **3 new findings**: STD-011 (duplicate of the Standard finding), PROC-002 (stale reviewed-SHA claim in this ledger), PROC-003 (the committed follow-ups file lagged the working tree) |
+| Follow-up | **No regressions.** All 17 prior findings preserved in their recorded status; the two commits since round 2 (`eb35dc6`, `aa0823a`) are documentation-only. **3 new findings**: STD-011 (duplicate), PROC-002 (stale reviewed-SHA claim), PROC-003 (the committed follow-ups file lagged the working tree) |
 
 ---
 
@@ -82,13 +81,13 @@ Rows are never deleted, only appended and re-statused.
 | SPEC-003 | Spec | low | owner/repo casing not canonicalized | resolved | `eec05ab`, `afce457` | owner and name lowercased; `.git` stripped after lowercasing so `ACME/DEMO.GIT` collapses to `acme/demo`; domain + use-case tests. No backfill needed — see SPEC-003N |
 | SPEC-004 | Spec | low | request ID minted twice per request | resolved | `cc03c6a` | `getRequestId` memoizes on the express `Request`; `request-context.spec.ts` covers repeated calls, inbound header, blank header, distinct requests |
 | SPEC-005 | Spec | high | a partial PATCH silently overwrites every omitted field | resolved | `5ad2602`, `e9a9128` | `updateProjectSchema` rebuilt as an explicit all-optional object with NO defaults over shared default-free field shapes; schema-level discriminating test plus three HTTP regression tests. Forge re-ran an independent probe: omitted fields now parse to `undefined`; create defaults intact |
-| STD-001 | Standard | medium | Admin env field stores a pasted `KEY=value` line — including the secret — as the key name | resolved | `2a48ce3` | `variableNameOf` splits at the first `=`; names filtered by `^[A-Za-z_][A-Za-z0-9_]*$`; API schema constrains keys identically; Thai copy forbids pasting values. Its unclosed remainder is now tracked as STD-011 |
+| STD-001 | Standard | medium | Admin env field stores a pasted `KEY=value` line — including the secret — as the key name | resolved | `2a48ce3` | `variableNameOf` splits at the first `=`; names filtered by `^[A-Za-z_][A-Za-z0-9_]*$`; API schema constrains keys identically; Thai copy forbids pasting values. Its unclosed remainder became STD-011 |
 | STD-002 | Standard | low | client schema does not enforce masked values | resolved | `061b274` | `z.record(z.string(), z.literal('configured'))`; positive, negative and non-string cases that discriminate |
 | STD-003 | Standard | low | archive "real prior status" test cannot fail | resolved | `f443fef` | falsifiable-by-construction test deleted; the guarantee is covered discriminatingly on the restore path |
 | STD-004 | Standard | low | failure paths and screen state logic unverified | resolved | `034247e` | view-state and failure mapping extracted and tested; fetch stub status-parameterisable with 403/404/409; restore spec uses a real `ForbiddenError` |
-| STD-005 | Standard | low | Admin PostgreSQL-UUID schema duplicated from the organization feature | deferred | — | Fix needs a shared Admin module and touches the organization feature. Drafted as proposed issue 1 in `issue-3-follow-ups.md` |
+| STD-005 | Standard | low | Admin PostgreSQL-UUID schema duplicated from the organization feature | deferred | — | Fix needs a shared Admin module and touches the organization feature. Drafted as proposed issue 1 |
 | STD-006 | Standard | low | concurrent duplicate returns 500 instead of 409 | resolved | `6c8dc2d` (supersedes `aa4e105`) | First attempt caught around `save`, which cannot fire because `save` never flushed. Corrected fix flushes inside the adapter and translates `UniqueConstraintViolationException` at the real failure point; port documents the flush-and-throw contract; no `@mikro-orm/*` remains in `application/**` or `domain/**` |
-| STD-007 | Standard | low | dead client surface and unused exports | resolved | `c88a528` | `getProject` endpoint and `useGetProjectQuery` removed; `PROJECT_MANAGE_PERMISSION` export dropped. Left one dead cache tag, now tracked as SPEC-104 |
+| STD-007 | Standard | low | dead client surface and unused exports | resolved | `c88a528` | `getProject` endpoint and `useGetProjectQuery` removed; `PROJECT_MANAGE_PERMISSION` export dropped. Left one dead cache tag, resolved as SPEC-104 |
 | STD-008 | Standard | low | the card/table/empty-state rule set is repeated a third time | deferred | — | Drafted as proposed issue 2. **Wording corrected (STD-013):** the copies are near-identical with per-page overrides, not byte-identical — `.table` min-width 48/44/42rem and `.emptyState` min-height 10/12rem differ per page |
 | STD-009 | Standard | low | `project.manage` hardcoded outside the Admin permission registry | deferred | — | Changes platform-wide navigation permission resolution. Drafted as proposed issue 3 |
 | STD-010 | Standard | medium | same defect as SPEC-005, reported independently | resolved | `5ad2602`, `e9a9128` | Duplicate of SPEC-005 |
@@ -100,16 +99,28 @@ Rows are never deleted, only appended and re-statused.
 
 | ID | Type | Severity | Finding | Status | Resolving commit(s) | Resolution evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| SPEC-101 | Spec | low | `PROJECT_UPDATED` audit `before`/`after` omit the repository fields, so a repository-only change records `before === after` | open | `_pending (round-3 correction dispatched)_` | `githubUrl`/`githubOwner`/`githubRepo` added to both projections (`environmentMetadata` still excluded, as it can carry secrets); HTTP test asserts a repository-only PATCH produces differing before/after |
+| SPEC-101 | Spec | low | `PROJECT_UPDATED` audit `before`/`after` omit the repository fields, so a repository-only change records `before === after` | resolved | `89c164a` | `githubUrl`/`githubOwner`/`githubRepo` added to both projections (`environmentMetadata` still excluded, as it can carry secrets); HTTP test asserts a repository-only PATCH produces differing before/after |
 | SPEC-102 | Spec | low | the Project list is the only collection endpoint with no pagination metadata | accepted scope | — | The issue's HTTP contract specifies "lists **all** Project records in the Organization", so an unpaginated list is the specified behaviour, not an omission. Recorded as an explicit scope decision rather than a silent one. If pagination is wanted, it is a contract change and belongs in a separate issue |
-| SPEC-103 | Spec | low | repeated archive/restore is a no-op only sequentially; concurrent duplicates can each audit | open | `_pending (round-3 correction dispatched)_` | The status transition is now applied conditionally at write time and only the request that actually transitioned writes the audit event; regression test asserts the losing concurrent request returns the current project with no second audit row |
-| SPEC-104 | Spec | low | Project mutations invalidate a project-scoped cache tag that no endpoint provides | open | `_pending (round-3 correction dispatched)_` | The three dead `{ type: 'Projects', id: projectId }` invalidations were removed, completing the STD-007 cleanup |
-| STD-011 | Standard | low | a bare pasted identifier-shaped secret is stored verbatim as an environment KEY, and the UI copy over-promises | open | `_pending (round-3 correction dispatched)_` | Forge reproduced it by executing the real module: `ghp_…`, `github_pat_…`, `sk_live_…`, `AKIA…` and `npm_…` were each stored as a key name. Now rejected on both the Admin form and the API key schema, and the Thai copy no longer claims an absolute guarantee. Residual: a bare high-entropy token of an unrecognised shape is still indistinguishable from a legitimate variable name and is documented as such |
+| SPEC-103 | Spec | low | repeated archive/restore is a no-op only sequentially; concurrent duplicates can each audit | resolved | `6e015bc` | The port gained `transitionStatus` and the adapter implements it as a conditional write (`nativeUpdate` with a status predicate, using the affected-row count), so exactly one request performs the transition and only that request writes the audit event. Archive and restore no longer read-then-write. Specs updated to assert observed behaviour plus a deterministic concurrent regression (two parallel executions → exactly one audit row) and three adapter-level cases. Forge re-verified against the real database: three archives produced **one** audit event, two restores produced **one** |
+| SPEC-104 | Spec | low | Project mutations invalidate a project-scoped cache tag that no endpoint provides | resolved | `8621c27` | The three dead `{ type: 'Projects', id: projectId }` invalidations were removed, completing the STD-007 cleanup |
+| STD-011 | Standard | low | a bare pasted identifier-shaped secret is stored verbatim as an environment KEY, and the UI copy over-promises | resolved | `022bda1`, `109e7b8` | Forge reproduced the defect by executing the real module: `ghp_…`, `github_pat_…`, `sk_live_…`, `AKIA…` and `npm_…` were each stored as a key name. `022bda1` rejected credential-shaped names on both the Admin form and the API key schema and corrected the Thai copy. Forge's verification of that first fix found it also silently DROPPED legitimate names (`npm_package_lock_version`), so `109e7b8` refined the rule to require a token-shaped suffix (contains a digit AND (an uppercase letter OR ≥16 characters)). Forge re-verified independently: all 6 credential tokens rejected, all 8 legitimate names kept |
 | STD-012 | Standard | low | (a) this ledger overstated API lint cleanliness; (b) Biome's `useImportType` "safe fix" would break NestJS constructor DI | (a) resolved (b) deferred | — | (a) corrected in this file: Biome reports 13 warnings under `modules/projects`, all `style/useImportType`, and they are known false positives — the "0 in `projects/**`" claim was wrong. (b) pre-existing across the whole API package and a repo-wide tooling change; drafted as proposed issue 6 |
-| STD-013 | Standard | low | the deferred-CSS evidence claimed "byte-identical" copies that are only near-identical | resolved | — | Corrected in this ledger's STD-008 row and in proposed issue 2, with the concrete divergences (`.table` min-width 48/44/42rem; `.emptyState` min-height 10/12rem) and a requirement to parameterise them so the extraction cannot regress layout |
-| STD-014 | Standard | low | the archive and restore routes have no HTTP-level test | open | `_pending (round-3 correction dispatched)_` | `projects.http.spec.ts` now covers archive and restore at the HTTP seam: 200 with the archived project, the no-op returning 200 with no extra audit row, 403 without `project.manage`, and a bodyless POST |
-| PROC-002 | Process | low | this ledger pinned the reviewed commit as `233826e` and called it identical to HEAD | resolved | — | Corrected in the tracking note above; the accurate statement is that HEAD differs from the CI-verified `233826e` only in `.forge/tasks/` documentation |
-| PROC-003 | Process | low | the committed follow-ups file lagged the working tree | open | `_pending (round-3 correction dispatched)_` | `.forge/tasks/issue-3-follow-ups.md` is committed with the two new operational follow-ups (proposed issues 4 and 5) and the tooling one (proposed issue 6) |
+| STD-013 | Standard | low | the deferred-CSS evidence claimed "byte-identical" copies that are only near-identical | resolved | — | Corrected in this ledger's STD-008 row and in proposed issue 2, with the concrete divergences and a requirement to parameterise them so the extraction cannot regress layout |
+| STD-014 | Standard | low | the archive and restore routes have no HTTP-level test | resolved | `c2993c3` | `projects.http.spec.ts` now covers archive and restore at the HTTP seam: 200 with the archived project, the no-op returning 200 with no extra audit row, 403 without `project.manage`, and a bodyless POST. This commit also added `@HttpCode(HttpStatus.OK)` to both routes — see the contract note below |
+| PROC-002 | Process | low | this ledger pinned the reviewed commit as `233826e` and called it identical to HEAD | resolved | — | Corrected in the tracking note above |
+| PROC-003 | Process | low | the committed follow-ups file lagged the working tree | resolved | `26591a3` | `.forge/tasks/issue-3-follow-ups.md` is committed with the two operational follow-ups (proposed issues 4 and 5) and the tooling one (proposed issue 6) |
+
+---
+
+## Contract note — archive and restore now answer 200, not 201
+
+Round-3 correction `c2993c3` added `@HttpCode(HttpStatus.OK)` to `POST :id/archive` and
+`POST :id/restore`. Before that they returned Nest's POST default **201**. Both round-3 reviews
+specified 200 for these action endpoints and the issue describes them as returning the standard
+success envelope, so this is a deliberate, observable contract change: **callers that asserted 201
+must accept 200.** The Admin client treats any 2xx as success, so nothing in this repository
+depends on the old code, and `POST /projects` (create) still returns 201. Flagged here because it
+is the only place a round-3 correction changed externally visible behaviour.
 
 ---
 
@@ -117,7 +128,9 @@ Rows are never deleted, only appended and re-statused.
 
 | Residual | Why accepted |
 | --- | --- |
-| A bare, unrecognised high-entropy string pasted without `=` may still be stored as a key name | No validation rule can distinguish a legitimate variable name from a token of the same shape. Known credential prefixes are now rejected and the UI copy was corrected to stop claiming an absolute guarantee; the remaining case is a documented limitation rather than an unqualified promise |
+| A bare, unrecognised high-entropy string pasted without `=` may still be stored as a key name, and a long legitimate name beginning with a credential prefix and carrying a digit (for example `npm_cache_v2_key_abcdef123456`) is still rejected | No rule can perfectly separate a variable name from a same-shaped token. Known credential shapes are rejected and the UI copy was corrected to stop claiming an absolute guarantee; the remaining behaviour is a documented limitation on both sides |
+| Archive/restore audit `before`/`after` use literal `ACTIVE`/`ARCHIVED` values rather than deriving from the transition input | Functionally correct: the audit only runs when `applied === true`, which the conditional write guarantees means the row really was in the expected state. Deriving from the transition input would remove a theoretical drift risk; noted, not changed |
+| The `transitionStatus` test fake is near-duplicated across three specs, and the archive/restore use cases are mirror images | Test-helper duplication and a deliberately symmetric pair; the contract requires separate use cases, routes, providers and audit actions |
 | Unused type exports flagged by `knip`: `GetProjectInput`, `databaseUuidSchema` (STD-005N), `ProjectStatus`, `ProjectsViewState` | `knip` is not one of the ten CI gates and reports 12 unused exported types across the admin, 10 of which pre-date this branch. `databaseUuidSchema` belongs to deferred STD-005 |
 | API lint reports 13 `style/useImportType` warnings under `modules/projects` (60 repo-wide) | Known false positives: the API sets `emitDecoratorMetadata` and those imports must stay value imports for Nest DI. The rule cannot be made decorator-aware in Biome 2.5.12; disabling it for the API is drafted as proposed issue 6 |
 | Constraint translation matches `UniqueConstraintViolationException` by type, not constraint name | The `projects` table carries exactly one unique constraint, `(organization_id, github_url)`; the only other unique key is the client-generated primary key |
@@ -130,15 +143,15 @@ Rows are never deleted, only appended and re-statused.
 
 ---
 
-## Required checks — final run by Forge
+## Required checks — final run by Forge at `109e7b8`
 
 | Check | Result |
 | --- | --- |
-| `pnpm --filter @project-forge/api test` | pass — 43 files / 158 tests |
+| `pnpm --filter @project-forge/api test` | pass — 43 files / 188 tests |
 | `pnpm --filter @project-forge/api check-types` | pass |
-| `pnpm --filter @project-forge/api lint` | pass (warnings only, exit 0) — 60 warnings repo-wide, **13 of them under `modules/projects`**, all `style/useImportType` false positives. See STD-012 |
+| `pnpm --filter @project-forge/api lint` | pass (warnings only, exit 0) — 60 repo-wide, 13 under `modules/projects`, all `style/useImportType` false positives. See STD-012 |
 | `pnpm --filter @project-forge/api build` | pass |
-| `pnpm --filter @project-forge/admin test` | pass — 32 files / 112 tests |
+| `pnpm --filter @project-forge/admin test` | pass — 32 files / 133 tests |
 | `pnpm --filter @project-forge/admin typecheck` | pass |
 | `pnpm --filter @project-forge/admin lint` | pass |
 | `pnpm --filter @project-forge/admin check:admin-client-boundary` | pass |
@@ -149,8 +162,8 @@ Baseline parity note: root `biome lint apps` and `biome format apps` report the 
 `main` and on this branch (a `core.autocrlf` checkout artefact for format, and pre-existing admin
 style deviations for lint), so they are not a regression. CI uses the per-package commands, which pass.
 
-Test growth across the whole task: API 37 files / 88 tests → 43 files / 158 tests.
-Admin 31 files / 88 tests → 32 files / 112 tests.
+Test growth across the whole task: API 37 files / 88 tests → 43 files / 188 tests.
+Admin 31 files / 88 tests → 32 files / 133 tests.
 
 ---
 
@@ -163,18 +176,21 @@ Admin 31 files / 88 tests → 32 files / 112 tests.
 
 Every step passed: Checkout, Setup pnpm, Setup Node.js, Install dependencies, Prepare CI
 environment, API lint, API test, API typecheck, API build, Admin lint, Admin test, Admin typecheck,
-Admin client-boundary check, Admin UI i18n check, Admin build.
+Admin client-boundary check, Admin UI i18n check, Admin build. A second run on `aa0823a` also
+succeeded (2m5s).
 
-A second run on `aa0823a` (the ledger commit) also succeeded in 2m5s. The commits after `233826e`
-change only `.forge/tasks/` documentation, so the CI-verified code is the same code this ledger
-describes.
+**Outstanding:** the round-3 correction commits (`89c164a` … `109e7b8`) have **not** been through
+GitHub CI yet. Their local equivalents of all ten gates pass, but real CI must be re-confirmed
+after they are pushed. This is recorded rather than assumed.
 
 ---
 
-## Browser verification (first end-to-end run against a real database)
+## Browser verification (real browser, real database)
 
-Run by Forge at `aa0823a` through a real browser against the locally running API and admin app,
-after applying the pending migrations.
+Run by Forge through a real browser against the locally running API and admin app, after applying
+the pending migrations.
+
+### First pass (at `aa0823a`)
 
 | Flow | Result |
 | --- | --- |
@@ -185,32 +201,45 @@ after applying the pending migrations.
 | Archived row actions | only กู้คืน offered; no edit action |
 | Restore | status → ใช้งาน with success feedback |
 | Error state | with the API blocked via CDP: "ไม่สามารถโหลดรายการโปรเจกต์ได้" plus a working "ลองใหม่" retry |
-| Audit trail | three rows (PROJECT_CREATED, PROJECT_ARCHIVED before ACTIVE/after ARCHIVED, PROJECT_RESTORED before ARCHIVED/after ACTIVE), each with actor, organization, target and a distinct request ID |
+| Audit trail | three rows with actor, organization, target, distinct request IDs |
 | Masking | `environment_metadata` stored as `{"DATABASE_URL":"configured"}` — no secret value |
+
+### Second pass (at `109e7b8`, after the round-3 corrections)
+
+| Flow | Result |
+| --- | --- |
+| List | renders; corrected Thai copy live ("บรรทัดที่ไม่มีเครื่องหมาย = จะถือว่าเป็นชื่อตัวแปร และระบบจะปฏิเสธชื่อที่ดูเหมือนโทเคนหรือคีย์ลับ") |
+| Archive via UI | menu → confirmation dialog → status เก็บถาวร → success toast |
+| Archived row | offers only กู้คืน |
+| Restore via UI | status ใช้งาน → success toast |
+| Repeated-action idempotency (API, real DB) | 3 × archive → **1** audit event; 2 × restore → **1** audit event |
+| Audit integrity | 9/9 unique request IDs; no secret value in any before/after payload |
+| Final state | project ACTIVE, `archivedAt` null, `environment_metadata` `{"DATABASE_URL":"configured"}` |
+
+One automation note worth keeping: the Mantine row menu did not render while the browser tab was
+backgrounded (`document.visibilityState === 'hidden'`), because the portal transition never mounted.
+It is a harness artefact, not an application defect — `Page.bringToFront` resolved it. Recorded so a
+future run does not misdiagnose it as a broken menu.
 
 ---
 
 ## Forge readiness decision
 
-**Provisional — round-3 corrections are dispatched and not yet committed.** The five open rows above
-(SPEC-101, SPEC-103, SPEC-104, STD-011, STD-014) plus PROC-003 are being corrected now; this section
-will be re-stated with the real resolving SHAs once they land. Recorded here so the in-flight state
-is explicit rather than implied.
+All Spec and Standard findings from three rounds are resolved, deferred with a recorded rationale, or
+explicitly accepted as scope. The follow-up worker reports no regressions. All ten required checks
+pass locally at `109e7b8`, and Forge independently re-verified the round-3 corrections rather than
+accepting the implementing agent's report.
 
-- **Spec:** rounds 1–2 findings all resolved. Round 3 added four low findings: three accepted for
-  correction (SPEC-101, SPEC-103, SPEC-104) and one recorded as an explicit scope decision (SPEC-102).
-- **Standard:** rounds 1–2 findings all resolved or deferred. Round 3 added four low findings:
-  STD-011 and STD-014 accepted for correction; STD-012(a) corrected in this file and STD-012(b)
-  deferred as proposed issue 6; STD-013 corrected in this file and in proposed issue 2.
-- **Follow-up:** no regressions across all three rounds; every prior finding preserved in its
-  recorded status.
-- **CI:** green on `233826e`; the commits since are documentation-only.
-- **Deferred:** proposed issues 1–6 in `.forge/tasks/issue-3-follow-ups.md` (STD-005, STD-008,
-  STD-009, the migration-drift diagnostics gap, the tracked-generated-artifact drift, and the
-  Biome DI hazard).
+- **Spec:** no open findings. All nine acceptance criteria plus the contract's `updatedAt` ordering clause PASS.
+- **Standard:** no open findings. STD-012(b) and the three round-1 deferrals are drafted follow-ups.
+- **Follow-up:** no regressions; every prior finding preserved in its recorded status.
+- **CI:** green on `233826e`; the round-3 correction commits still need a CI run (see above).
+- **Deferred:** proposed issues 1–6 in `.forge/tasks/issue-3-follow-ups.md`.
 
-The final readiness decision is issued once the round-3 corrections are committed and the gates are
-re-run. The user performs the final review and merge decision; Forge never merges.
+**Decision: the change set is complete and review-clean, and is ready for the user's final review as
+draft Pull Request #13.** Before merge the remaining steps are: push the round-3 corrections, confirm
+GitHub CI is green on the new HEAD, decide on the deferred items, and mark the draft ready. The user
+performs the final review and merge decision; Forge never merges.
 
 ### What the next review round must do
 
