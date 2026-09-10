@@ -55,7 +55,25 @@ describe('project resource schema', () => {
     ).toThrow()
   })
 
-  it('rejects environment metadata values that are not masked keys', () => {
+  it('accepts the masked environment metadata value the API returns', () => {
+    expect(
+      projectSchema.parse({
+        ...project,
+        environmentMetadata: { DATABASE_URL: 'configured' }
+      })
+    ).toMatchObject({ environmentMetadata: { DATABASE_URL: 'configured' } })
+  })
+
+  it('rejects an unmasked environment metadata value', () => {
+    expect(() =>
+      projectSchema.parse({
+        ...project,
+        environmentMetadata: { API_KEY: 'sk-live-secret' }
+      })
+    ).toThrow()
+  })
+
+  it('rejects non-string environment metadata entries', () => {
     expect(() =>
       projectSchema.parse({
         ...project,
