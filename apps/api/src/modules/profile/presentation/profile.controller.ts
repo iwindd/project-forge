@@ -7,7 +7,10 @@ import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js';
 import type { SecurityLogPort } from '../../../common/security/security-log.port.js';
 import { NotFoundError, ForbiddenError } from '../../../common/errors/application-error.js';
-import { apiSuccess } from '../../../common/http/api-response.js';
+import {
+  apiNullSuccessResponseSchema,
+  apiSuccess,
+} from '../../../common/http/api-response.js';
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
 import type { AuditLogPort } from '../../../common/audit/audit.port.js';
 import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/connection.orm-entity.js';
@@ -129,6 +132,6 @@ export class ProfileController {
       provider: connection.provider,
       event: 'OAUTH_CONNECTION_REMOVED',
     });
-    return apiSuccess(null);
+    return apiNullSuccessResponseSchema.parse(apiSuccess(null));
   }
 }

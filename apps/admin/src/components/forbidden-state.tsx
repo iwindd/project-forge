@@ -2,7 +2,7 @@ import { Button, Center, Paper, Stack, Text, Title } from '@mantine/core'
 import Link from 'next/link'
 
 export function ForbiddenState({
-  backHref = '/account'
+  backHref
 }: Readonly<{ backHref?: string }>) {
   return (
     <Center mih='60vh' p='xl'>
@@ -26,9 +26,11 @@ export function ForbiddenState({
           <Text c='dimmed'>
             บัญชีของคุณไม่มีสิทธิ์สำหรับข้อมูลนี้ และระบบจะไม่ส่งคุณกลับไปหน้าเข้าสู่ระบบ
           </Text>
-          <Button component={Link} href={backHref} variant='light'>
-            กลับบัญชีของฉัน
-          </Button>
+          {backHref ? (
+            <Button component={Link} href={backHref} variant='light'>
+              กลับบัญชีของฉัน
+            </Button>
+          ) : null}
         </Stack>
       </Paper>
     </Center>

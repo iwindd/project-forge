@@ -11,7 +11,10 @@ import {
   UseGuards
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
-import { apiSuccess } from '../../../common/http/api-response.js'
+import {
+  apiNullSuccessResponseSchema,
+  apiSuccess,
+} from '../../../common/http/api-response.js'
 import type { AuditLogPort } from '../../../common/audit/audit.port.js'
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js'
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
@@ -189,6 +192,8 @@ export class AuthController {
       event: 'LOGOUT'
     })
     response.clearCookie('pf_session', { path: '/' })
-    return response.status(200).json(apiSuccess(null))
+    return response
+      .status(200)
+      .json(apiNullSuccessResponseSchema.parse(apiSuccess(null)))
   }
 }
