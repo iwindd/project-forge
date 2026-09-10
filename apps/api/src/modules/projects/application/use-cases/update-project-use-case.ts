@@ -15,6 +15,10 @@ import {
   ProjectStatus,
 } from '../../domain/project.js';
 import type { UpdateProjectDto } from '../../presentation/dto/project.schemas.js';
+import {
+  DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
+  throwDuplicateRepositoryConflict,
+} from '../duplicate-repository-conflict.js';
 import { PROJECT_REPOSITORY } from '../ports/project.repository.js';
 import type { ProjectRepository } from '../ports/project.repository.js';
 
@@ -57,9 +61,7 @@ export class UpdateProjectUseCase {
             repository.url,
           );
           if (collision && collision.id !== project.id) {
-            throw new ConflictError(
-              'A project with this repository already exists in the organization',
-            );
+            throw new ConflictError(DUPLICATE_REPOSITORY_CONFLICT_MESSAGE);
           }
         }
         project.githubUrl = repository.url;
@@ -74,7 +76,11 @@ export class UpdateProjectUseCase {
         project.environmentMetadata = maskEnvironmentMetadata(input.environmentMetadata);
       }
       project.updatedAt = new Date();
-      await this.projects.save(project);
+      try {
+        await this.projects.save(project);
+      } catch (error) {
+        throwDuplicateRepositoryConflict(error);
+      }
       await this.audit.record({
         actorId,
         organizationId,

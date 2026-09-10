@@ -1,3 +1,4 @@
+import { UniqueConstraintViolationException } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { ConflictError } from '../../../../common/errors/application-error.js';
 import { ProjectStatus } from '../../domain/project.js';
@@ -15,6 +16,14 @@ const input = {
 
 function unitOfWork() {
   return { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
+}
+
+function uniqueConstraintViolation() {
+  return new UniqueConstraintViolationException(
+    new Error(
+      'duplicate key value violates unique constraint "projects_organization_id_github_url_unique"',
+    ),
+  );
 }
 
 function setup(existing: { id: string; status: ProjectStatus } | null = null) {
@@ -150,5 +159,32 @@ describe('CreateProjectUseCase', () => {
     );
     expect(projects.save).not.toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it('maps a concurrent duplicate repository violation to a typed 409 conflict', async () => {
+    const { useCase, projects, audit } = setup();
+    projects.save.mockRejectedValueOnce(uniqueConstraintViolation());
+
+    const error = await useCase.execute('actor-id', 'organization-id', input).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+
+    expect(error).toBeInstanceOf(ConflictError);
+    expect(error).toMatchObject({
+      code: 'CONFLICT',
+      status: 409,
+      message: 'A project with this repository already exists in the organization',
+    });
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it('does not swallow unrelated repository save failures', async () => {
+    const { useCase, projects } = setup();
+    projects.save.mockRejectedValueOnce(new Error('connection lost'));
+
+    await expect(useCase.execute('actor-id', 'organization-id', input)).rejects.toThrow(
+      'connection lost',
+    );
   });
 });

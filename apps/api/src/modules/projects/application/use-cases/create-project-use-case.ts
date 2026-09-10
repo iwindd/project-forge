@@ -14,6 +14,10 @@ import {
   parseGithubRepositoryUrl,
 } from '../../domain/project.js';
 import type { CreateProjectDto } from '../../presentation/dto/project.schemas.js';
+import {
+  DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
+  throwDuplicateRepositoryConflict,
+} from '../duplicate-repository-conflict.js';
 import { PROJECT_REPOSITORY } from '../ports/project.repository.js';
 import type { ProjectRepository } from '../ports/project.repository.js';
 
@@ -43,7 +47,7 @@ export class CreateProjectUseCase {
         repository.url,
       );
       if (existing) {
-        throw new ConflictError('A project with this repository already exists in the organization');
+        throw new ConflictError(DUPLICATE_REPOSITORY_CONFLICT_MESSAGE);
       }
       const project = createProject({
         organizationId,
@@ -59,7 +63,11 @@ export class CreateProjectUseCase {
           : null,
       });
 
-      await this.projects.save(project);
+      try {
+        await this.projects.save(project);
+      } catch (error) {
+        throwDuplicateRepositoryConflict(error);
+      }
       await this.audit.record({
         actorId,
         organizationId,
