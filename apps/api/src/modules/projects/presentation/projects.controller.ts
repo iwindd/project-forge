@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
@@ -95,7 +95,10 @@ export class ProjectsController {
     );
   }
 
+  // Archive and restore are actions on an existing project, so they answer 200 with the updated
+  // resource instead of Nest's POST default 201 Created.
   @Post(':id/archive')
+  @HttpCode(HttpStatus.OK)
   async archive(
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
@@ -114,6 +117,7 @@ export class ProjectsController {
   }
 
   @Post(':id/restore')
+  @HttpCode(HttpStatus.OK)
   async restore(
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,

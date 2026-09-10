@@ -111,16 +111,17 @@ describe('projects HTTP contracts', () => {
       archivedAt,
       updatedAt,
     }) => {
-      const record = records.find(
+      const index = records.findIndex(
         (candidate) =>
           candidate.organizationId === scopedOrganizationId && candidate.id === id,
       );
-      if (!record) return null;
+      if (index === -1) return null;
+      const record = records[index];
       if (record.status !== from) return { applied: false, project: { ...record } };
-      record.status = to;
-      record.archivedAt = archivedAt;
-      record.updatedAt = updatedAt;
-      return { applied: true, project: { ...record } };
+      // Replace the stored entry instead of mutating it, so the seeded fixtures stay pristine.
+      const updated = { ...record, status: to, archivedAt, updatedAt };
+      records[index] = updated;
+      return { applied: true, project: { ...updated } };
     },
     save: async (project: ProjectRecord) => {
       const index = records.findIndex((record) => record.id === project.id);
@@ -476,5 +477,114 @@ describe('projects HTTP contracts', () => {
     // Regression: before and after used to be byte-identical for this PATCH because the audit
     // projections omitted the repository fields entirely.
     expect(auditInput.before).not.toEqual(auditInput.after);
+  });
+
+  it('archives an active project and restores an archived project over HTTP', async () => {
+    const archiveResponse = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}/archive`,
+      { method: 'POST', headers: jsonHeaders('projects-archive'), body: JSON.stringify({}) },
+    );
+    const archiveBody = (await archiveResponse.json()) as {
+      data: { project: Record<string, unknown> };
+    };
+
+    expect(archiveResponse.status).toBe(200);
+    expect(archiveBody.data.project).toMatchObject({ id: activeProjectId, status: 'ARCHIVED' });
+    expect(archiveBody.data.project.archivedAt).not.toBeNull();
+    expect(records.find((record) => record.id === activeProjectId)?.status).toBe('ARCHIVED');
+    expect(audit.record).toHaveBeenCalledTimes(1);
+    expect(audit.record).toHaveBeenLastCalledWith(
+      expect.objectContaining({ action: 'PROJECT_ARCHIVED', requestId: 'projects-archive' }),
+    );
+
+    const restoreResponse = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${archivedProjectId}/restore`,
+      { method: 'POST', headers: jsonHeaders('projects-restore'), body: JSON.stringify({}) },
+    );
+    const restoreBody = (await restoreResponse.json()) as {
+      data: { project: Record<string, unknown> };
+    };
+
+    expect(restoreResponse.status).toBe(200);
+    expect(restoreBody.data.project).toMatchObject({
+      id: archivedProjectId,
+      status: 'ACTIVE',
+      archivedAt: null,
+    });
+    expect(audit.record).toHaveBeenCalledTimes(2);
+    expect(audit.record).toHaveBeenLastCalledWith(
+      expect.objectContaining({ action: 'PROJECT_RESTORED', requestId: 'projects-restore' }),
+    );
+  });
+
+  it('adds no further audit row when the archive and restore routes are repeated', async () => {
+    const firstArchive = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}/archive`,
+      { method: 'POST', headers: jsonHeaders('projects-archive-repeat-1'), body: JSON.stringify({}) },
+    );
+    const secondArchive = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}/archive`,
+      { method: 'POST', headers: jsonHeaders('projects-archive-repeat-2'), body: JSON.stringify({}) },
+    );
+    const secondArchiveBody = (await secondArchive.json()) as {
+      data: { project: Record<string, unknown> };
+    };
+
+    expect(firstArchive.status).toBe(200);
+    expect(secondArchive.status).toBe(200);
+    expect(secondArchiveBody.data.project).toMatchObject({ status: 'ARCHIVED' });
+    expect(audit.record).toHaveBeenCalledTimes(1);
+
+    const firstRestore = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${archivedProjectId}/restore`,
+      { method: 'POST', headers: jsonHeaders('projects-restore-repeat-1'), body: JSON.stringify({}) },
+    );
+    const secondRestore = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${archivedProjectId}/restore`,
+      { method: 'POST', headers: jsonHeaders('projects-restore-repeat-2'), body: JSON.stringify({}) },
+    );
+    const secondRestoreBody = (await secondRestore.json()) as {
+      data: { project: Record<string, unknown> };
+    };
+
+    expect(firstRestore.status).toBe(200);
+    expect(secondRestore.status).toBe(200);
+    expect(secondRestoreBody.data.project).toMatchObject({
+      status: 'ACTIVE',
+      archivedAt: null,
+    });
+    expect(audit.record).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns 403 without project.manage on the archive route and echoes the request ID', async () => {
+    organizations.requireProjectManager.mockRejectedValueOnce(
+      new ForbiddenError('Project management access is required'),
+    );
+
+    const response = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}/archive`,
+      { method: 'POST', headers: jsonHeaders('projects-archive-403'), body: JSON.stringify({}) },
+    );
+    const body = (await response.json()) as { error: Record<string, unknown> };
+
+    expect(response.status).toBe(403);
+    expect(body.error).toMatchObject({
+      code: 'FORBIDDEN',
+      details: {},
+      requestId: 'projects-archive-403',
+    });
+    expect(records.find((record) => record.id === activeProjectId)?.status).toBe('ACTIVE');
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it('accepts an archive POST with no body at all', async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}/archive`,
+      { method: 'POST', headers: authenticatedHeaders('projects-archive-no-body') },
+    );
+    const body = (await response.json()) as { data: { project: Record<string, unknown> } };
+
+    expect(response.status).toBe(200);
+    expect(body.data.project).toMatchObject({ id: activeProjectId, status: 'ARCHIVED' });
   });
 });
