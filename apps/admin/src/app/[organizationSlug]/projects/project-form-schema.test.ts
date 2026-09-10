@@ -135,6 +135,31 @@ describe('project form submission', () => {
     ).toEqual({ DATABASE_URL: 'configured' })
   })
 
+  it.each([
+    'ghp_A1b2C3d4E5f6G7h8I9j0',
+    'github_pat_11ABCDEFG0abcdefghij_kl',
+    'sk_live_0123456789abcdef',
+    'AKIAIOSFODNN7EXAMPLE',
+    'npm_abcdefghijklmnop1234'
+  ])(
+    'drops the credential-shaped bare token %s instead of storing it as a key name',
+    token => {
+      expect(parseEnvironmentMetadata(token)).toEqual({})
+    }
+  )
+
+  it('keeps ordinary variable names while dropping credential-shaped lines', () => {
+    expect(
+      parseEnvironmentMetadata(
+        'DATABASE_URL\nNODE_ENV\ngithub_pat_11ABCDEFG0abcdefghij_kl\nnpm_cache_dir'
+      )
+    ).toEqual({
+      DATABASE_URL: 'configured',
+      NODE_ENV: 'configured',
+      npm_cache_dir: 'configured'
+    })
+  })
+
   it('trims every request body field', () => {
     expect(
       toProjectRequestBody({
