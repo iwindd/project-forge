@@ -1,48 +1,34 @@
 'use client'
 
 import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation'
+import { getBrowserApiErrorMessage } from '@/lib/api/api'
+import { useUpdateProfileMutation } from '@/lib/features/profile/profile-api'
 import { Alert, Button, Group, Stack, TextInput } from '@mantine/core'
 import { useState } from 'react'
 import { useProfile } from './profile-context'
 import { ProfileEditCard } from './profile-edit-card'
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'
-
 export function ProfileNameForm() {
   const { profile, updateProfile } = useProfile()
   const { invalidateAdminCaches } = useAdminCacheInvalidation()
+  const [updateProfileRequest, { isLoading: pending }] = useUpdateProfileMutation()
   const [name, setName] = useState(profile.name)
-  const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const save = async () => {
-    setPending(true)
     setError(null)
     try {
-      const response = await fetch(`${apiOrigin}/api/v1/profile`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ displayName: name })
-      })
-      if (!response.ok) throw new Error('ไม่สามารถบันทึกชื่อได้')
-      const result = (await response.json()) as {
-        data: { profile: { displayName: string; updatedAt: string } }
-      }
+      const result = await updateProfileRequest({ displayName: name }).unwrap()
       updateProfile({
         ...profile,
-        name: result.data.profile.displayName,
-        updatedAt: result.data.profile.updatedAt
+        name: result.profile.displayName,
+        updatedAt: result.profile.updatedAt
       })
       invalidateAdminCaches({ resources: ['users'] })
     } catch (saveError) {
       setError(
-        saveError instanceof Error
-          ? saveError.message
-          : 'ไม่สามารถบันทึกชื่อได้'
+        getBrowserApiErrorMessage(saveError, 'ไม่สามารถบันทึกชื่อได้')
       )
-    } finally {
-      setPending(false)
     }
   }
 

@@ -22,6 +22,13 @@ export const userListResponseSchema = z.object({
   })
 })
 
+export const userListMetaSchema = z.object({
+  page: z.number(),
+  pageSize: z.number(),
+  total: z.number(),
+  totalPages: z.number()
+})
+
 export const userDetailResponseSchema = z.object({
   user: z.object({
     id: z.string().min(1),

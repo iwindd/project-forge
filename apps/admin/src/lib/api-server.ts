@@ -20,11 +20,12 @@ export class ApiServerError extends Error {
   }
 }
 
-export async function apiServerFetch<T>(
+async function fetchApiEnvelope<T, M>(
   path: string,
   schema: z.ZodType<T>,
+  metaSchema: z.ZodType<M>,
   init?: RequestInit
-): Promise<T> {
+): Promise<{ data: T; meta?: M }> {
   const cookieStore = await cookies()
   const response = await fetch(`${apiOrigin}/api/v1/${path.replace(/^\//, '')}`, {
     ...init,
@@ -61,7 +62,7 @@ export async function apiServerFetch<T>(
   }
 
   const envelope = z
-    .object({ data: schema, meta: z.unknown().optional() })
+    .object({ data: schema, meta: metaSchema.optional() })
     .safeParse(body)
   if (!envelope.success) {
     throw new ApiServerError(
@@ -73,5 +74,23 @@ export async function apiServerFetch<T>(
     )
   }
 
-  return envelope.data.data
+  return envelope.data
+}
+
+export async function apiServerFetchEnvelope<T, M>(
+  path: string,
+  schema: z.ZodType<T>,
+  metaSchema: z.ZodType<M>,
+  init?: RequestInit
+): Promise<{ data: T; meta?: M }> {
+  return fetchApiEnvelope(path, schema, metaSchema, init)
+}
+
+export async function apiServerFetch<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  init?: RequestInit
+): Promise<T> {
+  const envelope = await fetchApiEnvelope(path, schema, z.unknown(), init)
+  return envelope.data
 }

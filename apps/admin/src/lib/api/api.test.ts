@@ -92,4 +92,39 @@ describe('browser API root', () => {
     expect(result).toMatchObject({ error: { status: 403 } })
     expect(dispatch).not.toHaveBeenCalled()
   })
+
+  it('normalizes a non-contract HTTP error into the standard error contract', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: 'Access denied' }), {
+          status: 403,
+          headers: {
+            'content-type': 'application/json',
+            'x-request-id': 'request-456'
+          }
+        })
+      )
+    )
+
+    const result = await baseQuery(
+      'resource',
+      createQueryContext(vi.fn()),
+      {}
+    )
+
+    expect(result).toMatchObject({
+      error: {
+        status: 403,
+        data: {
+          error: {
+            code: 'API_REQUEST_FAILED',
+            message: 'API request failed with 403',
+            details: { message: 'Access denied' },
+            requestId: 'request-456'
+          }
+        }
+      }
+    })
+  })
 })

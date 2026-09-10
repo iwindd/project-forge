@@ -2,45 +2,38 @@
 
 import { Alert, Button, Group, Stack, Textarea, TextInput } from "@mantine/core";
 import { useState } from "react";
+import { getBrowserApiErrorMessage } from "@/lib/api/api";
+import { useUpdateProfileMutation } from "@/lib/features/profile/profile-api";
 import { ProfileEditCard } from "./profile-edit-card";
 import { useProfile } from "./profile-context";
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
-
 export function ProfileDetailsForm() {
   const { profile, updateProfile } = useProfile();
+  const [updateProfileRequest, { isLoading: pending }] = useUpdateProfileMutation();
   const [bio, setBio] = useState(profile.bio ?? "");
   const [timezone, setTimezone] = useState(profile.timezone ?? "");
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
-    setPending(true);
     setError(null);
     try {
-      const response = await fetch(`${apiOrigin}/api/v1/profile`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          bio: bio.trim() || null,
-          timezone: timezone.trim() || null,
-        }),
-      });
-      if (!response.ok) throw new Error("ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้");
-      const result = (await response.json()) as {
-        data: { profile: { bio: string | null; timezone: string | null; updatedAt: string } };
-      };
+      const result = await updateProfileRequest({
+        bio: bio.trim() || null,
+        timezone: timezone.trim() || null,
+      }).unwrap();
       updateProfile({
         ...profile,
-        bio: result.data.profile.bio,
-        timezone: result.data.profile.timezone,
-        updatedAt: result.data.profile.updatedAt,
+        bio: result.profile.bio,
+        timezone: result.profile.timezone,
+        updatedAt: result.profile.updatedAt,
       });
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้");
-    } finally {
-      setPending(false);
+      setError(
+        getBrowserApiErrorMessage(
+          saveError,
+          "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้"
+        )
+      );
     }
   };
 

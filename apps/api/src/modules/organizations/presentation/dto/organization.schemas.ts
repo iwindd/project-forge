@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
 import {
   ORGANIZATION_PERMISSIONS,
   OrganizationMemberRole,
@@ -58,6 +59,36 @@ export const createInvitationSchema = z.object({
   role: z.enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER]).optional(),
 }).refine((value) => Boolean(value.roleId || value.role), {
   message: 'A roleId or legacy role is required',
+});
+
+export const organizationIdParamSchema = z.object({
+  id: databaseUuidSchema,
+});
+
+export const organizationRoleParamSchema = organizationIdParamSchema.extend({
+  roleId: databaseUuidSchema,
+});
+
+export const organizationMemberParamSchema = organizationIdParamSchema.extend({
+  userId: databaseUuidSchema,
+});
+
+export const invitationTokenParamSchema = z.object({
+  token: z.string().trim().min(1).max(512),
+});
+
+export const organizationMembersQuerySchema = z.object({
+  search: z.string().trim().max(200).optional(),
+  role: z
+    .enum(['all', 'EDITOR', OrganizationMemberRole.OWNER, OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER])
+    .optional()
+    .default('all'),
+  roleId: z.union([z.literal('all'), databaseUuidSchema]).optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(5).max(100).optional().default(10),
+  sortBy: z.enum(['name', 'role', 'createdAt']).optional().default('createdAt'),
+  sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
 export type CreateOrganizationDto = z.infer<typeof createOrganizationSchema>;

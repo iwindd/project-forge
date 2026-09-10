@@ -2,12 +2,13 @@
 
 import { Alert, Badge, Button, Card, Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
+import { getBrowserApiErrorMessage } from "@/lib/api/api";
+import { useDisconnectConnectionMutation } from "@/lib/features/profile/profile-api";
 import { useProfile } from "./profile-context";
-
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
 
 export function ConnectionsCard() {
   const { profile, updateProfile } = useProfile();
+  const [disconnectConnection] = useDisconnectConnectionMutation();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const connections = profile.connections ?? [];
@@ -16,17 +17,18 @@ export function ConnectionsCard() {
     setPendingId(id);
     setError(null);
     try {
-      const response = await fetch(`${apiOrigin}/api/v1/connections/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("ไม่สามารถยกเลิกการเชื่อมต่อได้");
+      await disconnectConnection(id).unwrap();
       updateProfile({
         ...profile,
         connections: connections.filter((connection) => connection.id !== id),
       });
     } catch (disconnectError) {
-      setError(disconnectError instanceof Error ? disconnectError.message : "ไม่สามารถยกเลิกการเชื่อมต่อได้");
+      setError(
+        getBrowserApiErrorMessage(
+          disconnectError,
+          "ไม่สามารถยกเลิกการเชื่อมต่อได้"
+        )
+      );
     } finally {
       setPendingId(null);
     }

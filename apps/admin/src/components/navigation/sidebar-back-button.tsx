@@ -9,13 +9,13 @@ import classes from './sidebar-back-button.module.css'
 export function SidebarBackButton({
   organizationSlug
 }: {
-  organizationSlug: string
+  organizationSlug?: string
 }) {
   const t = useTranslations('Common')
 
   return (
     <Link
-      href={`/${encodeURIComponent(organizationSlug)}`}
+      href={organizationSlug ? `/${encodeURIComponent(organizationSlug)}` : '/'}
       className={classes.control}
       aria-label={t('back')}
     >

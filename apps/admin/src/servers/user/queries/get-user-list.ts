@@ -1,16 +1,20 @@
-import { apiServerFetch } from "@/lib/api-server";
-import { userListResponseSchema } from "../schemas";
+import { apiServerFetchEnvelope } from "@/lib/api-server";
+import { userListItemSchema, userListMetaSchema } from "../schemas";
 import type { UserListQuery, UserListResult } from "../types";
 
 export async function getUserList(query: UserListQuery): Promise<UserListResult> {
   const params = new URLSearchParams();
   if (query.search) params.set("search", query.search);
   if (query.status && query.status !== "all") {
-    params.set("status", query.status === "active" ? "APPROVED" : "SUSPENDED");
+    params.set("status", query.status);
   }
   params.set("page", String(query.page));
-  params.set("limit", String(query.pageSize));
-  const result = await apiServerFetch(`admin/users?${params}`, userListResponseSchema);
+  params.set("pageSize", String(query.pageSize));
+  const result = await apiServerFetchEnvelope(
+    `admin/users?${params}`,
+    userListItemSchema.array(),
+    userListMetaSchema
+  );
   return {
     data: result.data.map((user) => ({
       id: user.id,
@@ -20,6 +24,6 @@ export async function getUserList(query: UserListQuery): Promise<UserListResult>
       isActive: user.isActive,
       createdAt: user.createdAt,
     })),
-    total: result.meta.total,
+    total: result.meta?.total ?? result.data.length,
   } satisfies UserListResult;
 }

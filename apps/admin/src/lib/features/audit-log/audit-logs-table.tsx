@@ -264,7 +264,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
     recordsPerPageOptions: [25, 50, 100]
   })
   const { query, setSearchValue, updateQuery } = datatable
-  const { data, isFetching, isError } = useGetAuditLogsQuery(
+  const { data, isFetching, isError, refetch } = useGetAuditLogsQuery(
     { scope: scopeArg, query, organizationId },
     {
       skip:
@@ -443,7 +443,16 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       />
 
       {isError ? (
-        <Alert color='red'>ไม่สามารถโหลดประวัติการทำรายการได้</Alert>
+        <Alert color='red' title='ไม่สามารถโหลดประวัติการทำรายการได้'>
+          <Button
+            variant='light'
+            size='xs'
+            mt='sm'
+            onClick={() => void refetch()}
+          >
+            ลองใหม่
+          </Button>
+        </Alert>
       ) : null}
 
       <Paper p={0}>

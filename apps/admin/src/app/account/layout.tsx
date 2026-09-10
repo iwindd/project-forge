@@ -6,8 +6,6 @@ import { PageHeader } from '@/components/page-header'
 import { AppProvider } from '@/components/providers/app-provider'
 import { createPreloadedState } from '@/lib/store'
 import { getProfile } from '@/servers/profile/queries/get-profile'
-import { getOrganizations } from '@/servers/organization/queries/get-organizations'
-import { scopeUserToOrganization } from '@/session'
 import { fontClasses } from '@/themes/shadcn/font'
 import { Container, mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
@@ -32,18 +30,6 @@ export default async function AccountLayout({
     redirect('/admin/login')
   }
 
-  const organizations = await getOrganizations()
-
-  if (!organizations) {
-    redirect('/admin/login?error=organization_unavailable')
-  }
-
-  const organization = organizations[0]
-
-  if (!organization) {
-    redirect('/admin/login?error=organization_unavailable')
-  }
-
   const profile = await getProfile()
 
   if (!profile) {
@@ -52,8 +38,7 @@ export default async function AccountLayout({
 
   const locale = await getLocale()
   const messages = await getMessages()
-  const user = scopeUserToOrganization(session.user, organization)
-  const preloadedState = await createPreloadedState({ user }, organizations)
+  const preloadedState = await createPreloadedState({ user: session.user }, [])
 
   return (
     <html
@@ -69,9 +54,7 @@ export default async function AccountLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AppProvider preloadedState={preloadedState}>
             <AdminShell
-              user={user}
-              organizationSlug={organization.slug}
-              organizationId={organization.id}
+              user={session.user}
               navigationMode='account'
             >
               <ProfileProvider profile={profile}>

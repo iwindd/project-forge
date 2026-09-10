@@ -1,8 +1,46 @@
-import { api } from '@/lib/api/api'
+import { api, type BrowserApiMeta } from '@/lib/api/api'
 import type {
   AuditLogListQuery,
   AuditLogListResult
 } from '@/servers/audit-log/types'
+import { z } from 'zod'
+
+const auditLogUserSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  email: z.string()
+})
+
+const auditLogListItemSchema = z.object({
+  id: z.string().min(1),
+  createdAt: z.string().min(1),
+  action: z.string().min(1),
+  resourceType: z.string().min(1),
+  resourceId: z.string().nullable(),
+  actorRole: z.enum(['ADMIN', 'USER']).nullable(),
+  actor: auditLogUserSchema.nullable(),
+  target: auditLogUserSchema.nullable(),
+  reason: z.string().nullable(),
+  hasBefore: z.boolean(),
+  hasAfter: z.boolean()
+})
+
+const auditLogMetaSchema = z.object({
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+  totalPages: z.number()
+})
+
+export function parseAuditLogsResponse(
+  response: unknown,
+  meta: Pick<BrowserApiMeta, 'apiMeta'> | undefined
+): AuditLogListResult {
+  const records = z.array(auditLogListItemSchema).parse(response)
+  const parsedMeta = auditLogMetaSchema.parse(meta?.apiMeta)
+
+  return { data: records, total: parsedMeta.total }
+}
 
 /** Which timeline to read. The server re-derives every scope it can. */
 export type AuditLogScopeArg =
@@ -43,10 +81,11 @@ export function getAuditLogExportUrl(
 
 /** Multi-value filters travel as comma-separated lists. */
 function toRequestParams(query: AuditLogListQuery) {
-  const { actions, resourceTypes, ...rest } = query
+  const { actions, resourceTypes, pageSize, ...rest } = query
 
   return {
     ...rest,
+    limit: pageSize,
     ...(actions?.length ? { actions: actions.join(',') } : {}),
     ...(resourceTypes?.length
       ? { resourceTypes: resourceTypes.join(',') }
@@ -68,6 +107,7 @@ export const auditLogsApi = api.injectEndpoints({
         url: getAuditLogListUrl(scope, organizationId),
         params: toRequestParams(query)
       }),
+      transformResponse: parseAuditLogsResponse,
       providesTags: ['AuditLogs']
     })
   }),

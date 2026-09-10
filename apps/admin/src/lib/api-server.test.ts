@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ cookies: vi.fn() }))
 
 vi.mock('next/headers', () => ({ cookies: mocks.cookies }))
 
-import { apiServerFetch } from './api-server'
+import { apiServerFetch, apiServerFetchEnvelope } from './api-server'
 
 describe('apiServerFetch', () => {
   beforeEach(() => {
@@ -36,6 +36,35 @@ describe('apiServerFetch', () => {
         z.object({ id: z.string() })
       )
     ).resolves.toEqual({ id: 'resource-id' })
+  })
+
+  it('returns typed metadata alongside the unwrapped success data', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: [{ id: 'resource-id' }],
+            meta: { page: 1, total: 1 }
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' }
+          }
+        )
+      )
+    )
+
+    await expect(
+      apiServerFetchEnvelope(
+        'resource',
+        z.array(z.object({ id: z.string() })),
+        z.object({ page: z.number(), total: z.number() })
+      )
+    ).resolves.toEqual({
+      data: [{ id: 'resource-id' }],
+      meta: { page: 1, total: 1 }
+    })
   })
 
   it('exposes the standard error contract as a typed server error', async () => {

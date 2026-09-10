@@ -13,6 +13,9 @@ import type { AuditLogPort } from '../../../common/audit/audit.port.js';
 import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/connection.orm-entity.js';
 import { ProfileConnectionRepository } from '../../auth/infrastructure/persistence/profile-connection.repository.js';
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js';
+import { databaseUuidSchema } from '../../../common/http/database-uuid.schema.js';
+
+const connectionIdParamSchema = z.object({ id: databaseUuidSchema });
 
 const updateProfileSchema = z.object({
   displayName: z.string().trim().min(1).max(200).optional(),
@@ -107,7 +110,8 @@ export class ProfileController {
   }
 
   @Delete('connections/:id')
-  async disconnect(@Principal() principal: AuthenticatedPrincipal, @Param('id') id: string) {
+  async disconnect(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
+    const { id } = connectionIdParamSchema.parse(rawParams);
     const connection = await this.em.findOne(ConnectionOrmEntity, { id, userId: principal.id });
     if (!connection) throw new NotFoundError('Connection was not found');
     const total = await this.em.count(ConnectionOrmEntity, { userId: principal.id });
