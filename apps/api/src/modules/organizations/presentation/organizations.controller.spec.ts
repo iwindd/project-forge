@@ -13,8 +13,8 @@ function createController() {
   return new OrganizationsController(
     {
       listForUser: vi.fn(),
-      listMembers: vi.fn(),
     } as never,
+    { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
@@ -132,10 +132,16 @@ describe('OrganizationsController', () => {
       },
     ];
     const listMembers = vi.mocked(
-      (controller as unknown as { organizations: { listMembers: ReturnType<typeof vi.fn> } })
-        .organizations.listMembers,
+      (controller as unknown as { listOrganizationMembers: { execute: ReturnType<typeof vi.fn> } })
+        .listOrganizationMembers.execute,
     );
-    listMembers.mockResolvedValue(members);
+    listMembers.mockResolvedValue({
+      data: members,
+      page: 1,
+      pageSize: 10,
+      total: 1,
+      totalPages: 1,
+    });
 
     await expect(
       controller.members(

@@ -11,6 +11,7 @@ import { OrganizationRoleOrmEntity } from './infrastructure/persistence/organiza
 import { OrganizationService } from './application/organization.service.js';
 import { CreateOrganizationRoleUseCase } from './application/use-cases/create-organization-role-use-case.js';
 import { DeleteOrganizationRoleUseCase } from './application/use-cases/delete-organization-role-use-case.js';
+import { ListOrganizationMembersUseCase } from './application/use-cases/list-organization-members-use-case.js';
 import { ListOrganizationRolesUseCase } from './application/use-cases/list-organization-roles-use-case.js';
 import { UpdateOrganizationRoleUseCase } from './application/use-cases/update-organization-role-use-case.js';
 import { OrganizationsController } from './presentation/organizations.controller.js';
@@ -20,6 +21,7 @@ import { OrganizationsController } from './presentation/organizations.controller
   controllers: [OrganizationsController],
   providers: [
     OrganizationService,
+    ListOrganizationMembersUseCase,
     ListOrganizationRolesUseCase,
     CreateOrganizationRoleUseCase,
     UpdateOrganizationRoleUseCase,

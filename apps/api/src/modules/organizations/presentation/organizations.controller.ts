@@ -3,10 +3,11 @@ import { apiSuccess } from '../../../common/http/api-response.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
-import { ORGANIZATION_PERMISSIONS, OrganizationMemberRole } from '../domain/organization.js';
+import { ORGANIZATION_PERMISSIONS } from '../domain/organization.js';
 import { OrganizationService } from '../application/organization.service.js';
 import { CreateOrganizationRoleUseCase } from '../application/use-cases/create-organization-role-use-case.js';
 import { DeleteOrganizationRoleUseCase } from '../application/use-cases/delete-organization-role-use-case.js';
+import { ListOrganizationMembersUseCase } from '../application/use-cases/list-organization-members-use-case.js';
 import { ListOrganizationRolesUseCase } from '../application/use-cases/list-organization-roles-use-case.js';
 import { UpdateOrganizationRoleUseCase } from '../application/use-cases/update-organization-role-use-case.js';
 import {
@@ -64,6 +65,7 @@ function serializeOrganization(organization: {
 export class OrganizationsController {
   constructor(
     private readonly organizations: OrganizationService,
+    private readonly listOrganizationMembers: ListOrganizationMembersUseCase,
     private readonly listOrganizationRoles: ListOrganizationRolesUseCase,
     private readonly createOrganizationRole: CreateOrganizationRoleUseCase,
     private readonly updateOrganizationRole: UpdateOrganizationRoleUseCase,
@@ -175,41 +177,17 @@ export class OrganizationsController {
   ) {
     const { id: organizationId } = organizationIdParamSchema.parse(rawParams);
     const query = organizationMembersQuerySchema.parse(rawQuery);
-    let data = organizationMemberListSchema.parse(
-      await this.organizations.listMembers(principal.id, organizationId),
+    const result = await this.listOrganizationMembers.execute(
+      principal.id,
+      organizationId,
+      query,
     );
-    const search = query.search?.trim().toLowerCase();
-    if (search) data = data.filter((member) => `${member.name} ${member.email ?? ''}`.toLowerCase().includes(search));
-    if (query.roleId && query.roleId !== 'all') {
-      data = data.filter((member) => member.role.id === query.roleId);
-    } else if (query.role !== 'all') {
-      const roles: string[] = query.role === 'EDITOR'
-        ? [OrganizationMemberRole.MEMBER]
-        : query.role === 'ADMIN'
-          ? [OrganizationMemberRole.ADMIN, OrganizationMemberRole.OWNER]
-          : query.role === 'OWNER'
-            ? [OrganizationMemberRole.OWNER]
-            : [OrganizationMemberRole.MEMBER];
-      data = data.filter((member) => member.role.legacyRole !== null && roles.includes(member.role.legacyRole));
-    }
-    if (query.status === 'active') data = data.filter((member) => member.isActive);
-    if (query.status === 'inactive') data = data.filter((member) => !member.isActive);
-    const direction = query.sortDirection === 'asc' ? 1 : -1;
-    const sortBy = query.sortBy ?? 'createdAt';
-    data.sort((a, b) => {
-      const aValue = sortBy === 'role' ? a.role.name : a[sortBy as keyof typeof a];
-      const bValue = sortBy === 'role' ? b.role.name : b[sortBy as keyof typeof b];
-      return String(aValue ?? '').localeCompare(String(bValue ?? '')) * direction;
-    });
-    const page = query.page;
-    const pageSize = query.pageSize;
-    const total = data.length;
     return organizationMembersResponseSchema.parse(
-      apiSuccess(data.slice((page - 1) * pageSize, page * pageSize), {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
+      apiSuccess(organizationMemberListSchema.parse(result.data), {
+        page: result.page,
+        pageSize: result.pageSize,
+        total: result.total,
+        totalPages: result.totalPages,
       }),
     );
   }

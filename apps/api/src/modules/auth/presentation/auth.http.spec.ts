@@ -14,6 +14,7 @@ import { OrganizationService } from '../../organizations/application/organizatio
 import { OrganizationStatus, OrganizationType, OrganizationMemberRole } from '../../organizations/domain/organization.js'
 import { CreateOrganizationRoleUseCase } from '../../organizations/application/use-cases/create-organization-role-use-case.js'
 import { DeleteOrganizationRoleUseCase } from '../../organizations/application/use-cases/delete-organization-role-use-case.js'
+import { ListOrganizationMembersUseCase } from '../../organizations/application/use-cases/list-organization-members-use-case.js'
 import { ListOrganizationRolesUseCase } from '../../organizations/application/use-cases/list-organization-roles-use-case.js'
 import { UpdateOrganizationRoleUseCase } from '../../organizations/application/use-cases/update-organization-role-use-case.js'
 import { OrganizationsController } from '../../organizations/presentation/organizations.controller.js'
@@ -100,6 +101,7 @@ describe('auth HTTP contracts', () => {
         { provide: ProfileConnectionRepository, useValue: profileConnections },
         { provide: SECURITY_LOGGER, useValue: {} },
         { provide: OrganizationService, useValue: organizations },
+        { provide: ListOrganizationMembersUseCase, useValue: {} },
         { provide: ListOrganizationRolesUseCase, useValue: {} },
         { provide: CreateOrganizationRoleUseCase, useValue: {} },
         { provide: UpdateOrganizationRoleUseCase, useValue: {} },
