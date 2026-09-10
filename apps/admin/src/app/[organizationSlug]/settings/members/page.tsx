@@ -47,7 +47,9 @@ import {
   IconUserPlus
 } from '@tabler/icons-react'
 import { useFormatter, useTranslations } from 'next-intl'
-import { useMemo, useRef, useState } from 'react'
+import { schemaResolver, useForm } from '@mantine/form'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { z } from 'zod'
 import classes from './members-page.module.css'
 
 type MembersTab = 'members' | 'invitations'
@@ -60,11 +62,29 @@ type InviteRow = {
   roleId: string
 }
 
+type InviteRowsFormValues = {
+  rows: InviteRow[]
+}
+
 const INITIAL_INVITE_ROW: InviteRow = {
   id: 'invite-0',
   email: '',
   roleId: ''
 }
+
+const inviteRowsSchema = z.object({
+  rows: z.array(
+    z.object({
+      id: z.string().min(1),
+      email: z
+        .string()
+        .trim()
+        .min(1, 'กรุณาระบุอีเมลก่อนส่งคำเชิญ')
+        .email('กรุณาระบุอีเมลให้ถูกต้อง'),
+      roleId: z.string().min(1, 'กรุณาเลือกบทบาท')
+    })
+  ).min(1)
+})
 
 function getInitial(name: string) {
   return name.trim().charAt(0).toUpperCase() || 'U'
@@ -87,9 +107,13 @@ export default function OrganizationMembersPage() {
   const [status, setStatus] = useState<MemberStatusFilter>('all')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [inviteRows, setInviteRows] = useState<InviteRow[]>([
-    INITIAL_INVITE_ROW
-  ])
+  const inviteForm = useForm<InviteRowsFormValues>({
+    initialValues: {
+      rows: [{ ...INITIAL_INVITE_ROW }]
+    },
+    validate: schemaResolver(inviteRowsSchema),
+    validateInputOnBlur: true
+  })
   const [inviteLinks, setInviteLinks] = useState<
     Array<{ email: string | null; url: string }>
   >([])
@@ -170,6 +194,15 @@ export default function OrganizationMembersPage() {
     invitationRoleOptions.find(role => role.legacyRole === 'MEMBER')?.id ??
     invitationRoleOptions[0]?.id ??
     ''
+
+  useEffect(() => {
+    if (!defaultInviteRoleId) return
+    inviteForm.setValues(values => ({
+      rows: (values.rows ?? []).map(row =>
+        row.roleId ? row : { ...row, roleId: defaultInviteRoleId }
+      )
+    }))
+  }, [defaultInviteRoleId, inviteForm])
   const invitations = invitationsResult ?? []
   const allVisibleSelected =
     members.length > 0 &&
@@ -178,30 +211,19 @@ export default function OrganizationMembersPage() {
     selectedIds.includes(member.id)
   )
 
-  const updateInviteRow = (id: string, changes: Partial<InviteRow>) => {
-    setInviteRows(rows =>
-      rows.map(row => (row.id === id ? { ...row, ...changes } : row))
-    )
-  }
-
   const addInviteRow = () => {
     const id = `invite-${nextInviteRowId.current}`
     nextInviteRowId.current += 1
-    setInviteRows(rows => [
-      ...rows,
-      { id, email: '', roleId: defaultInviteRoleId }
-    ])
+    inviteForm.insertListItem('rows', {
+      id,
+      email: '',
+      roleId: defaultInviteRoleId
+    })
   }
 
-  const submitInvitations = async () => {
+  const submitInvitations = async ({ rows }: InviteRowsFormValues) => {
     if (!organizationId || !canManage) return
     if (!invitationRoleOptions.length) return
-
-    const rows = inviteRows.filter(row => row.email.trim())
-    if (!rows.length) {
-      notifications.show({ message: t('inviteEmailRequired'), color: 'red' })
-      return
-    }
 
     try {
       const results = await Promise.all(
@@ -220,7 +242,8 @@ export default function OrganizationMembersPage() {
           url: `${window.location.origin}/admin/invitations/${result.token}`
         }))
       )
-      setInviteRows([{ ...INITIAL_INVITE_ROW, id: 'invite-0' }])
+      inviteForm.setValues({ rows: [{ ...INITIAL_INVITE_ROW, id: 'invite-0' }] })
+      inviteForm.resetDirty()
       notifications.show({ message: t('inviteSuccess'), color: 'teal' })
     } catch {
       notifications.show({ message: t('inviteFailed'), color: 'red' })
@@ -354,51 +377,57 @@ export default function OrganizationMembersPage() {
 
           {canManage ? (
             <>
-              <Box className={classes.inviteRows}>
-                {inviteRows.map(row => (
-                  <Box className={classes.inviteRow} key={row.id}>
+              <form onSubmit={inviteForm.onSubmit(submitInvitations)}>
+                <Box className={classes.inviteRows}>
+                  {inviteForm.values.rows.map((row, index) => (
+                    <Box className={classes.inviteRow} key={row.id}>
                     <TextInput
                       label={t('emailAddress')}
                       placeholder={t('emailPlaceholder')}
                       type='email'
                       required
-                      value={row.email}
-                      onChange={event =>
-                        updateInviteRow(row.id, {
-                          email: event.currentTarget.value
-                        })
-                      }
+                      {...inviteForm.getInputProps(
+                        'rows.' + index + '.email'
+                      )}
                     />
                     <Select
                       label={t('role')}
+                      {...inviteForm.getInputProps(
+                        'rows.' + index + '.roleId'
+                      )}
                       value={row.roleId || defaultInviteRoleId || null}
                       data={invitationRoleOptions.map(role => ({
                         value: role.id,
                         label: role.name
                       }))}
                       onChange={value =>
-                        value && updateInviteRow(row.id, { roleId: value })
+                        inviteForm.setFieldValue(
+                          'rows.' + index + '.roleId',
+                          value ?? ''
+                        )
                       }
                     />
-                  </Box>
-                ))}
-              </Box>
-              <Group className={classes.inviteActions} justify='space-between'>
-                <Button
-                  variant='default'
-                  leftSection={<IconPlus size={16} />}
-                  onClick={addInviteRow}
-                >
-                  {t('addMore')}
-                </Button>
-                <Button
-                  leftSection={<IconUserPlus size={16} />}
-                  loading={invitePending}
-                  onClick={() => void submitInvitations()}
-                >
-                  {t('invite')}
-                </Button>
-              </Group>
+                    </Box>
+                  ))}
+                </Box>
+                <Group className={classes.inviteActions} justify='space-between'>
+                  <Button
+                    type='button'
+                    variant='default'
+                    leftSection={<IconPlus size={16} />}
+                    onClick={addInviteRow}
+                  >
+                    {t('addMore')}
+                  </Button>
+                  <Button
+                    type='submit'
+                    leftSection={<IconUserPlus size={16} />}
+                    loading={invitePending}
+                  >
+                    {t('invite')}
+                  </Button>
+                </Group>
+              </form>
               {inviteLinks.length > 0 ? (
                 <Stack className={classes.inviteLinks} gap='xs'>
                   <Text size='sm' fw={600}>
