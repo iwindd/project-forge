@@ -179,9 +179,16 @@ environment, API lint, API test, API typecheck, API build, Admin lint, Admin tes
 Admin client-boundary check, Admin UI i18n check, Admin build. A second run on `aa0823a` also
 succeeded (2m5s).
 
-**Outstanding:** the round-3 correction commits (`89c164a` … `109e7b8`) have **not** been through
-GitHub CI yet. Their local equivalents of all ten gates pass, but real CI must be re-confirmed
-after they are pushed. This is recorded rather than assumed.
+**Round-3 corrections verified in CI:** workflow run
+https://github.com/iwindd/project-forge/actions/runs/34530633903 succeeded on
+`a55c00e511cdc4fb52c62c340032f52e7984f878` in 1m55s with every step green — so the atomic
+`transitionStatus` change, the audit-field addition, the credential-name guard, the cache-tag
+cleanup and the archive/restore HTTP-status change all pass the real pipeline, not just the local
+equivalents.
+
+Invariant that stops this record going stale: commits after `a55c00e` touch only `.forge/tasks/`
+documentation, so they inherit exactly this code state. Confirm with
+`git diff --name-only a55c00e <HEAD> -- . ':!.forge/tasks'`, which must return nothing.
 
 ---
 
