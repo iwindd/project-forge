@@ -11,6 +11,7 @@ import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js'
 import { USER_REPOSITORY } from '../../users/application/ports/user.repository.js'
 import { AccessStatus, UserRole } from '../../users/domain/user.js'
 import { OrganizationService } from '../../organizations/application/organization.service.js'
+import { CancelOrganizationInvitationUseCase } from '../../organizations/application/use-cases/cancel-organization-invitation-use-case.js'
 import { OrganizationStatus, OrganizationType, OrganizationMemberRole } from '../../organizations/domain/organization.js'
 import { CreateOrganizationRoleUseCase } from '../../organizations/application/use-cases/create-organization-role-use-case.js'
 import { DeleteOrganizationRoleUseCase } from '../../organizations/application/use-cases/delete-organization-role-use-case.js'
@@ -106,6 +107,7 @@ describe('auth HTTP contracts', () => {
         { provide: CreateOrganizationRoleUseCase, useValue: {} },
         { provide: UpdateOrganizationRoleUseCase, useValue: {} },
         { provide: DeleteOrganizationRoleUseCase, useValue: {} },
+        { provide: CancelOrganizationInvitationUseCase, useValue: {} },
       ],
     }).compile()
     app = moduleRef.createNestApplication()
