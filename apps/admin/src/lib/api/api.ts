@@ -124,6 +124,7 @@ export const api = createApi({
     'OrganizationInvitations',
     'OrganizationRoles',
     'Organizations',
+    'Projects',
     'Profile',
     'SecurityLogs'
   ],
