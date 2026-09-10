@@ -2,7 +2,11 @@ import { EntityManager, UniqueConstraintViolationException } from '@mikro-orm/co
 import { Injectable } from '@nestjs/common';
 import { ConflictError } from '../../../../common/errors/application-error.js';
 import { DUPLICATE_REPOSITORY_CONFLICT_MESSAGE } from '../../application/ports/project.repository.js';
-import type { ProjectRepository } from '../../application/ports/project.repository.js';
+import type {
+  ProjectRepository,
+  ProjectStatusTransition,
+  ProjectStatusTransitionResult,
+} from '../../application/ports/project.repository.js';
 import type { ProjectRecord } from '../../domain/project.js';
 import { ProjectOrmEntity } from './project.orm-entity.js';
 
@@ -26,6 +30,36 @@ export class MikroOrmProjectRepository implements ProjectRepository {
   ): Promise<ProjectRecord | null> {
     const project = await this.em.findOne(ProjectOrmEntity, { organizationId, githubUrl });
     return project ? toRecord(project) : null;
+  }
+
+  /**
+   * Conditional write: the status predicate is part of the UPDATE, so the transition is atomic and
+   * exactly one of two concurrent requests can observe `affected === 1`. The follow-up read uses
+   * `refresh` so it returns the row as stored rather than any identity-map copy loaded earlier.
+   */
+  async transitionStatus(
+    transition: ProjectStatusTransition,
+  ): Promise<ProjectStatusTransitionResult | null> {
+    const affected = await this.em.nativeUpdate(
+      ProjectOrmEntity,
+      {
+        organizationId: transition.organizationId,
+        id: transition.id,
+        status: transition.from,
+      },
+      {
+        status: transition.to,
+        archivedAt: transition.archivedAt,
+        updatedAt: transition.updatedAt,
+      },
+    );
+    const entity = await this.em.findOne(
+      ProjectOrmEntity,
+      { organizationId: transition.organizationId, id: transition.id },
+      { refresh: true },
+    );
+    if (!entity) return null;
+    return { applied: affected > 0, project: toRecord(entity) };
   }
 
   /**

@@ -37,6 +37,7 @@ function project(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
 function setup(existing: unknown = null) {
   const em = {
     findOne: vi.fn(async () => existing),
+    nativeUpdate: vi.fn(async () => 1),
     create: vi.fn(() => ({})),
     persist: vi.fn(),
     flush: vi.fn(async () => undefined),
@@ -90,5 +91,62 @@ describe('MikroOrmProjectRepository', () => {
     em.flush.mockRejectedValueOnce(new Error('connection lost'));
 
     await expect(repository.save(project())).rejects.toThrow('connection lost');
+  });
+
+  it('applies the transition as a status-conditional update and reports applied for a matched row', async () => {
+    const { repository, em } = setup(project({ status: ProjectStatus.ARCHIVED }));
+    const archivedAt = new Date('2026-01-02T00:00:00.000Z');
+
+    const result = await repository.transitionStatus({
+      organizationId: 'organization-id',
+      id: 'project-id',
+      from: ProjectStatus.ACTIVE,
+      to: ProjectStatus.ARCHIVED,
+      archivedAt,
+      updatedAt: archivedAt,
+    });
+
+    // The stored-status predicate lives in the UPDATE itself, so concurrent callers cannot both
+    // see the pre-transition status and both win.
+    expect(em.nativeUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      { organizationId: 'organization-id', id: 'project-id', status: ProjectStatus.ACTIVE },
+      { status: ProjectStatus.ARCHIVED, archivedAt, updatedAt: archivedAt },
+    );
+    expect(result).toMatchObject({
+      applied: true,
+      project: { id: 'project-id', status: ProjectStatus.ARCHIVED },
+    });
+  });
+
+  it('reports not-applied when the conditional update matched no row', async () => {
+    const { repository, em } = setup(project({ status: ProjectStatus.ARCHIVED }));
+    em.nativeUpdate.mockResolvedValueOnce(0);
+
+    const result = await repository.transitionStatus({
+      organizationId: 'organization-id',
+      id: 'project-id',
+      from: ProjectStatus.ACTIVE,
+      to: ProjectStatus.ARCHIVED,
+      archivedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    expect(result).toMatchObject({ applied: false });
+  });
+
+  it('returns null from the transition when the project does not exist', async () => {
+    const { repository } = setup(null);
+
+    await expect(
+      repository.transitionStatus({
+        organizationId: 'organization-id',
+        id: 'project-id',
+        from: ProjectStatus.ACTIVE,
+        to: ProjectStatus.ARCHIVED,
+        archivedAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    ).resolves.toBeNull();
   });
 });

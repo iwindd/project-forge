@@ -26,27 +26,34 @@ export class ArchiveProjectUseCase {
   ) {
     return this.unitOfWork.run(async () => {
       await this.organizations.requireProjectManager(actorId, organizationId);
-      const project = await this.projects.findByOrganizationAndId(organizationId, id);
-      if (!project) throw new NotFoundError('Project was not found');
-      if (project.status === ProjectStatus.ARCHIVED) return project;
+      const now = new Date();
+      // Atomic conditional transition: only the request whose write actually moved the row from
+      // ACTIVE to ARCHIVED gets `applied: true`. A request that lost the race (double click, second
+      // tab, client retry) reads the ARCHIVED record and returns it without writing an audit event,
+      // so a repeated archive cannot produce a duplicate PROJECT_ARCHIVED row.
+      const transition = await this.projects.transitionStatus({
+        organizationId,
+        id,
+        from: ProjectStatus.ACTIVE,
+        to: ProjectStatus.ARCHIVED,
+        archivedAt: now,
+        updatedAt: now,
+      });
+      if (!transition) throw new NotFoundError('Project was not found');
+      if (!transition.applied) return transition.project;
 
-      const before = { status: project.status };
-      project.status = ProjectStatus.ARCHIVED;
-      project.archivedAt = new Date();
-      project.updatedAt = new Date();
-      await this.projects.save(project);
       await this.audit.record({
         actorId,
         organizationId,
         action: 'PROJECT_ARCHIVED',
         resourceType: 'PROJECT',
-        resourceId: project.id,
-        before,
-        after: { status: project.status },
+        resourceId: transition.project.id,
+        before: { status: ProjectStatus.ACTIVE },
+        after: { status: ProjectStatus.ARCHIVED },
         requestId: options.requestId,
         ...(options.reason ? { reason: options.reason } : {}),
       });
-      return project;
+      return transition.project;
     });
   }
 }
