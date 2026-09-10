@@ -3,6 +3,7 @@ import {
   authMeDataSchema,
   authMeResponseSchema,
   githubCallbackQuerySchema,
+  githubStartQuerySchema,
   updateProfileSchema,
 } from './auth.schemas.js'
 
@@ -54,6 +55,14 @@ describe('authMeDataSchema', () => {
       githubCallbackQuerySchema.parse({ code: 'oauth-code', state: 'oauth-state' }),
     ).toEqual({ code: 'oauth-code', state: 'oauth-state' })
     expect(() => githubCallbackQuerySchema.parse({ code: '', state: 'oauth-state' })).toThrow()
+  })
+
+  it('accepts only same-origin paths for OAuth continuation', () => {
+    expect(
+      githubStartQuerySchema.parse({ returnTo: '/admin/invitations/token' }),
+    ).toEqual({ returnTo: '/admin/invitations/token' })
+    expect(() => githubStartQuerySchema.parse({ returnTo: 'https://evil.test' })).toThrow()
+    expect(() => githubStartQuerySchema.parse({ returnTo: '//evil.test' })).toThrow()
   })
 
   it('validates profile update input at the controller boundary', () => {

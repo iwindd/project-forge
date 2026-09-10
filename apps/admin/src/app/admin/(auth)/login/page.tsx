@@ -5,9 +5,14 @@ import { getTranslations } from "next-intl/server";
 import { LoginForm } from "./login-form";
 import classes from "./login.module.css";
 
-export default async function AdminLoginPage() {
+export default async function AdminLoginPage({
+  searchParams
+}: {
+  searchParams: Promise<{ returnTo?: string }>
+}) {
   const t = await getTranslations("Auth");
   const session = await auth();
+  const { returnTo } = await searchParams;
 
   if (session?.user?.id) {
     redirect("/account");
@@ -22,7 +27,7 @@ export default async function AdminLoginPage() {
             {t("description")}
           </Text>
         </Stack>
-        <LoginForm />
+        <LoginForm returnTo={returnTo} />
       </Paper>
     </main>
   );

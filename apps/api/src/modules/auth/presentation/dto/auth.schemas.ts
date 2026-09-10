@@ -33,6 +33,19 @@ export const githubCallbackQuerySchema = z.object({
   state: z.string().trim().min(1),
 });
 
+export const githubReturnToSchema = z
+  .string()
+  .trim()
+  .max(2048)
+  .refine(
+    (value) => value.startsWith('/') && !value.startsWith('//'),
+    'returnTo must be a same-origin path',
+  );
+
+export const githubStartQuerySchema = z.object({
+  returnTo: githubReturnToSchema.optional(),
+});
+
 export const authMeDataSchema = z.object({
   user: identitySchema,
   profile: profileSchema.nullable(),
