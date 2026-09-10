@@ -1,6 +1,5 @@
 'use client'
 
-import { getBrowserApiErrorMessage } from '@/lib/api/api'
 import { PageHeader } from '@/components/page-header'
 import {
   useArchiveProjectMutation,
@@ -53,6 +52,26 @@ import {
 } from './project-form-schema'
 import classes from './projects-page.module.css'
 
+type ProjectsViewState = 'loading' | 'error' | 'empty' | 'list'
+
+function getProjectsViewState({
+  organizationLoading,
+  projectsError,
+  projectsFetching,
+  projectCount
+}: {
+  organizationLoading: boolean
+  projectsError: boolean
+  projectsFetching: boolean
+  projectCount: number
+}): ProjectsViewState {
+  if (organizationLoading) return 'loading'
+  if (projectsError) return 'error'
+  if (projectsFetching && projectCount === 0) return 'loading'
+
+  return projectCount > 0 ? 'list' : 'empty'
+}
+
 export default function ProjectsPage() {
   const t = useTranslations('Projects')
   const format = useFormatter()
@@ -70,10 +89,22 @@ export default function ProjectsPage() {
     return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'date')
   }
 
-  const describeFailure = (error: unknown, fallback: string) => {
-    const detail = getBrowserApiErrorMessage(error, '')
+  const failureMessageFor = (error: unknown, fallback: string) => {
+    const status =
+      typeof error === 'object' && error !== null && 'status' in error
+        ? (error as { status?: unknown }).status
+        : undefined
 
-    return detail ? `${fallback} (${detail})` : fallback
+    switch (status) {
+      case 409:
+        return t('conflictFailed')
+      case 403:
+        return t('forbiddenFailed')
+      case 404:
+        return t('notFoundFailed')
+      default:
+        return fallback
+    }
   }
 
   const projectFormSchema = useMemo(
@@ -113,6 +144,12 @@ export default function ProjectsPage() {
     useRestoreProjectMutation()
   const savePending = createPending || updatePending
   const rowActionPending = archivePending || restorePending
+  const viewState = getProjectsViewState({
+    organizationLoading,
+    projectsError,
+    projectsFetching,
+    projectCount: projects.length
+  })
 
   const resetProjectForm = () => {
     setEditingProject(null)
@@ -139,7 +176,7 @@ export default function ProjectsPage() {
       return true
     } catch (error) {
       notifications.show({
-        message: describeFailure(error, feedback.failure),
+        message: failureMessageFor(error, feedback.failure),
         color: 'red'
       })
       return false
@@ -281,7 +318,7 @@ export default function ProjectsPage() {
         </Alert>
       )}
 
-      {projectsError && !organizationLoading ? (
+      {viewState === 'error' ? (
         <Alert color='red' icon={<IconAlertCircle size={18} />}>
           <Group justify='space-between' gap='sm' wrap='nowrap'>
             <Text size='sm'>{t('loadFailed')}</Text>
@@ -299,11 +336,11 @@ export default function ProjectsPage() {
         </Alert>
       ) : (
         <Paper className={classes.card} withBorder radius='md'>
-          {organizationLoading || (projectsFetching && !projects.length) ? (
+          {viewState === 'loading' ? (
             <Center className={classes.emptyState}>
               <Loader size='sm' />
             </Center>
-          ) : projects.length ? (
+          ) : viewState === 'list' ? (
             <Box className={classes.tableScroll}>
               <Table className={classes.table} verticalSpacing='sm'>
                 <thead>
