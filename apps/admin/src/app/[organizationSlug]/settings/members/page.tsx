@@ -44,6 +44,7 @@ import {
   IconAlertCircle,
   IconCalendar,
   IconCheck,
+  IconCopy,
   IconDots,
   IconExternalLink,
   IconPlus,
@@ -121,6 +122,7 @@ export default function OrganizationMembersPage() {
   const [inviteLinks, setInviteLinks] = useState<
     Array<{ email: string | null; url: string }>
   >([])
+  const [copiedInviteLink, setCopiedInviteLink] = useState<string | null>(null)
   const [memberActionId, setMemberActionId] = useState<string | null>(null)
   const nextInviteRowId = useRef(1)
 
@@ -242,6 +244,7 @@ export default function OrganizationMembersPage() {
         }))
       )
       inviteForm.setValues({ rows: [{ ...INITIAL_INVITE_ROW, id: 'invite-0' }] })
+      setCopiedInviteLink(null)
       inviteForm.resetDirty()
       notifications.show({ message: t('inviteSuccess'), color: 'teal' })
     } catch {
@@ -265,6 +268,7 @@ export default function OrganizationMembersPage() {
           url: `${window.location.origin}/admin/invitations/${result.token}`
         }
       ])
+      setCopiedInviteLink(null)
       notifications.show({ message: t('resendSuccess'), color: 'teal' })
     } catch {
       notifications.show({ message: t('resendFailed'), color: 'red' })
@@ -287,6 +291,15 @@ export default function OrganizationMembersPage() {
       notifications.show({ message: t('cancelSuccess'), color: 'teal' })
     } catch {
       notifications.show({ message: t('cancelFailed'), color: 'red' })
+    }
+  }
+
+  const copyInviteLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedInviteLink(url)
+    } catch {
+      notifications.show({ message: t('copyInviteFailed'), color: 'red' })
     }
   }
 
@@ -444,6 +457,23 @@ export default function OrganizationMembersPage() {
                         {link.email ? `${link.email}: ` : ''}
                         {link.url}
                       </Text>
+                      <Button
+                        type='button'
+                        variant='subtle'
+                        size='xs'
+                        leftSection={
+                          copiedInviteLink === link.url ? (
+                            <IconCheck size={14} />
+                          ) : (
+                            <IconCopy size={14} />
+                          )
+                        }
+                        onClick={() => void copyInviteLink(link.url)}
+                      >
+                        {copiedInviteLink === link.url
+                          ? t('copiedInviteLink')
+                          : t('copyInviteLink')}
+                      </Button>
                     </Group>
                   ))}
                 </Stack>
