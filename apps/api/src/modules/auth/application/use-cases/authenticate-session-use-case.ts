@@ -26,7 +26,11 @@ export class AuthenticateSessionUseCase implements SessionAuthenticator {
       const session = await this.sessions.findActiveByTokenHash(this.hasher.hash(token));
       if (!session || session.expiresAt.getTime() <= Date.now()) return null;
       const user = await this.users.findById(session.userId);
-      if (!user?.isActive || user.accessStatus !== AccessStatus.APPROVED) return null;
+      if (
+        !user?.isActive ||
+        user.accessStatus === AccessStatus.REJECTED ||
+        user.accessStatus === AccessStatus.SUSPENDED
+      ) return null;
       session.lastSeenAt = new Date();
       await this.sessions.save(session);
       return toPrincipal(user);

@@ -3,6 +3,7 @@
 import { PageHeader } from '@/components/page-header'
 import {
   useCreateInvitationMutation,
+  useCancelInvitationMutation,
   useGetInvitationsQuery,
   useGetMembersQuery,
   useGetRolesQuery,
@@ -138,6 +139,8 @@ export default function OrganizationMembersPage() {
   )
   const [createInvitation, { isLoading: invitePending }] =
     useCreateInvitationMutation()
+  const [cancelInvitation, { isLoading: cancelPending }] =
+    useCancelInvitationMutation()
   const [updateMemberRole, { isLoading: rolePending }] =
     useUpdateMemberRoleMutation()
   const [updateMemberStatus, { isLoading: statusPending }] =
@@ -187,17 +190,18 @@ export default function OrganizationMembersPage() {
     if (!organizationId || !canManage) return
     if (!assignableRoles.length) return
 
-    const rows = inviteRows.filter(
-      row => row.email.trim() || inviteRows.length === 1
-    )
-    if (!rows.length) return
+    const rows = inviteRows.filter(row => row.email.trim())
+    if (!rows.length) {
+      notifications.show({ message: t('inviteEmailRequired'), color: 'red' })
+      return
+    }
 
     try {
       const results = await Promise.all(
         rows.map(row =>
           createInvitation({
             organizationId,
-            email: row.email.trim() || null,
+            email: row.email.trim(),
             roleId: row.roleId || defaultInviteRoleId
           }).unwrap()
         )
@@ -235,6 +239,25 @@ export default function OrganizationMembersPage() {
       notifications.show({ message: t('resendSuccess'), color: 'teal' })
     } catch {
       notifications.show({ message: t('resendFailed'), color: 'red' })
+    }
+  }
+
+  const cancelPendingInvitation = async (invitation: OrganizationInvitation) => {
+    if (
+      !organizationId ||
+      !window.confirm(t('cancelConfirm', { email: invitation.email }))
+    ) {
+      return
+    }
+
+    try {
+      await cancelInvitation({
+        organizationId,
+        invitationId: invitation.id
+      }).unwrap()
+      notifications.show({ message: t('cancelSuccess'), color: 'teal' })
+    } catch {
+      notifications.show({ message: t('cancelFailed'), color: 'red' })
     }
   }
 
@@ -331,6 +354,7 @@ export default function OrganizationMembersPage() {
                       label={t('emailAddress')}
                       placeholder={t('emailPlaceholder')}
                       type='email'
+                      required
                       value={row.email}
                       onChange={event =>
                         updateInviteRow(row.id, {
@@ -673,7 +697,7 @@ export default function OrganizationMembersPage() {
                 invitations.map(invitation => (
                   <Box className={classes.invitationRow} key={invitation.id}>
                     <Stack className={classes.invitationEmail} gap={2}>
-                      <Text fw={600}>{invitation.email ?? 'ลิงก์ทั่วไป'}</Text>
+                      <Text fw={600}>{invitation.email}</Text>
                       <Text size='sm' c='dimmed'>
                         {t('inviteLink')} ·{' '}
                         {format.dateTime(
@@ -687,7 +711,8 @@ export default function OrganizationMembersPage() {
                       {t('expiresAt')}{' '}
                       {format.dateTime(new Date(invitation.expiresAt), 'date')}
                     </Text>
-                    {invitation.email && invitation.role.id ? (
+                    <Group gap='xs' justify='flex-end'>
+                      {invitation.role.id ? (
                       <Button
                         size='compact-sm'
                         variant='subtle'
@@ -696,7 +721,17 @@ export default function OrganizationMembersPage() {
                       >
                         {t('resend')}
                       </Button>
-                    ) : null}
+                      ) : null}
+                      <Button
+                        size='compact-sm'
+                        variant='subtle'
+                        color='red'
+                        loading={cancelPending}
+                        onClick={() => void cancelPendingInvitation(invitation)}
+                      >
+                        {t('cancelInvitation')}
+                      </Button>
+                    </Group>
                   </Box>
                 ))
               ) : (

@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UNIT_OF_WORK } from '../../../../common/database/unit-of-work.port.js';
 import type { UnitOfWork } from '../../../../common/database/unit-of-work.port.js';
-import { ACCESS_REQUEST_REPOSITORY } from '../../../access-requests/application/ports/access-request.repository.js';
-import type { AccessRequestRepository } from '../../../access-requests/application/ports/access-request.repository.js';
-import { createAccessRequest } from '../../../access-requests/domain/access-request.js';
 import { AccessStatus, createUser, UserRole } from '../../../users/domain/user.js';
 import { USER_REPOSITORY } from '../../../users/application/ports/user.repository.js';
 import type { UserRepository } from '../../../users/application/ports/user.repository.js';
@@ -23,7 +20,6 @@ export class CompleteGithubLoginUseCase {
   constructor(
     @Inject(GITHUB_OAUTH) private readonly github: GithubOAuthPort,
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
-    @Inject(ACCESS_REQUEST_REPOSITORY) private readonly accessRequests: AccessRequestRepository,
     @Inject(SECRET_CIPHER) private readonly cipher: SecretCipherPort,
     @Inject(AUTH_CONFIG) private readonly config: AuthConfig,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
@@ -36,7 +32,7 @@ export class CompleteGithubLoginUseCase {
   async execute(code: string): Promise<{
     principal: AuthenticatedPrincipal
     sessionToken: string | null
-    organizationSlug: string
+    organizationSlug: string | null
   }> {
     if (!code.trim()) throw new InvalidInputError('OAuth code is required');
     const result = await this.github.exchangeCode(code);
@@ -72,22 +68,14 @@ export class CompleteGithubLoginUseCase {
         providerAccountId: userId,
         providerUsername: result.profile.login,
         providerEmail: result.profile.email,
+        providerEmailVerified: result.profile.emailVerified ?? false,
         accessTokenCiphertext: this.cipher.encrypt(result.accessToken),
         scopes: result.scope,
       });
-      const personalWorkspace = await this.organizations.ensurePersonalWorkspace(user.id, user.name ?? user.githubLogin);
-
-      const pending = await this.accessRequests.findPendingByUserId(user.id);
-      if (!pending && user.accessStatus === AccessStatus.PENDING) {
-        await this.accessRequests.save(createAccessRequest(user.id, null));
-      }
-
-      const sessionToken =
-        user.accessStatus === AccessStatus.APPROVED
-          ? await this.issueSession.issueWithinTransaction(user.id)
-          : null;
+      const organizations = await this.organizations.listForUser(user.id);
+      const sessionToken = await this.issueSession.issueWithinTransaction(user.id);
       await this.security.record({
-        organizationId: personalWorkspace.id,
+        organizationId: organizations[0]?.organization.id ?? null,
         userId: user.id,
         provider: 'GITHUB',
         event: 'LOGIN_SUCCEEDED',
@@ -95,7 +83,7 @@ export class CompleteGithubLoginUseCase {
       return {
         principal: toPrincipal(user),
         sessionToken,
-        organizationSlug: personalWorkspace.slug
+        organizationSlug: organizations[0]?.organization.slug ?? null,
       };
     });
   }

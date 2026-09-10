@@ -21,15 +21,6 @@ export const organizationResourceSchema = z.object({
   updatedAt: organizationDateSchema,
 });
 
-export const organizationCreatedResponseSchema = z.object({
-  organization: organizationResourceSchema.pick({
-    id: true,
-    name: true,
-    slug: true,
-    type: true,
-  }),
-});
-
 export const organizationResponseSchema = z.object({
   organization: organizationResourceSchema,
 });
@@ -76,7 +67,7 @@ export const organizationMemberRoleResponseSchema = z.object({
 export const organizationInvitationSchema = z.object({
   id: databaseUuidSchema,
   organizationId: databaseUuidSchema,
-  email: z.string().nullable(),
+  email: z.string().email(),
   role: organizationRoleSchema,
   status: z.enum(['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED']),
   expiresAt: organizationDateSchema,

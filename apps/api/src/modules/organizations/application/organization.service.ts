@@ -60,50 +60,6 @@ export class OrganizationService {
     @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort,
   ) {}
 
-  async ensurePersonalWorkspace(ownerId: string, displayName: string | null) {
-    const existing = await this.em.findOne(OrganizationOrmEntity, {
-      ownerId,
-      type: OrganizationType.PERSONAL,
-      status: OrganizationStatus.ACTIVE,
-    });
-    if (existing) return existing;
-
-    const baseName = `${displayName?.trim() || 'Personal'} Workspace`;
-    const organization = createOrganization({
-      ownerId,
-      name: baseName,
-      slug: `personal-${ownerId}`,
-      type: OrganizationType.PERSONAL,
-    });
-    const ownerRole = createOrganizationRole({
-      organizationId: organization.id,
-      name: DEFAULT_ROLE_NAMES.owner,
-      permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
-      isOwner: true,
-      legacyRole: OrganizationMemberRole.OWNER,
-    });
-    const member = createOrganizationMember({
-      organizationId: organization.id,
-      userId: ownerId,
-      role: OrganizationMemberRole.OWNER,
-      roleId: ownerRole.id,
-    });
-    this.em.persist(this.em.create(OrganizationOrmEntity, organization));
-    this.em.persist(this.em.create(OrganizationRoleOrmEntity, ownerRole));
-    this.em.persist(this.em.create(OrganizationMemberOrmEntity, member));
-    await this.audit.record({
-      organizationId: organization.id,
-      actorId: ownerId,
-      targetUserId: ownerId,
-      action: 'ORGANIZATION_CREATED',
-      resourceType: 'ORGANIZATION',
-      resourceId: organization.id,
-      after: { name: organization.name, type: organization.type },
-    });
-    await this.em.flush();
-    return organization;
-  }
-
   async listForUser(userId: string) {
     const memberships = await this.em.find(
       OrganizationMemberOrmEntity,
@@ -445,7 +401,7 @@ export class OrganizationService {
     return target;
   }
 
-  async createInvitation(actorId: string, organizationId: string, email: string | null, input: RoleInput) {
+  async createInvitation(actorId: string, organizationId: string, email: string, input: RoleInput) {
     await this.requireManager(actorId, organizationId);
     const role = await this.resolveRequestedRole(
       organizationId,
@@ -459,16 +415,15 @@ export class OrganizationService {
       throw new InvalidInputError('Invitations can only assign Admin or Member roles');
     }
 
-    const normalizedEmail = email?.trim().toLowerCase() || null;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) throw new InvalidInputError('Invitation email is required');
     const token = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const existingInvitation = normalizedEmail
-      ? await this.em.findOne(OrganizationInvitationOrmEntity, {
-          organizationId,
-          email: normalizedEmail,
-          status: OrganizationInvitationStatus.PENDING,
-        })
-      : null;
+    const existingInvitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
+      organizationId,
+      email: normalizedEmail,
+      status: OrganizationInvitationStatus.PENDING,
+    });
     const invitation = existingInvitation ?? createOrganizationInvitation({
       organizationId,
       invitedBy: actorId,
@@ -533,6 +488,29 @@ export class OrganizationService {
     })));
   }
 
+  async cancelInvitation(actorId: string, organizationId: string, invitationId: string) {
+    await this.requireManager(actorId, organizationId);
+    const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
+      id: invitationId,
+      organizationId,
+      status: OrganizationInvitationStatus.PENDING,
+    });
+    if (!invitation) throw new NotFoundError('Pending organization invitation was not found');
+
+    invitation.status = OrganizationInvitationStatus.CANCELLED;
+    this.em.persist(invitation);
+    await this.audit.record({
+      organizationId,
+      actorId,
+      action: 'ORGANIZATION_INVITATION_CANCELLED',
+      resourceType: 'ORGANIZATION_INVITATION',
+      resourceId: invitation.id,
+      after: { email: invitation.email, status: invitation.status },
+    });
+    await this.em.flush();
+    return { ok: true as const };
+  }
+
   async acceptInvitation(userId: string, token: string) {
     const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
       tokenHash: this.hashToken(token),
@@ -545,15 +523,26 @@ export class OrganizationService {
       await this.em.flush();
       throw new ConflictError('Invitation has expired');
     }
+    if (!invitation.email) {
+      throw new ConflictError('Invitation requires an email address');
+    }
     const organization = await this.requireOrganization(invitation.organizationId);
-    if (invitation.email) {
-      const connection = await this.em.findOne(ConnectionOrmEntity, { userId, provider: 'GITHUB' });
-      if (connection?.providerEmail?.toLowerCase() !== invitation.email.toLowerCase()) {
-        throw new ForbiddenError('This invitation is assigned to a different email address');
-      }
+    const connection = await this.em.findOne(ConnectionOrmEntity, { userId, provider: 'GITHUB' });
+    if (
+      !connection?.providerEmailVerified ||
+      connection.providerEmail?.toLowerCase() !== invitation.email.toLowerCase()
+    ) {
+      throw new ForbiddenError('This invitation requires a matching verified GitHub email address');
     }
     const role = await this.resolveInvitationRole(invitation);
     if (role.isOwner) throw new ConflictError('An invitation cannot assign the owner role');
+    const user = await this.em.findOne(UserOrmEntity, { id: userId });
+    if (!user) throw new NotFoundError('User was not found');
+    if (!user.isActive || user.accessStatus === AccessStatus.REJECTED || user.accessStatus === AccessStatus.SUSPENDED) {
+      throw new ForbiddenError('This user cannot accept organization invitations');
+    }
+    user.accessStatus = AccessStatus.APPROVED;
+    this.em.persist(user);
     let membership = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId: organization.id,
       userId,

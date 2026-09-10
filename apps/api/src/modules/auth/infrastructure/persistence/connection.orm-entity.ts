@@ -6,7 +6,7 @@ import { Entity, Index, PrimaryKey, Property, Unique } from '@mikro-orm/decorato
 @Unique({ properties: ['provider', 'providerAccountId'] })
 @Unique({ properties: ['userId', 'provider'] })
 export class ConnectionOrmEntity {
-  [OptionalProps]?: 'id' | 'connectedAt' | 'updatedAt';
+  [OptionalProps]?: 'id' | 'providerEmailVerified' | 'connectedAt' | 'updatedAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();
@@ -25,6 +25,9 @@ export class ConnectionOrmEntity {
 
   @Property({ type: 'text', nullable: true })
   providerEmail: string | null = null;
+
+  @Property({ type: 'boolean' })
+  providerEmailVerified = false;
 
   @Property({ type: 'text', nullable: true })
   accessTokenCiphertext: string | null = null;

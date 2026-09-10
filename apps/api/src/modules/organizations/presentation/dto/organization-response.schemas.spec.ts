@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  organizationCreatedResponseSchema,
   organizationInvitationResponseSchema,
   organizationListSchema,
   organizationMemberRoleResponseSchema,
@@ -21,7 +20,7 @@ describe('organizationListSchema', () => {
         type: 'PERSONAL',
         role: {
           id: null,
-          name: 'Owner',
+          name: 'เจ้าของ',
           permissions: ['organization.manage'],
           isOwner: true,
           legacyRole: 'OWNER',
@@ -36,17 +35,6 @@ describe('organizationListSchema', () => {
   })
 
   it('requires canonical UUIDs and complete mutation response fields', () => {
-    expect(() =>
-      organizationCreatedResponseSchema.parse({
-        organization: {
-          id: 'not-an-id',
-          name: 'Organization',
-          slug: 'organization',
-          type: 'SHARED',
-        },
-      }),
-    ).toThrow()
-
     expect(() =>
       organizationRoleResponseSchema.parse({
         role: {

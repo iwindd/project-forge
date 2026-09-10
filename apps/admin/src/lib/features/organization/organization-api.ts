@@ -1,24 +1,10 @@
 import { api } from '@/lib/api/api'
-import { z } from 'zod'
-import {
-  organizationCreatedResponseSchema,
-  organizationListSchema,
-  organizationResponseSchema
-} from './organization-schemas'
+import { organizationListSchema, organizationResponseSchema } from './organization-schemas'
 import type { Organization } from './types'
-
-export type CreateOrganizationInput = {
-  name: string
-  slug?: string
-}
 
 export type UpdateOrganizationInput = {
   organizationId: string
   name: string
-}
-
-export function parseCreateOrganizationResponse(response: unknown) {
-  return organizationCreatedResponseSchema.parse(response)
 }
 
 export function parseUpdateOrganizationResponse(response: unknown) {
@@ -32,18 +18,6 @@ export const organizationApi = api.injectEndpoints({
       transformResponse: (response: unknown) =>
         organizationListSchema.parse(response),
       providesTags: ['Organizations']
-    }),
-    createOrganization: builder.mutation<
-      z.infer<typeof organizationCreatedResponseSchema>,
-      CreateOrganizationInput
-    >({
-      query: body => ({
-        url: 'organizations',
-        method: 'POST',
-        body
-      }),
-      transformResponse: parseCreateOrganizationResponse,
-      invalidatesTags: ['Organizations']
     }),
     updateOrganization: builder.mutation<
       ReturnType<typeof parseUpdateOrganizationResponse>,
@@ -62,7 +36,6 @@ export const organizationApi = api.injectEndpoints({
 })
 
 export const {
-  useCreateOrganizationMutation,
   useGetOrganizationsQuery,
   useUpdateOrganizationMutation
 } = organizationApi

@@ -99,10 +99,9 @@ export class AuthController {
       } else {
         response.clearCookie('pf_session', { path: '/' })
       }
-      const destination =
-        result.principal.accessStatus === 'APPROVED'
-          ? `/${encodeURIComponent(result.organizationSlug)}`
-          : '/admin/login?status=pending'
+      const destination = result.organizationSlug
+        ? `/${encodeURIComponent(result.organizationSlug)}`
+        : '/account'
       return response.redirect(this.adminRedirect(destination))
     } catch (error) {
       const message =

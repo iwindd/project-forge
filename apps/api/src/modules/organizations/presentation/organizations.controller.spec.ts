@@ -14,6 +14,7 @@ function createController() {
     {
       listForUser: vi.fn(),
       createInvitation: vi.fn(),
+      cancelInvitation: vi.fn(),
     } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
@@ -24,6 +25,15 @@ function createController() {
 }
 
 describe('OrganizationsController', () => {
+  it('does not expose public organization creation', () => {
+    expect(
+      Object.prototype.hasOwnProperty.call(
+        OrganizationsController.prototype,
+        'create',
+      ),
+    ).toBe(false);
+  });
+
   it('does not expose organization member profile mutation', () => {
     expect(
       Object.prototype.hasOwnProperty.call(
@@ -240,5 +250,22 @@ describe('OrganizationsController', () => {
       'person@example.com',
       { roleId: undefined, role: 'MEMBER' },
     );
+  });
+
+  it('cancels an invitation through the standard acknowledgement envelope', async () => {
+    const controller = createController();
+    const cancelInvitation = vi.mocked(
+      (controller as unknown as { organizations: { cancelInvitation: ReturnType<typeof vi.fn> } })
+        .organizations.cancelInvitation,
+    );
+    cancelInvitation.mockResolvedValue({ ok: true });
+
+    await expect(
+      controller.cancelInvitation(
+        principal,
+        { id: organizationId, invitationId: userId },
+      ),
+    ).resolves.toEqual({ data: { ok: true } });
+    expect(cancelInvitation).toHaveBeenCalledWith(userId, organizationId, userId);
   });
 });
