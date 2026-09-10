@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "project-forge",
+    "type": "website",
+    "typeNotes": "Full-stack organization administration website with a Next.js browser application and a NestJS API."
+  },
+  "repository": {
+    "root": "E:\\Projects\\project-forge",
+    "git": true,
+    "trackedFiles": 397
+  },
+  "scan": {
+    "mode": "auto",
+    "status": "complete",
+    "generatedAt": "2026-09-11T00:48:24+07:00"
+  },
+  "sizeScore": {
+    "score": 6,
+    "rationale": "Two application packages, 397 tracked files, layered API and persistence, substantial admin routes/components, 66 tracked test files, CI, Docker Compose, and external integrations; future platform components remain unimplemented.",
+    "breakdown": {
+      "eligibleTrackedFiles": 397,
+      "architectureBreadth": "Two-app pnpm workspace with Next.js UI, NestJS API, domain/application/infrastructure layers, and shared security/audit concerns",
+      "packagesOrApps": 2,
+      "tests": 66,
+      "ciCd": 1,
+      "integrations": [
+        "GitHub OAuth",
+        "PostgreSQL",
+        "AWS S3 client"
+      ],
+      "infrastructure": 1
+    }
+  },
+  "technologies": [
+    "TypeScript",
+    "pnpm",
+    "NestJS",
+    "Next.js",
+    "React",
+    "MikroORM",
+    "PostgreSQL",
+    "Zod",
+    "Vitest",
+    "Biome",
+    "ESLint",
+    "Docker Compose",
+    "GitHub Actions"
+  ],
+  "features": {
+    "topLevelGroups": 7,
+    "evidence": [
+      {
+        "feature": "Identity and access",
+        "paths": ["apps/api/src/modules/auth", "apps/api/src/modules/users", "apps/admin/src/auth.ts", "apps/admin/src/session.ts"],
+        "confidence": "high"
+      },
+      {
+        "feature": "Organization administration",
+        "paths": ["apps/api/src/modules/organizations", "apps/admin/src/app/[organizationSlug]/settings", "apps/admin/src/lib/features/organization"],
+        "confidence": "high"
+      },
+      {
+        "feature": "Projects",
+        "paths": ["apps/api/src/modules/projects", "apps/admin/src/app/[organizationSlug]/page.tsx"],
+        "confidence": "high"
+      },
+      {
+        "feature": "Audit and security",
+        "paths": ["apps/api/src/modules/audit-logs", "apps/api/src/common/audit", "apps/api/src/common/security", "apps/admin/src/lib/features/audit-log"],
+        "confidence": "high"
+      },
+      {
+        "feature": "Admin application shell",
+        "paths": ["apps/admin/src/app/admin", "apps/admin/src/components", "apps/admin/src/lib/i18n"],
+        "confidence": "high"
+      },
+      {
+        "feature": "API and persistence",
+        "paths": ["apps/api/src", "apps/api/src/database", "apps/api/mikro-orm.config.ts"],
+        "confidence": "high"
+      },
+      {
+        "feature": "Quality and delivery",
+        "paths": ["package.json", ".github/workflows/pull-request.yml", "docker-compose.yml", "apps/api/src/**/*.spec.ts", "apps/admin/src/**/*.test.ts"],
+        "confidence": "high"
+      }
+    ]
+  },
+  "fileSummary": {
+    "sourceAreas": ["apps/api/src", "apps/admin/src", "apps/admin/scripts"],
+    "generatedAreas": ["apps/admin/.next", "apps/api/dist", "node_modules", "coverage"],
+    "excludedAreas": [".git", "node_modules", "dist", "build", ".next", "coverage", "binary assets", "blocked environment files"]
+  },
+  "environment": {
+    "exampleFound": true,
+    "proposalCreated": false,
+    "blockedFiles": [".env", ".env.local", ".env.production", "apps/admin/.env", "apps/admin/.env.local", "apps/admin/.env.production"],
+    "issues": []
+  },
+  "limitations": [
+    "Runtime behavior, deployed infrastructure, external provider configuration, and production data were not inspected.",
+    "Environment values were not read or persisted; only variable names from safe example files were considered.",
+    "Future capabilities in planning documents were not classified as implemented without source evidence."
+  ]
+}

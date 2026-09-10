@@ -1,0 +1,21 @@
+schemaVersion: 1
+scanMode: auto
+maxDepth: 4
+safety:
+  blockedFiles:
+    - .env
+    - .env.local
+    - .env.production
+  excludedDirectories:
+    - .git
+    - node_modules
+    - vendor
+    - dist
+    - build
+    - .next
+    - coverage
+    - .cache
+  excludedFileTypes:
+    - binary
+    - minified
+  maxFileSizeBytes: 2097152
