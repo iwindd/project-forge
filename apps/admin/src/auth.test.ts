@@ -55,6 +55,20 @@ describe('auth session contract', () => {
     })
   })
 
+  it('keeps an active user without organization access in the account session', async () => {
+    mocks.apiServerFetch.mockImplementation(
+      async (_path: string, schema: { parse: (value: unknown) => unknown }) =>
+        schema.parse({
+          ...authResponse,
+          user: { ...authResponse.user, accessStatus: 'APPROVED' }
+        })
+    )
+
+    await expect(auth()).resolves.toMatchObject({
+      user: { id: 'user-id', role: 'EDITOR' }
+    })
+  })
+
   it('propagates organization context contract violations', async () => {
     mocks.apiServerFetch.mockImplementation(
       async (_path: string, schema: { parse: (value: unknown) => unknown }) =>

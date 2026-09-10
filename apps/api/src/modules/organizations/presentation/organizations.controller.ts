@@ -1,10 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { apiSuccess } from '../../../common/http/api-response.js';
+import {
+  apiNullSuccessResponseSchema,
+  apiSuccess,
+} from '../../../common/http/api-response.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
 import { ORGANIZATION_PERMISSIONS } from '../domain/organization.js';
 import { OrganizationService } from '../application/organization.service.js';
+import { CancelOrganizationInvitationUseCase } from '../application/use-cases/cancel-organization-invitation-use-case.js';
 import { CreateOrganizationRoleUseCase } from '../application/use-cases/create-organization-role-use-case.js';
 import { DeleteOrganizationRoleUseCase } from '../application/use-cases/delete-organization-role-use-case.js';
 import { ListOrganizationMembersUseCase } from '../application/use-cases/list-organization-members-use-case.js';
@@ -12,7 +16,6 @@ import { ListOrganizationRolesUseCase } from '../application/use-cases/list-orga
 import { UpdateOrganizationRoleUseCase } from '../application/use-cases/update-organization-role-use-case.js';
 import {
   createInvitationSchema,
-  createOrganizationSchema,
   updateMemberRoleSchema,
   updateMemberStatusSchema,
   updateOrganizationSchema,
@@ -20,12 +23,12 @@ import {
   updateOrganizationRoleSchema,
   invitationTokenParamSchema,
   organizationIdParamSchema,
+  organizationInvitationParamSchema,
   organizationMemberParamSchema,
   organizationMembersQuerySchema,
   organizationRoleParamSchema,
 } from './dto/organization.schemas.js';
 import {
-  organizationCreatedResponseSchema,
   organizationInvitationListSchema,
   organizationInvitationResponseSchema,
   organizationListSchema,
@@ -70,6 +73,7 @@ export class OrganizationsController {
     private readonly createOrganizationRole: CreateOrganizationRoleUseCase,
     private readonly updateOrganizationRole: UpdateOrganizationRoleUseCase,
     private readonly deleteOrganizationRole: DeleteOrganizationRoleUseCase,
+    private readonly cancelOrganizationInvitation: CancelOrganizationInvitationUseCase,
   ) {}
 
   @Get()
@@ -88,24 +92,6 @@ export class OrganizationsController {
     return apiSuccess(organizationListSchema.parse(data));
   }
 
-  @Post()
-  async create(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
-    const input = createOrganizationSchema.parse(body);
-    const organization = await this.organizations.createShared(
-      principal.id,
-      input.name,
-      input.slug,
-    );
-    return apiSuccess(organizationCreatedResponseSchema.parse({
-      organization: {
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-        type: organization.type,
-      },
-    }));
-  }
-
   @Get(':id/roles')
   async roles(
     @Principal() principal: AuthenticatedPrincipal,
@@ -117,7 +103,10 @@ export class OrganizationsController {
     );
     return organizationRolesResponseSchema.parse(
       apiSuccess(roles, {
-        availablePermissions: [{ key: ORGANIZATION_PERMISSIONS.MANAGE }],
+        availablePermissions: [
+          { key: ORGANIZATION_PERMISSIONS.MANAGE },
+          { key: ORGANIZATION_PERMISSIONS.MANAGE_PROJECT },
+        ],
       }),
     );
   }
@@ -277,7 +266,7 @@ export class OrganizationsController {
     const result = await this.organizations.createInvitation(
       principal.id,
       organizationId,
-      input.email ?? null,
+      input.email,
       { roleId: input.roleId, role: input.role },
     );
     return apiSuccess(organizationInvitationResponseSchema.parse({
@@ -305,6 +294,20 @@ export class OrganizationsController {
         await this.organizations.listInvitations(principal.id, organizationId),
       ),
     );
+  }
+
+  @Delete(':id/invitations/:invitationId')
+  async cancelInvitation(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+  ) {
+    const { id: organizationId, invitationId } = organizationInvitationParamSchema.parse(rawParams);
+    await this.cancelOrganizationInvitation.execute(
+      principal.id,
+      organizationId,
+      invitationId,
+    );
+    return apiNullSuccessResponseSchema.parse(apiSuccess(null));
   }
 
   @Post('invitations/:token/accept')

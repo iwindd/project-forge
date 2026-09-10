@@ -64,11 +64,9 @@ describe('AuthenticateSessionUseCase', () => {
     expect(sessions.save).toHaveBeenCalledOnce();
   });
 
-  it.each([
-    AccessStatus.PENDING,
-    AccessStatus.REJECTED,
-    AccessStatus.SUSPENDED,
-  ])('rejects a %s user even when the session is active', async (accessStatus) => {
+  it.each([AccessStatus.REJECTED, AccessStatus.SUSPENDED])(
+    'rejects a %s user even when the session is active',
+    async (accessStatus) => {
     const sessions = {
       findActiveByTokenHash: vi.fn(async () => ({ ...session })),
       save: vi.fn(async () => undefined),
@@ -83,7 +81,9 @@ describe('AuthenticateSessionUseCase', () => {
       unitOfWork() as never,
     );
 
-    await expect(useCase.principalFromToken('token')).resolves.toBeNull();
-    expect(sessions.save).not.toHaveBeenCalled();
-  });
+      await expect(useCase.principalFromToken('token')).resolves.toBeNull();
+      expect(sessions.save).not.toHaveBeenCalled();
+    },
+  );
+
 });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
+import { ORGANIZATION_PERMISSIONS } from '../../domain/organization.js';
 
 const organizationDateSchema = z.string().min(1);
 
@@ -19,15 +20,6 @@ export const organizationResourceSchema = z.object({
   status: z.enum(['ACTIVE', 'ARCHIVED', 'SUSPENDED']),
   createdAt: organizationDateSchema,
   updatedAt: organizationDateSchema,
-});
-
-export const organizationCreatedResponseSchema = z.object({
-  organization: organizationResourceSchema.pick({
-    id: true,
-    name: true,
-    slug: true,
-    type: true,
-  }),
 });
 
 export const organizationResponseSchema = z.object({
@@ -76,7 +68,7 @@ export const organizationMemberRoleResponseSchema = z.object({
 export const organizationInvitationSchema = z.object({
   id: databaseUuidSchema,
   organizationId: databaseUuidSchema,
-  email: z.string().nullable(),
+  email: z.string().email(),
   role: organizationRoleSchema,
   status: z.enum(['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED']),
   expiresAt: organizationDateSchema,
@@ -106,7 +98,12 @@ export const organizationRolesResponseSchema = z.object({
   data: organizationRoleListSchema,
   meta: z.object({
     availablePermissions: z.array(
-      z.object({ key: z.literal('organization.manage') }),
+      z.object({
+        key: z.enum([
+          ORGANIZATION_PERMISSIONS.MANAGE,
+          ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+        ]),
+      }),
     ),
   }),
 });

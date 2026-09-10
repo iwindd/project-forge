@@ -3,16 +3,22 @@
 import { PageHeader } from '@/components/page-header'
 import {
   useCreateInvitationMutation,
+  useCancelInvitationMutation,
   useGetInvitationsQuery,
   useGetMembersQuery,
   useGetRolesQuery,
   useRemoveMemberMutation,
   useUpdateMemberRoleMutation,
   useUpdateMemberStatusMutation,
+  type OrganizationInvitation,
   type OrganizationMember,
   type OrganizationRoleSummary
 } from '@/lib/features/organization/organization-members-api'
 import { useOrganizationContext } from '@/lib/features/organization/organization-provider'
+import {
+  getDefaultInvitationRoleId,
+  getInvitationRoleOptions
+} from '@/lib/features/organization/invitation-role-options'
 import {
   ActionIcon,
   Alert,
@@ -38,6 +44,7 @@ import {
   IconAlertCircle,
   IconCalendar,
   IconCheck,
+  IconCopy,
   IconDots,
   IconExternalLink,
   IconPlus,
@@ -45,7 +52,9 @@ import {
   IconUserPlus
 } from '@tabler/icons-react'
 import { useFormatter, useTranslations } from 'next-intl'
-import { useMemo, useRef, useState } from 'react'
+import { schemaResolver, useForm } from '@mantine/form'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { z } from 'zod'
 import classes from './members-page.module.css'
 
 type MembersTab = 'members' | 'invitations'
@@ -58,11 +67,29 @@ type InviteRow = {
   roleId: string
 }
 
+type InviteRowsFormValues = {
+  rows: InviteRow[]
+}
+
 const INITIAL_INVITE_ROW: InviteRow = {
   id: 'invite-0',
   email: '',
   roleId: ''
 }
+
+const inviteRowsSchema = z.object({
+  rows: z.array(
+    z.object({
+      id: z.string().min(1),
+      email: z
+        .string()
+        .trim()
+        .min(1, 'กรุณาระบุอีเมลก่อนส่งคำเชิญ')
+        .email('กรุณาระบุอีเมลให้ถูกต้อง'),
+      roleId: z.string().min(1, 'กรุณาเลือกบทบาท')
+    })
+  ).min(1)
+})
 
 function getInitial(name: string) {
   return name.trim().charAt(0).toUpperCase() || 'U'
@@ -85,12 +112,18 @@ export default function OrganizationMembersPage() {
   const [status, setStatus] = useState<MemberStatusFilter>('all')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [inviteRows, setInviteRows] = useState<InviteRow[]>([
-    INITIAL_INVITE_ROW
-  ])
+  const inviteForm = useForm<InviteRowsFormValues>({
+    initialValues: {
+      rows: [{ ...INITIAL_INVITE_ROW }]
+    },
+    validate: schemaResolver(inviteRowsSchema),
+    validateInputOnBlur: true
+  })
+  const { setValues: setInviteValues } = inviteForm
   const [inviteLinks, setInviteLinks] = useState<
     Array<{ email: string | null; url: string }>
   >([])
+  const [copiedInviteLink, setCopiedInviteLink] = useState<string | null>(null)
   const [memberActionId, setMemberActionId] = useState<string | null>(null)
   const nextInviteRowId = useRef(1)
 
@@ -137,6 +170,8 @@ export default function OrganizationMembersPage() {
   )
   const [createInvitation, { isLoading: invitePending }] =
     useCreateInvitationMutation()
+  const [cancelInvitation, { isLoading: cancelPending }] =
+    useCancelInvitationMutation()
   const [updateMemberRole, { isLoading: rolePending }] =
     useUpdateMemberRoleMutation()
   const [updateMemberStatus, { isLoading: statusPending }] =
@@ -146,7 +181,7 @@ export default function OrganizationMembersPage() {
 
   const members = membersResult?.data ?? []
   const roles = useMemo(() => rolesResult?.data ?? [], [rolesResult?.data])
-  const assignableRoles = useMemo(
+  const memberRoleOptions = useMemo(
     () =>
       roles.filter(
         (candidate): candidate is OrganizationRoleSummary & { id: string } =>
@@ -154,6 +189,26 @@ export default function OrganizationMembersPage() {
       ),
     [roles]
   )
+  const invitationRoleOptions = useMemo(
+    () => getInvitationRoleOptions(memberRoleOptions),
+    [memberRoleOptions]
+  )
+  const defaultInviteRoleId = getDefaultInvitationRoleId(
+    invitationRoleOptions
+  )
+
+  useEffect(() => {
+    if (!defaultInviteRoleId) return
+    setInviteValues(values => {
+      const rows = values.rows ?? []
+      if (!rows.some(row => !row.roleId)) return values
+      return {
+        rows: rows.map(row =>
+          row.roleId ? row : { ...row, roleId: defaultInviteRoleId }
+        )
+      }
+    })
+  }, [defaultInviteRoleId, setInviteValues])
   const invitations = invitationsResult ?? []
   const allVisibleSelected =
     members.length > 0 &&
@@ -162,37 +217,27 @@ export default function OrganizationMembersPage() {
     selectedIds.includes(member.id)
   )
 
-  const updateInviteRow = (id: string, changes: Partial<InviteRow>) => {
-    setInviteRows(rows =>
-      rows.map(row => (row.id === id ? { ...row, ...changes } : row))
-    )
-  }
-
   const addInviteRow = () => {
     const id = `invite-${nextInviteRowId.current}`
     nextInviteRowId.current += 1
-    setInviteRows(rows => [
-      ...rows,
-      { id, email: '', roleId: assignableRoles[0]?.id ?? '' }
-    ])
+    inviteForm.insertListItem('rows', {
+      id,
+      email: '',
+      roleId: defaultInviteRoleId
+    })
   }
 
-  const submitInvitations = async () => {
+  const submitInvitations = async ({ rows }: InviteRowsFormValues) => {
     if (!organizationId || !canManage) return
-    if (!assignableRoles.length) return
-
-    const rows = inviteRows.filter(
-      row => row.email.trim() || inviteRows.length === 1
-    )
-    if (!rows.length) return
+    if (!invitationRoleOptions.length) return
 
     try {
       const results = await Promise.all(
         rows.map(row =>
           createInvitation({
             organizationId,
-            email: row.email.trim() || null,
-            roleId: row.roleId || assignableRoles[0].id
+            email: row.email.trim(),
+            roleId: row.roleId || defaultInviteRoleId
           }).unwrap()
         )
       )
@@ -203,10 +248,63 @@ export default function OrganizationMembersPage() {
           url: `${window.location.origin}/admin/invitations/${result.token}`
         }))
       )
-      setInviteRows([{ ...INITIAL_INVITE_ROW, id: 'invite-0' }])
+      inviteForm.setValues({ rows: [{ ...INITIAL_INVITE_ROW, id: 'invite-0' }] })
+      setCopiedInviteLink(null)
+      inviteForm.resetDirty()
       notifications.show({ message: t('inviteSuccess'), color: 'teal' })
     } catch {
       notifications.show({ message: t('inviteFailed'), color: 'red' })
+    }
+  }
+
+  const resendInvitation = async (invitation: OrganizationInvitation) => {
+    if (!organizationId || !invitation.email || !invitation.role.id) return
+
+    try {
+      const result = await createInvitation({
+        organizationId,
+        email: invitation.email,
+        roleId: invitation.role.id
+      }).unwrap()
+      setInviteLinks(links => [
+        ...links,
+        {
+          email: invitation.email,
+          url: `${window.location.origin}/admin/invitations/${result.token}`
+        }
+      ])
+      setCopiedInviteLink(null)
+      notifications.show({ message: t('resendSuccess'), color: 'teal' })
+    } catch {
+      notifications.show({ message: t('resendFailed'), color: 'red' })
+    }
+  }
+
+  const cancelPendingInvitation = async (invitation: OrganizationInvitation) => {
+    if (
+      !organizationId ||
+      !window.confirm(t('cancelConfirm', { email: invitation.email }))
+    ) {
+      return
+    }
+
+    try {
+      await cancelInvitation({
+        organizationId,
+        invitationId: invitation.id
+      }).unwrap()
+      notifications.show({ message: t('cancelSuccess'), color: 'teal' })
+    } catch {
+      notifications.show({ message: t('cancelFailed'), color: 'red' })
+    }
+  }
+
+  const copyInviteLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedInviteLink(url)
+    } catch {
+      notifications.show({ message: t('copyInviteFailed'), color: 'red' })
     }
   }
 
@@ -296,50 +394,57 @@ export default function OrganizationMembersPage() {
 
           {canManage ? (
             <>
-              <Box className={classes.inviteRows}>
-                {inviteRows.map(row => (
-                  <Box className={classes.inviteRow} key={row.id}>
+              <form onSubmit={inviteForm.onSubmit(submitInvitations)}>
+                <Box className={classes.inviteRows}>
+                  {inviteForm.values.rows.map((row, index) => (
+                    <Box className={classes.inviteRow} key={row.id}>
                     <TextInput
                       label={t('emailAddress')}
                       placeholder={t('emailPlaceholder')}
                       type='email'
-                      value={row.email}
-                      onChange={event =>
-                        updateInviteRow(row.id, {
-                          email: event.currentTarget.value
-                        })
-                      }
+                      required
+                      {...inviteForm.getInputProps(
+                        'rows.' + index + '.email'
+                      )}
                     />
                     <Select
                       label={t('role')}
-                      value={row.roleId || assignableRoles[0]?.id || null}
-                      data={assignableRoles.map(role => ({
+                      {...inviteForm.getInputProps(
+                        'rows.' + index + '.roleId'
+                      )}
+                      value={row.roleId || defaultInviteRoleId || null}
+                      data={invitationRoleOptions.map(role => ({
                         value: role.id,
                         label: role.name
                       }))}
                       onChange={value =>
-                        value && updateInviteRow(row.id, { roleId: value })
+                        inviteForm.setFieldValue(
+                          'rows.' + index + '.roleId',
+                          value ?? ''
+                        )
                       }
                     />
-                  </Box>
-                ))}
-              </Box>
-              <Group className={classes.inviteActions} justify='space-between'>
-                <Button
-                  variant='default'
-                  leftSection={<IconPlus size={16} />}
-                  onClick={addInviteRow}
-                >
-                  {t('addMore')}
-                </Button>
-                <Button
-                  leftSection={<IconUserPlus size={16} />}
-                  loading={invitePending}
-                  onClick={() => void submitInvitations()}
-                >
-                  {t('invite')}
-                </Button>
-              </Group>
+                    </Box>
+                  ))}
+                </Box>
+                <Group className={classes.inviteActions} justify='space-between'>
+                  <Button
+                    type='button'
+                    variant='default'
+                    leftSection={<IconPlus size={16} />}
+                    onClick={addInviteRow}
+                  >
+                    {t('addMore')}
+                  </Button>
+                  <Button
+                    type='submit'
+                    leftSection={<IconUserPlus size={16} />}
+                    loading={invitePending}
+                  >
+                    {t('invite')}
+                  </Button>
+                </Group>
+              </form>
               {inviteLinks.length > 0 ? (
                 <Stack className={classes.inviteLinks} gap='xs'>
                   <Text size='sm' fw={600}>
@@ -357,6 +462,23 @@ export default function OrganizationMembersPage() {
                         {link.email ? `${link.email}: ` : ''}
                         {link.url}
                       </Text>
+                      <Button
+                        type='button'
+                        variant='subtle'
+                        size='xs'
+                        leftSection={
+                          copiedInviteLink === link.url ? (
+                            <IconCheck size={14} />
+                          ) : (
+                            <IconCopy size={14} />
+                          )
+                        }
+                        onClick={() => void copyInviteLink(link.url)}
+                      >
+                        {copiedInviteLink === link.url
+                          ? t('copiedInviteLink')
+                          : t('copyInviteLink')}
+                      </Button>
                     </Group>
                   ))}
                 </Stack>
@@ -557,7 +679,7 @@ export default function OrganizationMembersPage() {
                                     </Menu.Target>
                                     <Menu.Dropdown>
                                       {!member.role.isOwner
-                                        ? assignableRoles.map(roleOption => (
+                                        ? memberRoleOptions.map(roleOption => (
                                             <Menu.Item
                                               key={roleOption.id}
                                               disabled={
@@ -574,20 +696,22 @@ export default function OrganizationMembersPage() {
                                             </Menu.Item>
                                           ))
                                         : null}
-                                      <Menu.Item
-                                        onClick={() => changeStatus(member)}
-                                      >
-                                        {member.isActive
-                                          ? t('suspend')
-                                          : t('activate')}
-                                      </Menu.Item>
                                       {!member.role.isOwner ? (
-                                        <Menu.Item
-                                          color='red'
-                                          onClick={() => remove(member)}
-                                        >
-                                          {t('remove')}
-                                        </Menu.Item>
+                                        <>
+                                          <Menu.Item
+                                            onClick={() => changeStatus(member)}
+                                          >
+                                            {member.isActive
+                                              ? t('suspend')
+                                              : t('activate')}
+                                          </Menu.Item>
+                                          <Menu.Item
+                                            color='red'
+                                            onClick={() => remove(member)}
+                                          >
+                                            {t('remove')}
+                                          </Menu.Item>
+                                        </>
                                       ) : null}
                                     </Menu.Dropdown>
                                   </Menu>
@@ -643,7 +767,7 @@ export default function OrganizationMembersPage() {
                 invitations.map(invitation => (
                   <Box className={classes.invitationRow} key={invitation.id}>
                     <Stack className={classes.invitationEmail} gap={2}>
-                      <Text fw={600}>{invitation.email ?? 'ลิงก์ทั่วไป'}</Text>
+                      <Text fw={600}>{invitation.email}</Text>
                       <Text size='sm' c='dimmed'>
                         {t('inviteLink')} ·{' '}
                         {format.dateTime(
@@ -657,6 +781,27 @@ export default function OrganizationMembersPage() {
                       {t('expiresAt')}{' '}
                       {format.dateTime(new Date(invitation.expiresAt), 'date')}
                     </Text>
+                    <Group gap='xs' justify='flex-end'>
+                      {invitation.role.id ? (
+                      <Button
+                        size='compact-sm'
+                        variant='subtle'
+                        loading={invitePending}
+                        onClick={() => void resendInvitation(invitation)}
+                      >
+                        {t('resend')}
+                      </Button>
+                      ) : null}
+                      <Button
+                        size='compact-sm'
+                        variant='subtle'
+                        color='red'
+                        loading={cancelPending}
+                        onClick={() => void cancelPendingInvitation(invitation)}
+                      >
+                        {t('cancelInvitation')}
+                      </Button>
+                    </Group>
                   </Box>
                 ))
               ) : (

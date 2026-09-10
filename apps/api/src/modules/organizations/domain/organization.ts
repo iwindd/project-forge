@@ -19,6 +19,7 @@ export enum OrganizationMemberRole {
 
 export const ORGANIZATION_PERMISSIONS = {
   MANAGE: 'organization.manage',
+  MANAGE_PROJECT: 'project.manage',
 } as const;
 
 export type OrganizationPermission =
@@ -75,7 +76,7 @@ export type OrganizationInvitationRecord = {
   id: string;
   organizationId: string;
   invitedBy: string;
-  email: string | null;
+  email: string;
   tokenHash: string;
   role: OrganizationMemberRole;
   roleId: string | null;
@@ -148,7 +149,7 @@ export function createOrganizationMember(input: {
 export function createOrganizationInvitation(input: {
   organizationId: string;
   invitedBy: string;
-  email: string | null;
+  email: string;
   tokenHash: string;
   role: OrganizationMemberRole;
   roleId?: string | null;

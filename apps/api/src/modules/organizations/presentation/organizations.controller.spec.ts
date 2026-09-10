@@ -13,7 +13,9 @@ function createController() {
   return new OrganizationsController(
     {
       listForUser: vi.fn(),
+      createInvitation: vi.fn(),
     } as never,
+    { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
@@ -23,6 +25,15 @@ function createController() {
 }
 
 describe('OrganizationsController', () => {
+  it('does not expose public organization creation', () => {
+    expect(
+      Object.prototype.hasOwnProperty.call(
+        OrganizationsController.prototype,
+        'create',
+      ),
+    ).toBe(false);
+  });
+
   it('does not expose organization member profile mutation', () => {
     expect(
       Object.prototype.hasOwnProperty.call(
@@ -105,7 +116,10 @@ describe('OrganizationsController', () => {
     ).resolves.toEqual({
       data: roles,
       meta: {
-        availablePermissions: [{ key: 'organization.manage' }],
+        availablePermissions: [
+          { key: 'organization.manage' },
+          { key: 'project.manage' },
+        ],
       },
     });
   });
@@ -177,5 +191,84 @@ describe('OrganizationsController', () => {
         permissions: ['organization.manage'],
       }),
     ).rejects.toThrow();
+  });
+
+  it('defaults an invitation to Member and returns the one-time token in the envelope', async () => {
+    const controller = createController();
+    const createInvitation = vi.mocked(
+      (controller as unknown as { organizations: { createInvitation: ReturnType<typeof vi.fn> } })
+        .organizations.createInvitation,
+    );
+    createInvitation.mockResolvedValue({
+      invitation: {
+        id: organizationId,
+        organizationId,
+        email: 'person@example.com',
+        role: {
+          id: organizationId,
+          name: 'สมาชิก',
+          permissions: [],
+          isOwner: false,
+          legacyRole: 'MEMBER',
+        },
+        status: 'PENDING',
+        expiresAt: new Date('2026-01-08T00:00:00.000Z'),
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      role: {
+        id: organizationId,
+        name: 'สมาชิก',
+        permissions: [],
+        isOwner: false,
+        legacyRole: 'MEMBER',
+      },
+      token: 'one-time-token',
+    });
+
+    await expect(
+      controller.invite(principal, { id: organizationId }, { email: 'person@example.com' }),
+    ).resolves.toEqual({
+      data: {
+        invitation: {
+          id: organizationId,
+          organizationId,
+          email: 'person@example.com',
+          role: {
+            id: organizationId,
+            name: 'สมาชิก',
+            permissions: [],
+            isOwner: false,
+            legacyRole: 'MEMBER',
+          },
+          status: 'PENDING',
+          expiresAt: '2026-01-08T00:00:00.000Z',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        token: 'one-time-token',
+      },
+    });
+    expect(createInvitation).toHaveBeenCalledWith(
+      userId,
+      organizationId,
+      'person@example.com',
+      { roleId: undefined, role: 'MEMBER' },
+    );
+  });
+
+  it('cancels an invitation through the standard acknowledgement envelope', async () => {
+    const controller = createController();
+    const cancelInvitation = vi.mocked(
+      (controller as unknown as { cancelOrganizationInvitation: { execute: ReturnType<typeof vi.fn> } })
+        .cancelOrganizationInvitation.execute,
+    );
+    cancelInvitation.mockResolvedValue({ ok: true });
+
+    await expect(
+      controller.cancelInvitation(
+        principal,
+        { id: organizationId, invitationId: userId },
+      ),
+    ).resolves.toEqual({ data: null });
+    expect(cancelInvitation).toHaveBeenCalledWith(userId, organizationId, userId);
   });
 });

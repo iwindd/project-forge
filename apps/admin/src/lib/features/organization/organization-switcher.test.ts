@@ -1,28 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import {
-  createOrganizationFormSchema,
-  inviteMemberFormSchema
-} from './organization-switcher'
+import { inviteMemberFormSchema } from './organization-switcher'
 
 describe('organization switcher form contracts', () => {
-  it('trims a valid organization name using the API boundary rules', () => {
-    expect(createOrganizationFormSchema.parse({ name: '  ทีม A  ' })).toEqual({
-      name: 'ทีม A'
-    })
-  })
-
-  it('rejects an empty organization name', () => {
-    expect(() => createOrganizationFormSchema.parse({ name: '   ' })).toThrow()
-  })
-
-  it('accepts an optional invite email and a database role id', () => {
+  it('accepts a verified-email invitation and a database role id', () => {
     expect(
       inviteMemberFormSchema.parse({
-        email: '',
+        email: 'person@example.com',
         roleId: '00000000-0000-0000-0000-000000000001'
       })
     ).toEqual({
-      email: '',
+      email: 'person@example.com',
       roleId: '00000000-0000-0000-0000-000000000001'
     })
   })

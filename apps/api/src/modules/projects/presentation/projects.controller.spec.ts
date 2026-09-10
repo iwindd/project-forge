@@ -4,11 +4,12 @@ import { ProjectsController } from './projects.controller.js';
 
 const ownerId = '550e8400-e29b-41d4-a716-446655440000';
 const projectId = '550e8400-e29b-41d4-a716-446655440001';
+const organizationId = '550e8400-e29b-41d4-a716-446655440002';
 const now = new Date('2026-01-01T00:00:00.000Z');
 const principal = { id: ownerId } as AuthenticatedPrincipal;
 const project = {
   id: projectId,
-  ownerId,
+  organizationId,
   name: 'Project',
   githubUrl: 'https://github.com/example/project',
   githubOwner: 'example',
@@ -62,21 +63,21 @@ describe('ProjectsController', () => {
     update.mockResolvedValue(project);
     archive.mockResolvedValue(project);
 
-    await expect(controller.list(principal)).resolves.toEqual({
+    await expect(controller.list(principal, { organizationId })).resolves.toEqual({
       data: [expect.objectContaining({ id: projectId })],
     });
-    await expect(controller.create(principal, {
+    await expect(controller.create(principal, { organizationId }, {
       githubUrl: project.githubUrl,
     })).resolves.toEqual({
       data: { project: expect.objectContaining({ createdAt: now.toISOString() }) },
     });
-    await expect(controller.get(principal, { id: projectId })).resolves.toEqual({
+    await expect(controller.get(principal, { organizationId, id: projectId })).resolves.toEqual({
       data: { project: expect.objectContaining({ id: projectId }) },
     });
-    await expect(controller.update(principal, { id: projectId }, {})).resolves.toEqual({
+    await expect(controller.update(principal, { organizationId, id: projectId }, {})).resolves.toEqual({
       data: { project: expect.objectContaining({ id: projectId }) },
     });
-    await expect(controller.archive(principal, { id: projectId })).resolves.toEqual({
+    await expect(controller.archive(principal, { organizationId, id: projectId })).resolves.toEqual({
       data: { project: expect.objectContaining({ id: projectId }) },
     });
   });
@@ -89,13 +90,13 @@ describe('ProjectsController', () => {
     );
     get.mockResolvedValue(project);
 
-    await expect(controller.get(principal, { id: 'not-a-uuid' })).rejects.toThrow();
+    await expect(controller.get(principal, { organizationId, id: 'not-a-uuid' })).rejects.toThrow();
 
     const list = vi.mocked(
       (controller as unknown as { listProjects: { execute: ReturnType<typeof vi.fn> } })
         .listProjects.execute,
     );
     list.mockResolvedValue([{ ...project, id: 'not-a-uuid' }]);
-    await expect(controller.list(principal)).rejects.toThrow();
+    await expect(controller.list(principal, { organizationId })).rejects.toThrow();
   });
 });

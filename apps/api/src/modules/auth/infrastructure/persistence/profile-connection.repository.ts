@@ -49,6 +49,8 @@ export class ProfileConnectionRepository {
     providerAccountId: string;
     providerUsername?: string | null;
     providerEmail?: string | null;
+    providerEmailVerified?: boolean;
+    providerVerifiedEmails?: string[];
     accessTokenCiphertext?: string | null;
     scopes?: string | null;
   }) {
@@ -66,6 +68,14 @@ export class ProfileConnectionRepository {
     connection.userId = input.userId;
     connection.providerUsername = input.providerUsername ?? connection.providerUsername;
     connection.providerEmail = input.providerEmail ?? connection.providerEmail;
+    if (input.providerEmailVerified !== undefined) {
+      connection.providerEmailVerified = input.providerEmailVerified;
+    }
+    if (input.providerVerifiedEmails !== undefined) {
+      connection.providerVerifiedEmails = input.providerVerifiedEmails
+        .map(email => email.trim().toLowerCase())
+        .filter(Boolean);
+    }
     connection.accessTokenCiphertext = input.accessTokenCiphertext ?? connection.accessTokenCiphertext;
     connection.scopes = input.scopes ?? connection.scopes;
     connection.updatedAt = new Date();

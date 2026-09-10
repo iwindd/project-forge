@@ -23,22 +23,21 @@ if (!githubUserId) throw new Error('SEED_ADMIN_GITHUB_ID is required')
 
 const orm = await MikroORM.init(config)
 const em = orm.em.fork()
-const user = await em.findOne(UserOrmEntity, { githubUserId })
+let user = await em.findOne(UserOrmEntity, { githubUserId })
 if (user) {
   user.role = UserRole.ADMIN
   user.accessStatus = AccessStatus.APPROVED
   user.isActive = true
 } else {
-  em.persist(
-    em.create(UserOrmEntity, {
-      githubUserId,
-      githubLogin: process.env.SEED_ADMIN_GITHUB_LOGIN?.trim() || 'admin',
-      name: process.env.SEED_ADMIN_NAME?.trim() || 'Project Forge Admin',
-      role: UserRole.ADMIN,
-      accessStatus: AccessStatus.APPROVED,
-      isActive: true
-    })
-  )
+  user = em.create(UserOrmEntity, {
+    githubUserId,
+    githubLogin: process.env.SEED_ADMIN_GITHUB_LOGIN?.trim() || 'admin',
+    name: process.env.SEED_ADMIN_NAME?.trim() || 'Project Forge Admin',
+    role: UserRole.ADMIN,
+    accessStatus: AccessStatus.APPROVED,
+    isActive: true
+  })
+  em.persist(user)
 }
 if (!user) throw new Error('Admin user could not be initialized')
 let profile = await em.findOne(ProfileOrmEntity, { userId: user.id })
@@ -50,45 +49,78 @@ if (!profile) {
   })
   em.persist(profile)
 }
-let personal = await em.findOne(OrganizationOrmEntity, {
-  ownerId: user.id,
-  type: OrganizationType.PERSONAL
-})
-if (!personal) {
-  personal = em.create(OrganizationOrmEntity, {
+const organizationName = process.env.SEED_ORGANIZATION_NAME?.trim() || 'Project Forge'
+const organizationSlug = process.env.SEED_ORGANIZATION_SLUG?.trim() || 'project-forge'
+let organization = await em.findOne(OrganizationOrmEntity, { slug: organizationSlug })
+if (!organization) {
+  organization = em.create(OrganizationOrmEntity, {
     ownerId: user.id,
-    name: `${user.name || user.githubLogin} Personal Workspace`,
-    slug: `personal-${user.id}`,
-    type: OrganizationType.PERSONAL,
+    name: organizationName,
+    slug: organizationSlug,
+    type: OrganizationType.SHARED,
     status: OrganizationStatus.ACTIVE
   })
-  em.persist(personal)
+  em.persist(organization)
+} else if (organization.ownerId !== user.id) {
+  throw new Error('Seed organization is owned by another user')
 }
+const builtInRoles = [
+  {
+    name: 'เจ้าของ',
+    permissions: [
+      ORGANIZATION_PERMISSIONS.MANAGE,
+      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+    ],
+    isOwner: true,
+    legacyRole: OrganizationMemberRole.OWNER
+  },
+  {
+    name: 'แอดมิน',
+    permissions: [
+      ORGANIZATION_PERMISSIONS.MANAGE,
+      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+    ],
+    isOwner: false,
+    legacyRole: OrganizationMemberRole.ADMIN
+  },
+  {
+    name: 'สมาชิก',
+    permissions: [],
+    isOwner: false,
+    legacyRole: OrganizationMemberRole.MEMBER
+  }
+] as const
+const roles: OrganizationRoleOrmEntity[] = []
+for (const definition of builtInRoles) {
+  let role = await em.findOne(OrganizationRoleOrmEntity, {
+    organizationId: organization.id,
+    legacyRole: definition.legacyRole
+  })
+  if (!role) {
+    role = em.create(
+      OrganizationRoleOrmEntity,
+      createOrganizationRole({
+        organizationId: organization.id,
+        name: definition.name,
+        permissions: [...definition.permissions],
+        isOwner: definition.isOwner,
+        legacyRole: definition.legacyRole
+      })
+    )
+    em.persist(role)
+  }
+  roles.push(role)
+}
+const ownerRole = roles.find(role => role.legacyRole === OrganizationMemberRole.OWNER)
+if (!ownerRole) throw new Error('Seed Owner role could not be initialized')
 const member = await em.findOne(OrganizationMemberOrmEntity, {
-  organizationId: personal.id,
+  organizationId: organization.id,
   userId: user.id
 })
-let ownerRole = await em.findOne(OrganizationRoleOrmEntity, {
-  organizationId: personal.id,
-  isOwner: true
-})
-if (!ownerRole) {
-  ownerRole = em.create(
-    OrganizationRoleOrmEntity,
-    createOrganizationRole({
-      organizationId: personal.id,
-      name: 'Owner',
-      permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
-      isOwner: true,
-      legacyRole: OrganizationMemberRole.OWNER
-    })
-  )
-  em.persist(ownerRole)
-}
 if (!member) {
   em.persist(
     em.create(OrganizationMemberOrmEntity, {
-      organizationId: personal.id,
+      organizationId: organization.id,
       userId: user.id,
       role: OrganizationMemberRole.OWNER,
       roleId: ownerRole.id,

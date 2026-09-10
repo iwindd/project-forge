@@ -6,7 +6,6 @@ export enum UserRole {
 }
 
 export enum AccessStatus {
-  PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   SUSPENDED = 'SUSPENDED',
@@ -34,7 +33,7 @@ export function createUser(input: Pick<UserRecord, 'githubUserId' | 'githubLogin
     name: null,
     avatarUrl: null,
     role: UserRole.USER,
-    accessStatus: AccessStatus.PENDING,
+    accessStatus: AccessStatus.APPROVED,
     isActive: true,
     createdAt: now,
     updatedAt: now,

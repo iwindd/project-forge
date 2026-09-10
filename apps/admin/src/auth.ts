@@ -11,7 +11,7 @@ const authMeSchema = z.object({
     name: z.string().nullable(),
     avatarUrl: z.string().nullable(),
     role: z.enum(['ADMIN', 'USER']),
-    accessStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']),
+    accessStatus: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
     isActive: z.boolean(),
     createdAt: z.string().min(1),
     updatedAt: z.string().min(1)
@@ -44,7 +44,13 @@ export async function auth(): Promise<AdminSession | null> {
     })
 
     const { user } = data
-    if (!user.isActive || user.accessStatus !== 'APPROVED') return null
+    if (
+      !user.isActive ||
+      user.accessStatus === 'REJECTED' ||
+      user.accessStatus === 'SUSPENDED'
+    ) {
+      return null
+    }
 
     return {
       user: {

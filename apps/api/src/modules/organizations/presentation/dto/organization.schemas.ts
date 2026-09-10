@@ -5,15 +5,9 @@ import {
   OrganizationMemberRole,
 } from '../../domain/organization.js';
 
-export const createOrganizationSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  slug: z.string().trim().min(1).max(60).optional(),
-});
-
 export const updateOrganizationSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
 });
-
 const legacyMemberRoleSchema = z.enum([
   OrganizationMemberRole.OWNER,
   OrganizationMemberRole.ADMIN,
@@ -27,12 +21,17 @@ const organizationRoleNameSchema = z
   .max(80, 'ชื่อบทบาทต้องไม่เกิน 80 ตัวอักษร');
 
 const organizationRolePermissionsSchema = z
-  .array(z.enum([ORGANIZATION_PERMISSIONS.MANAGE]))
-  .max(1, 'ไม่สามารถเลือกสิทธิ์ซ้ำได้');
+  .array(
+    z.enum([
+      ORGANIZATION_PERMISSIONS.MANAGE,
+      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+    ]),
+  )
+  .max(2, 'ไม่สามารถเลือกสิทธิ์ซ้ำได้');
 
 export const updateMemberRoleSchema = z
   .object({
-    roleId: z.string().uuid().optional(),
+    roleId: databaseUuidSchema.optional(),
     role: legacyMemberRoleSchema.optional(),
   })
   .refine((value) => Boolean(value.roleId || value.role), {
@@ -52,11 +51,11 @@ export const updateOrganizationRoleSchema = z.object({
 export const updateMemberStatusSchema = z.object({ active: z.boolean() });
 
 export const createInvitationSchema = z.object({
-  email: z.string().email().optional().nullable(),
-  roleId: z.string().uuid().optional(),
-  role: z.enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER]).optional(),
-}).refine((value) => Boolean(value.roleId || value.role), {
-  message: 'A roleId or legacy role is required',
+  email: z.string().trim().email(),
+  roleId: databaseUuidSchema.optional(),
+  role: z
+    .enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER])
+    .default(OrganizationMemberRole.MEMBER),
 });
 
 export const organizationIdParamSchema = z.object({
@@ -69,6 +68,9 @@ export const organizationRoleParamSchema = organizationIdParamSchema.extend({
 
 export const organizationMemberParamSchema = organizationIdParamSchema.extend({
   userId: databaseUuidSchema,
+});
+export const organizationInvitationParamSchema = organizationIdParamSchema.extend({
+  invitationId: databaseUuidSchema,
 });
 
 export const invitationTokenParamSchema = z.object({
@@ -88,5 +90,3 @@ export const organizationMembersQuerySchema = z.object({
   sortBy: z.enum(['name', 'role', 'createdAt']).optional().default('createdAt'),
   sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
 });
-
-export type CreateOrganizationDto = z.infer<typeof createOrganizationSchema>;

@@ -8,7 +8,7 @@ const identitySchema = z.object({
   name: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   role: z.enum(['ADMIN', 'USER']),
-  accessStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']),
+  accessStatus: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   isActive: z.boolean(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
@@ -31,6 +31,19 @@ export const updateProfileSchema = z.object({
 export const githubCallbackQuerySchema = z.object({
   code: z.string().trim().min(1),
   state: z.string().trim().min(1),
+});
+
+export const githubReturnToSchema = z
+  .string()
+  .trim()
+  .max(2048)
+  .refine(
+    (value) => value.startsWith('/') && !value.startsWith('//'),
+    'returnTo must be a same-origin path',
+  );
+
+export const githubStartQuerySchema = z.object({
+  returnTo: githubReturnToSchema.optional(),
 });
 
 export const authMeDataSchema = z.object({

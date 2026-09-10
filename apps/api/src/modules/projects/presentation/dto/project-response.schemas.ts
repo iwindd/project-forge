@@ -3,7 +3,7 @@ import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema
 
 const projectResponseSchema = z.object({
   id: databaseUuidSchema,
-  ownerId: databaseUuidSchema,
+  organizationId: databaseUuidSchema,
   name: z.string().min(1),
   githubUrl: z.string().url(),
   githubOwner: z.string().min(1),
