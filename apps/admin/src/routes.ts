@@ -55,7 +55,7 @@ const adminRoutes = ROUTER({
         path: '/:organizationSlug/audit-logs',
         label: 'ประวัติการทำรายการ',
         navigationLabelKey: 'auditLogs',
-        permission: 'viewAuditLogs'
+        permission: 'manageOrganization'
       }
     }
   },

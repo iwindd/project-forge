@@ -35,6 +35,8 @@ import {
   organizationResponseSchema,
   organizationRoleResponseSchema,
   organizationRoleListSchema,
+  organizationRolesResponseSchema,
+  organizationMembersResponseSchema,
   okResponseSchema,
 } from './dto/organization-response.schemas.js';
 
@@ -112,9 +114,11 @@ export class OrganizationsController {
     const roles = organizationRoleListSchema.parse(
       await this.listOrganizationRoles.execute(principal.id, organizationId),
     );
-    return apiSuccess(roles, {
-      availablePermissions: [{ key: ORGANIZATION_PERMISSIONS.MANAGE }],
-    });
+    return organizationRolesResponseSchema.parse(
+      apiSuccess(roles, {
+        availablePermissions: [{ key: ORGANIZATION_PERMISSIONS.MANAGE }],
+      }),
+    );
   }
 
   @Post(':id/roles')
@@ -201,12 +205,14 @@ export class OrganizationsController {
     const page = query.page;
     const pageSize = query.pageSize;
     const total = data.length;
-    return apiSuccess(data.slice((page - 1) * pageSize, page * pageSize), {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    });
+    return organizationMembersResponseSchema.parse(
+      apiSuccess(data.slice((page - 1) * pageSize, page * pageSize), {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      }),
+    );
   }
 
   @Patch(':id')

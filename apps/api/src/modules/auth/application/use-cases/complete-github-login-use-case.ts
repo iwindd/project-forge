@@ -33,7 +33,11 @@ export class CompleteGithubLoginUseCase {
     private readonly issueSession: IssueSessionUseCase,
   ) {}
 
-  async execute(code: string): Promise<{ principal: AuthenticatedPrincipal; sessionToken: string }> {
+  async execute(code: string): Promise<{
+    principal: AuthenticatedPrincipal
+    sessionToken: string
+    organizationSlug: string
+  }> {
     if (!code.trim()) throw new InvalidInputError('OAuth code is required');
     const result = await this.github.exchangeCode(code);
     const userId = String(result.profile.id);
@@ -85,7 +89,11 @@ export class CompleteGithubLoginUseCase {
         provider: 'GITHUB',
         event: 'LOGIN_SUCCEEDED',
       });
-      return { principal: toPrincipal(user), sessionToken };
+      return {
+        principal: toPrincipal(user),
+        sessionToken,
+        organizationSlug: personalWorkspace.slug
+      };
     });
   }
 }

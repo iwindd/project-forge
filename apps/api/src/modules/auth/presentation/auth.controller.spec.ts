@@ -4,6 +4,42 @@ import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
 import { AuthController } from './auth.controller.js'
 
 describe('AuthController', () => {
+  it('redirects an approved OAuth login to the resolved organization route', async () => {
+    const completeGithubLogin = {
+      execute: vi.fn().mockResolvedValue({
+        principal: { accessStatus: AccessStatus.APPROVED },
+        sessionToken: 'session-token',
+        organizationSlug: 'personal-user'
+      })
+    }
+    const response = {
+      cookie: vi.fn(),
+      clearCookie: vi.fn(),
+      redirect: vi.fn()
+    }
+    const controller = new AuthController(
+      {} as never,
+      completeGithubLogin as never,
+      {} as never,
+      { adminOrigin: 'http://localhost:5051' } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never
+    )
+
+    await controller.callback(
+      { code: 'oauth-code', state: 'expected-state' },
+      { headers: { cookie: 'pf_oauth_state=expected-state' } } as never,
+      response as never
+    )
+
+    expect(response.redirect).toHaveBeenCalledWith(
+      'http://localhost:5051/personal-user'
+    )
+  })
+
   it('keeps organization context out of the auth/me response', async () => {
     const profileConnections = {
       findProfile: vi.fn().mockResolvedValue(null)

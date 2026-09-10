@@ -28,6 +28,11 @@ import {
   auditLogUserParamSchema,
   type AuditLogQuery
 } from './dto/audit-log.schemas.js'
+import {
+  auditLogExportResponseSchema,
+  auditLogListResponseSchema,
+  securityLogListResponseSchema
+} from './dto/audit-log-response.schemas.js'
 
 @Controller('audit-logs')
 @UseGuards(SessionGuard)
@@ -126,7 +131,9 @@ export class AuditLogsController {
     const { id } = auditLogIdParamSchema.parse(rawParams)
     const log = await this.em.findOne(AuditLogOrmEntity, { id })
     if (!log) throw newAuditLogNotFound()
-    return response.json(log)
+    return response.json(
+      auditLogExportResponseSchema.parse(apiSuccess(serializeAuditLogExport(log)))
+    )
   }
 
   @Get('me/:id/export')
@@ -143,7 +150,9 @@ export class AuditLogsController {
     ) {
       throw newAuditLogNotFound()
     }
-    return response.json(log)
+    return response.json(
+      auditLogExportResponseSchema.parse(apiSuccess(serializeAuditLogExport(log)))
+    )
   }
 
   @Get('organization/:organizationId/:id/export')
@@ -157,7 +166,9 @@ export class AuditLogsController {
     await this.requireOrganizationViewer(principal, organizationId)
     const log = await this.em.findOne(AuditLogOrmEntity, { id, organizationId })
     if (!log) throw newAuditLogNotFound()
-    return response.json(log)
+    return response.json(
+      auditLogExportResponseSchema.parse(apiSuccess(serializeAuditLogExport(log)))
+    )
   }
 
   private async queryLogs(
@@ -228,7 +239,7 @@ export class AuditLogsController {
         : null
     }
 
-    return apiSuccess(
+    return auditLogListResponseSchema.parse(apiSuccess(
       logs.map(log => ({
         id: log.id,
         createdAt: log.createdAt.toISOString(),
@@ -250,7 +261,7 @@ export class AuditLogsController {
         pageSize: limit,
         totalPages: Math.ceil(total / limit)
       }
-    )
+    ))
   }
 
   private async querySecurityLogs(
@@ -288,7 +299,7 @@ export class AuditLogsController {
         offset: (page - 1) * limit
       }
     )
-    return apiSuccess(
+    return securityLogListResponseSchema.parse(apiSuccess(
       logs.map(log => ({
         id: log.id,
         organizationId: log.organizationId,
@@ -306,7 +317,7 @@ export class AuditLogsController {
         pageSize: limit,
         totalPages: Math.ceil(total / limit)
       }
-    )
+    ))
   }
 
   private async requireOrganizationViewer(
@@ -337,4 +348,21 @@ function newAuditLogNotFound() {
     code: 'AUDIT_LOG_NOT_FOUND',
     message: 'Audit log was not found'
   })
+}
+
+function serializeAuditLogExport(log: AuditLogOrmEntity) {
+  return {
+    id: log.id,
+    organizationId: log.organizationId,
+    actorId: log.actorId,
+    targetUserId: log.targetUserId,
+    action: log.action,
+    resourceType: log.resourceType,
+    resourceId: log.resourceId,
+    beforeJson: log.beforeJson,
+    afterJson: log.afterJson,
+    reason: log.reason,
+    requestId: log.requestId,
+    createdAt: log.createdAt.toISOString()
+  }
 }

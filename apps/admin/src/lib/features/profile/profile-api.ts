@@ -3,7 +3,7 @@ import { profileUpdateResponseSchema } from '@/servers/profile/schemas'
 import { z } from 'zod'
 
 const profileUpdateInputSchema = z.object({
-  displayName: z.string().trim().min(1).max(200).optional(),
+  displayName: z.string().trim().min(1).max(200).nullable().optional(),
   bio: z.string().trim().max(1000).nullable().optional(),
   timezone: z.string().trim().max(80).nullable().optional()
 })

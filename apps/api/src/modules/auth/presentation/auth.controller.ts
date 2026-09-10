@@ -33,6 +33,7 @@ import { ProfileConnectionRepository } from '../infrastructure/persistence/profi
 import {
   authMeDataSchema,
   authMeResponseSchema,
+  authUpdateMeResponseSchema,
   githubCallbackQuerySchema,
   updateProfileSchema,
 } from './dto/auth.schemas.js'
@@ -93,7 +94,7 @@ export class AuthController {
       })
       const destination =
         result.principal.accessStatus === 'APPROVED'
-          ? '/'
+          ? `/${encodeURIComponent(result.organizationSlug)}`
           : '/admin/login?status=pending'
       return response.redirect(this.adminRedirect(destination))
     } catch (error) {
@@ -166,7 +167,13 @@ export class AuthController {
       }
       return { user: { ...user } }
     })
-    return apiSuccess(data)
+    return authUpdateMeResponseSchema.parse(apiSuccess({
+      user: {
+        ...data.user,
+        createdAt: data.user.createdAt.toISOString(),
+        updatedAt: data.user.updatedAt.toISOString(),
+      },
+    }))
   }
 
   @Post('logout')

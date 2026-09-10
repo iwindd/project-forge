@@ -1,4 +1,4 @@
-import { apiServerFetch } from "@/lib/api-server";
+import { ApiServerError, apiServerFetch } from "@/lib/api-server";
 import { profileResponseSchema } from "../schemas";
 import type { Profile } from "../types";
 
@@ -17,7 +17,14 @@ export async function getProfile(): Promise<Profile | null> {
       timezone: result.profile.timezone,
       connections: result.connections,
     };
-  } catch {
-    return null;
+  } catch (error) {
+    if (
+      error instanceof ApiServerError &&
+      (error.status === 401 || error.status === 404)
+    ) {
+      return null;
+    }
+
+    throw error;
   }
 }

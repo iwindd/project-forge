@@ -25,7 +25,7 @@ export const profileResponseSchema = z.object({
 export const profileUpdateResponseSchema = z.object({
   profile: z.object({
     id: z.string().min(1),
-    displayName: z.string().min(1),
+    displayName: z.string().min(1).nullable(),
     avatarUrl: z.string().nullable(),
     bio: z.string().nullable(),
     timezone: z.string().nullable(),

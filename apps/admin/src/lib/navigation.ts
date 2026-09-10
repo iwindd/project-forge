@@ -85,6 +85,19 @@ export const adminNavigation: AdminNavigationGroup[] = [
     ]
   },
   {
+    id: 'system',
+    label: 'ระบบ',
+    labelKey: 'system',
+    permissionKey: 'manageOrganization',
+    items: [
+      routeItem('system.auditLogs', {
+        icon: IconHistory,
+        labelKey: 'auditLogs',
+        permissionKey: 'manageOrganization'
+      })
+    ]
+  },
+  {
     id: 'settings',
     label: 'ตั้งค่า',
     labelKey: 'settings',

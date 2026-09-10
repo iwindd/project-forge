@@ -41,3 +41,9 @@ export const authMeDataSchema = z.object({
 export const authMeResponseSchema = z.object({
   data: authMeDataSchema,
 }).strict();
+
+export const authUpdateMeResponseSchema = z.object({
+  data: z.object({
+    user: identitySchema,
+  }),
+}).strict();

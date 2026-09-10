@@ -32,6 +32,25 @@ const auditLogMetaSchema = z.object({
   totalPages: z.number()
 })
 
+const auditLogExportDataSchema = z.object({
+  id: z.string().min(1),
+  organizationId: z.string().nullable(),
+  actorId: z.string().nullable(),
+  targetUserId: z.string().nullable(),
+  action: z.string().min(1),
+  resourceType: z.string().min(1),
+  resourceId: z.string().nullable(),
+  beforeJson: z.record(z.string(), z.unknown()).nullable(),
+  afterJson: z.record(z.string(), z.unknown()).nullable(),
+  reason: z.string().nullable(),
+  requestId: z.string().nullable(),
+  createdAt: z.string().min(1)
+})
+
+export const auditLogExportResponseSchema = z.object({
+  data: auditLogExportDataSchema
+})
+
 export function parseAuditLogsResponse(
   response: unknown,
   meta: Pick<BrowserApiMeta, 'apiMeta'> | undefined
@@ -85,7 +104,10 @@ export async function parseAuditLogExportResponse(
   // Keep the successful payload serializable while RTK Query stores the
   // mutation result. The component turns this JSON string into a Blob only
   // at the point where the browser download is started.
-  if (response.ok) return response.text()
+  if (response.ok) {
+    const body: unknown = await response.json()
+    return JSON.stringify(auditLogExportResponseSchema.parse(body), null, 2)
+  }
 
   const body = await response.text()
   if (!body) return {}

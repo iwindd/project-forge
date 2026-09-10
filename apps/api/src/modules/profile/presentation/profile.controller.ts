@@ -14,11 +14,16 @@ import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/conne
 import { ProfileConnectionRepository } from '../../auth/infrastructure/persistence/profile-connection.repository.js';
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js';
 import { databaseUuidSchema } from '../../../common/http/database-uuid.schema.js';
+import {
+  profileConnectionsResponseSchema,
+  profileResponseSchema,
+  profileUpdateResponseSchema,
+} from './dto/profile-response.schemas.js';
 
 const connectionIdParamSchema = z.object({ id: databaseUuidSchema });
 
 const updateProfileSchema = z.object({
-  displayName: z.string().trim().min(1).max(200).optional(),
+  displayName: z.string().trim().min(1).max(200).nullable().optional(),
   bio: z.string().trim().max(1000).nullable().optional(),
   timezone: z.string().trim().max(80).nullable().optional(),
 });
@@ -43,7 +48,7 @@ export class ProfileController {
       avatarUrl: user.avatarUrl,
     });
     const connections = await this.profileConnections.findConnections(user.id);
-    return apiSuccess({
+    return apiSuccess(profileResponseSchema.parse({
       profile: {
         id: user.id,
         displayName: profile.displayName ?? user.name ?? user.githubLogin,
@@ -62,7 +67,7 @@ export class ProfileController {
         email: connection.providerEmail,
         connectedAt: connection.connectedAt.toISOString(),
       })),
-    });
+    }));
   }
 
   @Patch('profile')
@@ -71,7 +76,7 @@ export class ProfileController {
     const profile = await this.profileConnections.updateProfile(principal.id, input);
     if (!profile) throw new NotFoundError('Profile was not found');
     const user = await this.em.findOne(UserOrmEntity, { id: principal.id });
-    if (user && profile.displayName) {
+    if (user && input.displayName !== undefined) {
       user.name = profile.displayName;
       user.updatedAt = new Date();
       this.em.persist(user);
@@ -85,7 +90,7 @@ export class ProfileController {
       resourceId: principal.id,
       after: { displayName: profile.displayName, bio: profile.bio, timezone: profile.timezone },
     });
-    return apiSuccess({
+    return apiSuccess(profileUpdateResponseSchema.parse({
       profile: {
         id: principal.id,
         displayName: profile.displayName,
@@ -94,19 +99,19 @@ export class ProfileController {
         timezone: profile.timezone,
         updatedAt: profile.updatedAt.toISOString(),
       },
-    });
+    }));
   }
 
   @Get('connections')
   async connections(@Principal() principal: AuthenticatedPrincipal) {
     const connections = await this.profileConnections.findConnections(principal.id);
-    return apiSuccess(connections.map((connection) => ({
+    return apiSuccess(profileConnectionsResponseSchema.parse(connections.map((connection) => ({
         id: connection.id,
         provider: connection.provider,
         username: connection.providerUsername,
         email: connection.providerEmail,
         connectedAt: connection.connectedAt.toISOString(),
-      })));
+      }))));
   }
 
   @Delete('connections/:id')

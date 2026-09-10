@@ -14,7 +14,6 @@ const profileNameFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, 'กรุณาระบุชื่อผู้ใช้')
     .max(200, 'ชื่อผู้ใช้ต้องไม่เกิน 200 ตัวอักษร')
 })
 
@@ -34,14 +33,17 @@ export function ProfileNameForm() {
   const save = async (values: ProfileNameFormValues) => {
     setError(null)
     try {
-      const result = await updateProfileRequest({ displayName: values.name }).unwrap()
+      const result = await updateProfileRequest({
+        displayName: values.name.trim() || null
+      }).unwrap()
       updateProfile({
         ...profile,
-        name: result.profile.displayName,
+        name: result.profile.displayName ?? '',
         updatedAt: result.profile.updatedAt
       })
-      form.setValues({ name: result.profile.displayName })
-      form.setInitialValues({ name: result.profile.displayName })
+      const nextName = result.profile.displayName ?? ''
+      form.setValues({ name: nextName })
+      form.setInitialValues({ name: nextName })
       form.resetDirty()
       invalidateAdminCaches({ resources: ['users'] })
     } catch (saveError) {

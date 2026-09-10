@@ -101,3 +101,22 @@ export const organizationListSchema = z.array(
     role: organizationRoleSchema,
   }),
 );
+
+export const organizationRolesResponseSchema = z.object({
+  data: organizationRoleListSchema,
+  meta: z.object({
+    availablePermissions: z.array(
+      z.object({ key: z.literal('organization.manage') }),
+    ),
+  }),
+});
+
+export const organizationMembersResponseSchema = z.object({
+  data: organizationMemberListSchema,
+  meta: z.object({
+    page: z.number().int().positive(),
+    pageSize: z.number().int().positive(),
+    total: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
+  }),
+});

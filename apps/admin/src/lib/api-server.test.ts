@@ -5,7 +5,11 @@ const mocks = vi.hoisted(() => ({ cookies: vi.fn() }))
 
 vi.mock('next/headers', () => ({ cookies: mocks.cookies }))
 
-import { apiServerFetch, apiServerFetchEnvelope } from './api-server'
+import {
+  apiServerFetch,
+  apiServerFetchEnvelope,
+  isApiServerForbidden
+} from './api-server'
 
 describe('apiServerFetch', () => {
   beforeEach(() => {
@@ -88,12 +92,16 @@ describe('apiServerFetch', () => {
       )
     )
 
-    await expect(
-      apiServerFetch('resource', z.object({ id: z.string() }))
-    ).rejects.toMatchObject({
+    const error = await apiServerFetch(
+      'resource',
+      z.object({ id: z.string() })
+    ).catch(value => value)
+
+    expect(error).toMatchObject({
       status: 403,
       code: 'FORBIDDEN',
       requestId: 'request-123'
     })
+    expect(isApiServerForbidden(error)).toBe(true)
   })
 })

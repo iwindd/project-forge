@@ -20,6 +20,12 @@ export class ApiServerError extends Error {
   }
 }
 
+export function isApiServerForbidden(
+  error: unknown
+): error is ApiServerError {
+  return error instanceof ApiServerError && error.status === 403
+}
+
 async function fetchApiEnvelope<T, M>(
   path: string,
   schema: z.ZodType<T>,

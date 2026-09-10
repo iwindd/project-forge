@@ -18,6 +18,11 @@ import {
   userIdParamSchema,
   userListQuerySchema,
 } from './dto/user.schemas.js';
+import {
+  userListResponseSchema,
+  userMutationResponseSchema,
+  userResponseEnvelopeSchema,
+} from './dto/user-response.schemas.js';
 
 @Controller('admin/users')
 @UseGuards(SessionGuard, AdminGuard)
@@ -59,7 +64,7 @@ export class UsersController {
       page: query.page,
       limit: query.pageSize,
     });
-    return apiSuccess(
+    return userListResponseSchema.parse(apiSuccess(
       result.data.map((user) => this.present(user)),
       {
         page: result.page,
@@ -67,36 +72,70 @@ export class UsersController {
         total: result.total,
         totalPages: Math.ceil(result.total / result.limit),
       },
-    );
+    ));
   }
 
   @Get(':id')
   async get(@Param() rawParams: unknown) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return apiSuccess({ user: this.present(await this.getUser.execute(id)) });
+    return userResponseEnvelopeSchema.parse(
+      apiSuccess({ user: this.present(await this.getUser.execute(id)) }),
+    );
   }
 
   @Patch(':id/name')
   async setName(@Param() rawParams: unknown, @Body() body: unknown, @Principal() actor: AuthenticatedPrincipal) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return apiSuccess({ user: this.present(await this.changeName.execute(actor.id, id, changeUserNameSchema.parse(body))) });
+    return userResponseEnvelopeSchema.parse(
+      apiSuccess({
+        user: this.present(
+          await this.changeName.execute(
+            actor.id,
+            id,
+            changeUserNameSchema.parse(body),
+          ),
+        ),
+      }),
+    );
   }
 
   @Patch(':id/status')
   async setStatus(@Param() rawParams: unknown, @Body() body: unknown, @Principal() actor: AuthenticatedPrincipal) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return apiSuccess({ user: this.present(await this.changeStatus.execute(actor.id, id, changeUserStatusSchema.parse(body))) });
+    return userResponseEnvelopeSchema.parse(
+      apiSuccess({
+        user: this.present(
+          await this.changeStatus.execute(
+            actor.id,
+            id,
+            changeUserStatusSchema.parse(body),
+          ),
+        ),
+      }),
+    );
   }
 
   @Patch(':id/role')
   async setRole(@Param() rawParams: unknown, @Body() body: unknown, @Principal() actor: AuthenticatedPrincipal) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return apiSuccess({ user: this.present(await this.changeRole.execute(actor.id, id, changeUserRoleSchema.parse(body))) });
+    return userResponseEnvelopeSchema.parse(
+      apiSuccess({
+        user: this.present(
+          await this.changeRole.execute(
+            actor.id,
+            id,
+            changeUserRoleSchema.parse(body),
+          ),
+        ),
+      }),
+    );
   }
 
   @Post(':id/revoke-sessions')
   revoke(@Param() rawParams: unknown, @Principal() actor: AuthenticatedPrincipal) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return this.revokeSessions.execute(actor.id, id).then(() => apiSuccess(null));
+    return this.revokeSessions
+      .execute(actor.id, id)
+      .then(() => userMutationResponseSchema.parse(apiSuccess(null)));
   }
 }

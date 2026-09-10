@@ -35,14 +35,30 @@ describe('audit log API response contract', () => {
 
 describe('audit log export transport', () => {
   it('keeps successful export responses serializable for RTK Query', async () => {
-    const response = new Response('{"auditLog":"export"}', {
+    const payload = {
+      data: {
+        id: 'audit-1',
+        organizationId: null,
+        actorId: 'user-1',
+        targetUserId: null,
+        action: 'PROFILE_UPDATED',
+        resourceType: 'PROFILE',
+        resourceId: 'user-1',
+        beforeJson: null,
+        afterJson: { displayName: 'Updated' },
+        reason: null,
+        requestId: 'audit-request',
+        createdAt: '2026-09-10T00:00:00.000Z'
+      }
+    }
+    const response = new Response(JSON.stringify(payload), {
       status: 200,
       headers: { 'content-type': 'application/json' }
     })
 
     const result = await parseAuditLogExportResponse(response)
 
-    expect(result).toBe('{"auditLog":"export"}')
+    expect(result).toBe(JSON.stringify(payload, null, 2))
   })
 
   it('preserves the standard JSON error envelope for failed exports', async () => {

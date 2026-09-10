@@ -18,7 +18,12 @@ describe('UsersController HTTP boundaries', () => {
 
   it('normalizes public list filters before calling the use-case', async () => {
     const listUsers = {
-      execute: vi.fn().mockResolvedValue({ data: [], total: 0 }),
+      execute: vi.fn().mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 2,
+        limit: 50,
+      }),
     };
     const controller = new UsersController(
       listUsers as never,
