@@ -17,6 +17,19 @@ describe('parseGithubRepositoryUrl', () => {
     expect(parseGithubRepositoryUrl('https://github.com/acme/demo.git/')).toEqual(canonical);
   });
 
+  it('canonicalizes owner and repository casing to one identity', () => {
+    const canonical = parseGithubRepositoryUrl('https://github.com/acme/demo');
+    expect(canonical).toEqual({
+      owner: 'acme',
+      name: 'demo',
+      url: 'https://github.com/acme/demo',
+    });
+    expect(parseGithubRepositoryUrl('https://github.com/Acme/Demo')).toEqual(canonical);
+    expect(parseGithubRepositoryUrl('https://github.com/ACME/Demo.git')).toEqual(canonical);
+    expect(parseGithubRepositoryUrl('https://github.com/ACME/DEMO/')).toEqual(canonical);
+    expect(parseGithubRepositoryUrl('https://GitHub.com/AcMe/DeMo')).toEqual(canonical);
+  });
+
   it('rejects credential-bearing URLs', () => {
     expect(parseGithubRepositoryUrl('https://user:secret@github.com/acme/demo')).toBeNull();
     expect(parseGithubRepositoryUrl('https://user@github.com/acme/demo')).toBeNull();

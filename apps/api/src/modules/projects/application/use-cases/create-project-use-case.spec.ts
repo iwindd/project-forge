@@ -131,4 +131,24 @@ describe('CreateProjectUseCase', () => {
       expect(audit.record).not.toHaveBeenCalled();
     },
   );
+
+  it('rejects a differently-cased repository URL of an existing project as a duplicate', async () => {
+    const { useCase, projects, audit } = setup({
+      id: 'existing-project-id',
+      status: ProjectStatus.ACTIVE,
+    });
+
+    await expect(
+      useCase.execute('actor-id', 'organization-id', {
+        ...input,
+        githubUrl: 'https://github.com/ACME/Demo.git',
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(projects.findByOrganizationAndGithubUrl).toHaveBeenCalledWith(
+      'organization-id',
+      'https://github.com/acme/demo',
+    );
+    expect(projects.save).not.toHaveBeenCalled();
+    expect(audit.record).not.toHaveBeenCalled();
+  });
 });
