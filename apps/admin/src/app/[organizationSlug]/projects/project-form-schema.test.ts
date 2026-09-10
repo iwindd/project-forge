@@ -148,6 +148,38 @@ describe('project form submission', () => {
     }
   )
 
+  it.each([
+    'ghp_16C7e42F292c6912E7710c838347Ae178B4a',
+    'github_pat_11ABCDEFG0abcdefghij_klmnopqrstuvwxyz0123456789ABCDE',
+    'sk_live_abcdef1234567890abcdef',
+    'AKIAIOSFODNN7EXAMPLE',
+    'npm_AbCdEf1234567890AbCdEf1234567890',
+    'glpat-AbCdEf1234567890'
+  ])('drops the token-shaped credential %s', token => {
+    expect(parseEnvironmentMetadata(token)).toEqual({})
+  })
+
+  // Regression guard for the false positives of the first version: a credential prefix followed by
+  // a merely long, word-like string is a legitimate variable name, not a token.
+  it.each([
+    'npm_package_lock_version',
+    'sk_live_cache_ttl_seconds',
+    'DATABASE_URL',
+    'NODE_ENV',
+    'npm_cache_dir',
+    'AWS_REGION',
+    'GITHUB_TOKEN',
+    'API_KEY'
+  ])('keeps the legitimate variable name %s', name => {
+    expect(parseEnvironmentMetadata(name)).toEqual({ [name]: 'configured' })
+  })
+
+  it('keeps a prefixed name whose suffix is short and has no uppercase letter', () => {
+    expect(parseEnvironmentMetadata('npm_lock_1')).toEqual({
+      npm_lock_1: 'configured'
+    })
+  })
+
   it('keeps ordinary variable names while dropping credential-shaped lines', () => {
     expect(
       parseEnvironmentMetadata(

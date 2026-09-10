@@ -7,16 +7,56 @@ const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 /**
  * A bare credential (GitHub token, API key, cloud access key id) is identifier-shaped, so the
  * variable-name pattern alone would accept it and store the secret itself as the key name. Mirror
- * the Admin rule and reject any known credential prefix followed by 16 or more token characters,
- * so a token-shaped key cannot be stored even if a client sends one.
+ * the Admin rule: a known credential prefix is only rejected when what follows it is token-shaped,
+ * so a legitimate name such as `npm_package_lock_version` is not silently dropped.
  */
-const CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN =
-  /^(ghp_|gho_|ghu_|ghs_|ghr_|github_pat_|glpat-|sk_live_|sk_test_|sk-|xoxb-|xoxp-|npm_|AKIA|ASIA)[A-Za-z0-9_-]{16,}$/;
+const CREDENTIAL_PREFIXES = [
+  'ghp_',
+  'gho_',
+  'ghu_',
+  'ghs_',
+  'ghr_',
+  'github_pat_',
+  'glpat-',
+  'sk_live_',
+  'sk_test_',
+  'sk-',
+  'xoxb-',
+  'xoxp-',
+  'npm_',
+  'AKIA',
+  'ASIA',
+];
+
+const DIGIT_PATTERN = /[0-9]/;
+const UPPERCASE_LETTER_PATTERN = /[A-Z]/;
+const TOKEN_SHAPED_SUFFIX_MIN_LENGTH = 16;
+
+/**
+ * A credential prefix alone does not make a secret: length by itself would silently discard
+ * legitimate names such as `npm_package_lock_version`. The suffix is treated as token material
+ * only when it contains a digit AND either an uppercase letter or at least 16 characters.
+ */
+function isTokenShapedSuffix(suffix: string) {
+  return (
+    DIGIT_PATTERN.test(suffix) &&
+    (UPPERCASE_LETTER_PATTERN.test(suffix) ||
+      suffix.length >= TOKEN_SHAPED_SUFFIX_MIN_LENGTH)
+  );
+}
+
+function isCredentialShapedEnvironmentName(name: string) {
+  const prefix = CREDENTIAL_PREFIXES.find((candidate) =>
+    name.startsWith(candidate),
+  );
+
+  return prefix !== undefined && isTokenShapedSuffix(name.slice(prefix.length));
+}
 
 const environmentVariableNameSchema = z
   .string()
   .regex(ENVIRONMENT_VARIABLE_NAME_PATTERN)
-  .refine((name) => !CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN.test(name));
+  .refine((name) => !isCredentialShapedEnvironmentName(name));
 
 /**
  * Validated field shapes shared by create and update, declared once and WITHOUT defaults.
