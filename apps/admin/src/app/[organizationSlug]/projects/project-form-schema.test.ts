@@ -3,7 +3,7 @@ import {
   EMPTY_PROJECT_FORM_VALUES,
   createProjectFormSchema,
   isGithubHttpsRepositoryUrl,
-  parseEnvironmentVariables,
+  parseEnvironmentMetadata,
   toProjectRequestBody,
   type ProjectFormMessages
 } from './project-form-schema'
@@ -26,7 +26,7 @@ const validValues = {
   sourceBranch: 'main',
   targetBranch: 'main',
   nodeVersion: '22',
-  environmentVariables: 'DATABASE_URL'
+  environmentMetadata: 'DATABASE_URL'
 }
 
 describe('github repository URL validation', () => {
@@ -99,12 +99,12 @@ describe('project form schema', () => {
 
 describe('project form submission', () => {
   it('sends environment variable names with the masked value', () => {
-    expect(parseEnvironmentVariables('DATABASE_URL\nAPI_KEY\n\nDATABASE_URL')).toEqual(
-      {
-        DATABASE_URL: 'configured',
-        API_KEY: 'configured'
-      }
-    )
+    expect(
+      parseEnvironmentMetadata('DATABASE_URL\nAPI_KEY\n\nDATABASE_URL')
+    ).toEqual({
+      DATABASE_URL: 'configured',
+      API_KEY: 'configured'
+    })
   })
 
   it('trims every request body field', () => {
@@ -113,7 +113,7 @@ describe('project form submission', () => {
         ...validValues,
         name: '  Project A  ',
         githubUrl: ' https://github.com/owner/repository ',
-        environmentVariables: ''
+        environmentMetadata: ''
       })
     ).toEqual({
       name: 'Project A',
@@ -126,7 +126,7 @@ describe('project form submission', () => {
   })
 
   it('keeps empty default values valid for the create form', () => {
-    expect(EMPTY_PROJECT_FORM_VALUES.environmentVariables).toBe('')
+    expect(EMPTY_PROJECT_FORM_VALUES.environmentMetadata).toBe('')
     expect(EMPTY_PROJECT_FORM_VALUES.sourceBranch).toBe('main')
     expect(EMPTY_PROJECT_FORM_VALUES.targetBranch).toBe('main')
   })

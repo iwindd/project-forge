@@ -1,5 +1,6 @@
 'use client'
 
+import { getBrowserApiErrorMessage } from '@/lib/api/api'
 import { PageHeader } from '@/components/page-header'
 import {
   useArchiveProjectMutation,
@@ -55,11 +56,25 @@ import classes from './projects-page.module.css'
 export default function ProjectsPage() {
   const t = useTranslations('Projects')
   const format = useFormatter()
-  const { activeOrganization } = useOrganizationContext()
+  const { activeOrganization, pending: organizationPending } =
+    useOrganizationContext()
   const organizationId = activeOrganization?.id ?? ''
+  const organizationLoading = organizationPending && !activeOrganization
   const canManage = canManageProjects(activeOrganization?.role)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [archiveTarget, setArchiveTarget] = useState<Project | null>(null)
+
+  const formatDate = (value: string) => {
+    const date = new Date(value)
+
+    return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'date')
+  }
+
+  const describeFailure = (error: unknown, fallback: string) => {
+    const detail = getBrowserApiErrorMessage(error, '')
+
+    return detail ? `${fallback} (${detail})` : fallback
+  }
 
   const projectFormSchema = useMemo(
     () =>
@@ -114,70 +129,75 @@ export default function ProjectsPage() {
     projectForm.resetDirty()
   }
 
+  const runProjectAction = async (
+    action: () => Promise<unknown>,
+    feedback: { success: string; failure: string }
+  ) => {
+    try {
+      await action()
+      notifications.show({ message: feedback.success, color: 'teal' })
+      return true
+    } catch (error) {
+      notifications.show({
+        message: describeFailure(error, feedback.failure),
+        color: 'red'
+      })
+      return false
+    }
+  }
+
   const submitProject = async (values: ProjectFormValues) => {
     if (!organizationId || !canManage) return
 
     const body = toProjectRequestBody(values)
     const current = editingProject
-
-    try {
-      if (current) {
-        await updateProject({
-          organizationId,
-          projectId: current.id,
-          ...body
-        }).unwrap()
-      } else {
-        await createProject({ organizationId, ...body }).unwrap()
+    const succeeded = await runProjectAction(
+      () =>
+        current
+          ? updateProject({
+              organizationId,
+              projectId: current.id,
+              ...body
+            }).unwrap()
+          : createProject({ organizationId, ...body }).unwrap(),
+      {
+        success: current ? t('updateSuccess') : t('createSuccess'),
+        failure: current ? t('updateFailed') : t('createFailed')
       }
+    )
 
-      notifications.show({
-        message: current ? t('updateSuccess') : t('createSuccess'),
-        color: 'teal'
-      })
-      resetProjectForm()
-    } catch {
-      notifications.show({
-        message: current ? t('updateFailed') : t('createFailed'),
-        color: 'red'
-      })
-    }
+    if (succeeded) resetProjectForm()
   }
 
   const confirmArchive = async () => {
     if (!organizationId || !archiveTarget) return
 
     const target = archiveTarget
+    const succeeded = await runProjectAction(
+      () => archiveProject({ organizationId, projectId: target.id }).unwrap(),
+      { success: t('archiveSuccess'), failure: t('archiveFailed') }
+    )
 
-    try {
-      await archiveProject({
-        organizationId,
-        projectId: target.id
-      }).unwrap()
-      notifications.show({ message: t('archiveSuccess'), color: 'teal' })
-      setArchiveTarget(null)
-      if (editingProject?.id === target.id) resetProjectForm()
-    } catch {
-      notifications.show({ message: t('archiveFailed'), color: 'red' })
-    }
+    if (!succeeded) return
+
+    setArchiveTarget(null)
+    if (editingProject?.id === target.id) resetProjectForm()
   }
 
   const restore = async (project: Project) => {
     if (!organizationId) return
 
-    try {
-      await restoreProject({ organizationId, projectId: project.id }).unwrap()
-      notifications.show({ message: t('restoreSuccess'), color: 'teal' })
-    } catch {
-      notifications.show({ message: t('restoreFailed'), color: 'red' })
-    }
+    await runProjectAction(
+      () => restoreProject({ organizationId, projectId: project.id }).unwrap(),
+      { success: t('restoreSuccess'), failure: t('restoreFailed') }
+    )
   }
 
   return (
     <Box className={classes.page}>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
-      {canManage ? (
+      {organizationLoading ? null : canManage ? (
         <Paper
           className={`${classes.card} ${classes.formCard}`}
           withBorder
@@ -231,12 +251,16 @@ export default function ProjectsPage() {
                 placeholder={t('environmentMetadataPlaceholder')}
                 autosize
                 minRows={2}
-                {...projectForm.getInputProps('environmentVariables')}
+                {...projectForm.getInputProps('environmentMetadata')}
               />
 
               <Group justify='flex-end'>
                 {editingProject ? (
-                  <Button type='button' variant='default' onClick={resetProjectForm}>
+                  <Button
+                    type='button'
+                    variant='default'
+                    onClick={resetProjectForm}
+                  >
                     {t('cancelEdit')}
                   </Button>
                 ) : null}
@@ -257,7 +281,7 @@ export default function ProjectsPage() {
         </Alert>
       )}
 
-      {projectsError ? (
+      {projectsError && !organizationLoading ? (
         <Alert color='red' icon={<IconAlertCircle size={18} />}>
           <Group justify='space-between' gap='sm' wrap='nowrap'>
             <Text size='sm'>{t('loadFailed')}</Text>
@@ -273,114 +297,112 @@ export default function ProjectsPage() {
             </Button>
           </Group>
         </Alert>
-      ) : null}
-
-      <Paper className={classes.card} withBorder radius='md'>
-        {projectsFetching && !projects.length ? (
-          <Center className={classes.emptyState}>
-            <Loader size='sm' />
-          </Center>
-        ) : projects.length ? (
-          <Box className={classes.tableScroll}>
-            <Table className={classes.table} verticalSpacing='sm'>
-              <thead>
-                <tr>
-                  <th>{t('project')}</th>
-                  <th>{t('branches')}</th>
-                  <th>{t('nodeVersion')}</th>
-                  <th>{t('status')}</th>
-                  <th>{t('updatedAt')}</th>
-                  <th aria-label={t('actions')} />
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map(project => (
-                  <tr key={project.id}>
-                    <td>
-                      <Stack className={classes.projectIdentity} gap={0}>
-                        <Text fw={600}>{project.name}</Text>
-                        <Text className={classes.repository} size='sm'>
-                          {project.githubOwner}/{project.githubRepo}
-                        </Text>
-                      </Stack>
-                    </td>
-                    <td>
-                      <Text size='sm'>
-                        {project.sourceBranch} → {project.targetBranch}
-                      </Text>
-                    </td>
-                    <td>{project.nodeVersion ?? '-'}</td>
-                    <td>
-                      <Badge
-                        color={project.status === 'ACTIVE' ? 'teal' : 'gray'}
-                        variant='light'
-                      >
-                        {project.status === 'ACTIVE'
-                          ? t('active')
-                          : t('archived')}
-                      </Badge>
-                    </td>
-                    <td>
-                      {format.dateTime(new Date(project.updatedAt), 'date')}
-                    </td>
-                    <td>
-                      {canManage ? (
-                        <Menu shadow='md' position='bottom-end'>
-                          <Menu.Target>
-                            <ActionIcon
-                              variant='subtle'
-                              disabled={rowActionPending}
-                              aria-label={`${t('actions')}: ${project.name}`}
-                            >
-                              <IconDots size={18} />
-                            </ActionIcon>
-                          </Menu.Target>
-                          <Menu.Dropdown>
-                            {project.status === 'ACTIVE' ? (
-                              <>
-                                <Menu.Item
-                                  leftSection={<IconPencil size={16} />}
-                                  onClick={() => startEditing(project)}
-                                >
-                                  {t('edit')}
-                                </Menu.Item>
-                                <Menu.Item
-                                  color='red'
-                                  leftSection={<IconArchive size={16} />}
-                                  onClick={() => setArchiveTarget(project)}
-                                >
-                                  {t('archive')}
-                                </Menu.Item>
-                              </>
-                            ) : (
-                              <Menu.Item
-                                leftSection={<IconRestore size={16} />}
-                                onClick={() => void restore(project)}
-                              >
-                                {t('restore')}
-                              </Menu.Item>
-                            )}
-                          </Menu.Dropdown>
-                        </Menu>
-                      ) : null}
-                    </td>
+      ) : (
+        <Paper className={classes.card} withBorder radius='md'>
+          {organizationLoading || (projectsFetching && !projects.length) ? (
+            <Center className={classes.emptyState}>
+              <Loader size='sm' />
+            </Center>
+          ) : projects.length ? (
+            <Box className={classes.tableScroll}>
+              <Table className={classes.table} verticalSpacing='sm'>
+                <thead>
+                  <tr>
+                    <th>{t('project')}</th>
+                    <th>{t('branches')}</th>
+                    <th>{t('nodeVersion')}</th>
+                    <th>{t('status')}</th>
+                    <th>{t('updatedAt')}</th>
+                    <th aria-label={t('actions')} />
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Box>
-        ) : (
-          <Stack
-            className={classes.emptyState}
-            align='center'
-            justify='center'
-            gap='xs'
-          >
-            <IconFolders size={28} stroke={1.5} />
-            <Text c='dimmed'>{t('noProjects')}</Text>
-          </Stack>
-        )}
-      </Paper>
+                </thead>
+                <tbody>
+                  {projects.map(project => (
+                    <tr key={project.id}>
+                      <td>
+                        <Stack className={classes.projectIdentity} gap={0}>
+                          <Text fw={600}>{project.name}</Text>
+                          <Text className={classes.repository} size='sm'>
+                            {project.githubOwner}/{project.githubRepo}
+                          </Text>
+                        </Stack>
+                      </td>
+                      <td>
+                        <Text size='sm'>
+                          {project.sourceBranch} → {project.targetBranch}
+                        </Text>
+                      </td>
+                      <td>{project.nodeVersion ?? '-'}</td>
+                      <td>
+                        <Badge
+                          color={project.status === 'ACTIVE' ? 'teal' : 'gray'}
+                          variant='light'
+                        >
+                          {project.status === 'ACTIVE'
+                            ? t('active')
+                            : t('archived')}
+                        </Badge>
+                      </td>
+                      <td>{formatDate(project.updatedAt)}</td>
+                      <td>
+                        {canManage ? (
+                          <Menu shadow='md' position='bottom-end'>
+                            <Menu.Target>
+                              <ActionIcon
+                                variant='subtle'
+                                disabled={rowActionPending}
+                                aria-label={`${t('actions')}: ${project.name}`}
+                              >
+                                <IconDots size={18} />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              {project.status === 'ACTIVE' ? (
+                                <>
+                                  <Menu.Item
+                                    leftSection={<IconPencil size={16} />}
+                                    onClick={() => startEditing(project)}
+                                  >
+                                    {t('edit')}
+                                  </Menu.Item>
+                                  <Menu.Item
+                                    color='red'
+                                    leftSection={<IconArchive size={16} />}
+                                    onClick={() => setArchiveTarget(project)}
+                                  >
+                                    {t('archive')}
+                                  </Menu.Item>
+                                </>
+                              ) : (
+                                <Menu.Item
+                                  leftSection={<IconRestore size={16} />}
+                                  onClick={() => void restore(project)}
+                                >
+                                  {t('restore')}
+                                </Menu.Item>
+                              )}
+                            </Menu.Dropdown>
+                          </Menu>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Box>
+          ) : (
+            <Stack
+              className={classes.emptyState}
+              align='center'
+              justify='center'
+              gap='xs'
+            >
+              <IconFolders size={28} stroke={1.5} />
+              <Text c='dimmed'>{t('noProjects')}</Text>
+            </Stack>
+          )}
+        </Paper>
+      )}
 
       <Modal
         opened={archiveTarget !== null}
