@@ -8,13 +8,13 @@ import { ProjectOrmEntity } from './project.orm-entity.js';
 export class MikroOrmProjectRepository implements ProjectRepository {
   constructor(private readonly em: EntityManager) {}
 
-  async findByOwnerId(ownerId: string): Promise<ProjectRecord[]> {
-    const projects = await this.em.find(ProjectOrmEntity, { ownerId }, { orderBy: { updatedAt: 'desc' } });
+  async findByOrganizationId(organizationId: string): Promise<ProjectRecord[]> {
+    const projects = await this.em.find(ProjectOrmEntity, { organizationId }, { orderBy: { updatedAt: 'desc' } });
     return projects.map(toRecord);
   }
 
-  async findByOwnerAndId(ownerId: string, id: string): Promise<ProjectRecord | null> {
-    const project = await this.em.findOne(ProjectOrmEntity, { ownerId, id });
+  async findByOrganizationAndId(organizationId: string, id: string): Promise<ProjectRecord | null> {
+    const project = await this.em.findOne(ProjectOrmEntity, { organizationId, id });
     return project ? toRecord(project) : null;
   }
 
@@ -24,7 +24,7 @@ export class MikroOrmProjectRepository implements ProjectRepository {
       this.em.persist(
         this.em.create(ProjectOrmEntity, {
           id: project.id,
-          ownerId: project.ownerId,
+          organizationId: project.organizationId,
           name: project.name,
           githubUrl: project.githubUrl,
           githubOwner: project.githubOwner,
@@ -41,7 +41,7 @@ export class MikroOrmProjectRepository implements ProjectRepository {
       );
       return;
     }
-    entity.ownerId = project.ownerId;
+    entity.organizationId = project.organizationId;
     entity.name = project.name;
     entity.githubUrl = project.githubUrl;
     entity.githubOwner = project.githubOwner;
@@ -61,7 +61,7 @@ export class MikroOrmProjectRepository implements ProjectRepository {
 function toRecord(project: ProjectOrmEntity): ProjectRecord {
   return {
     id: project.id,
-    ownerId: project.ownerId,
+    organizationId: project.organizationId,
     name: project.name,
     githubUrl: project.githubUrl,
     githubOwner: project.githubOwner,

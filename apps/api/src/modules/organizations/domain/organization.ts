@@ -19,6 +19,7 @@ export enum OrganizationMemberRole {
 
 export const ORGANIZATION_PERMISSIONS = {
   MANAGE: 'organization.manage',
+  MANAGE_PROJECT: 'project.manage',
 } as const;
 
 export type OrganizationPermission =

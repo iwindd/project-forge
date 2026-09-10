@@ -99,7 +99,7 @@ export const nullResponseSchema = z.null()
 
 export const organizationRolesMetaSchema = z.object({
   availablePermissions: z.array(
-    z.object({ key: z.literal('organization.manage') })
+    z.object({ key: z.enum(['organization.manage', 'project.manage']) })
   )
 })
 

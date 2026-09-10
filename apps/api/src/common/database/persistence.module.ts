@@ -9,11 +9,8 @@ import { MikroOrmSessionRepository } from '../../modules/auth/infrastructure/per
 import { SessionOrmEntity } from '../../modules/auth/infrastructure/persistence/session.orm-entity.js';
 import { OAUTH_ACCOUNT_REPOSITORY } from '../../modules/auth/application/ports/oauth-account.repository.js';
 import { SESSION_REPOSITORY } from '../../modules/auth/application/ports/session.repository.js';
-import { MikroOrmProjectMemberRepository } from '../../modules/projects/infrastructure/persistence/mikro-orm-project-member.repository.js';
-import { ProjectMemberOrmEntity } from '../../modules/projects/infrastructure/persistence/project-member.orm-entity.js';
 import { MikroOrmProjectRepository } from '../../modules/projects/infrastructure/persistence/mikro-orm-project.repository.js';
 import { ProjectOrmEntity } from '../../modules/projects/infrastructure/persistence/project.orm-entity.js';
-import { PROJECT_MEMBER_REPOSITORY } from '../../modules/projects/application/ports/project-member.repository.js';
 import { PROJECT_REPOSITORY } from '../../modules/projects/application/ports/project.repository.js';
 import { MikroOrmUserRepository } from '../../modules/users/infrastructure/persistence/mikro-orm-user.repository.js';
 import { UserOrmEntity } from '../../modules/users/infrastructure/persistence/user.orm-entity.js';
@@ -37,7 +34,6 @@ import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repo
       SessionOrmEntity,
       AccessRequestOrmEntity,
       ProjectOrmEntity,
-      ProjectMemberOrmEntity,
     ]),
   ],
   providers: [
@@ -46,7 +42,6 @@ import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repo
     { provide: SESSION_REPOSITORY, useClass: MikroOrmSessionRepository },
     { provide: ACCESS_REQUEST_REPOSITORY, useClass: MikroOrmAccessRequestRepository },
     { provide: PROJECT_REPOSITORY, useClass: MikroOrmProjectRepository },
-    { provide: PROJECT_MEMBER_REPOSITORY, useClass: MikroOrmProjectMemberRepository },
   ],
   exports: [
     USER_REPOSITORY,
@@ -54,7 +49,6 @@ import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repo
     SESSION_REPOSITORY,
     ACCESS_REQUEST_REPOSITORY,
     PROJECT_REPOSITORY,
-    PROJECT_MEMBER_REPOSITORY,
   ],
 })
 export class PersistenceModule {}

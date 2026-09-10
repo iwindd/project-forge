@@ -12,7 +12,11 @@ export const createProjectSchema = z.object({
 
 export const updateProjectSchema = createProjectSchema.partial();
 
-export const projectIdParamSchema = z.object({
+export const organizationIdParamSchema = z.object({
+  organizationId: databaseUuidSchema,
+});
+
+export const organizationProjectIdParamSchema = organizationIdParamSchema.extend({
   id: databaseUuidSchema,
 });
 

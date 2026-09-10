@@ -103,7 +103,10 @@ export class OrganizationsController {
     );
     return organizationRolesResponseSchema.parse(
       apiSuccess(roles, {
-        availablePermissions: [{ key: ORGANIZATION_PERMISSIONS.MANAGE }],
+        availablePermissions: [
+          { key: ORGANIZATION_PERMISSIONS.MANAGE },
+          { key: ORGANIZATION_PERMISSIONS.MANAGE_PROJECT },
+        ],
       }),
     );
   }

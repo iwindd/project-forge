@@ -15,19 +15,19 @@ export class Migration20260910120000_OrganizationMembershipInvariants extends Mi
     )
 
     this.addSql(
-      `update "organization_roles" set "name" = 'เจ้าของ', "legacy_role" = 'OWNER', "is_owner" = true, "permissions" = '["organization.manage"]'::jsonb, "updated_at" = now() where "is_owner" = true or "legacy_role" = 'OWNER';`,
+      `update "organization_roles" set "name" = 'เจ้าของ', "legacy_role" = 'OWNER', "is_owner" = true, "permissions" = '["organization.manage","project.manage"]'::jsonb, "updated_at" = now() where "is_owner" = true or "legacy_role" = 'OWNER';`,
     )
     this.addSql(
-      `update "organization_roles" set "name" = 'แอดมิน', "legacy_role" = 'ADMIN', "is_owner" = false, "permissions" = '["organization.manage"]'::jsonb, "updated_at" = now() where "legacy_role" = 'ADMIN';`,
+      `update "organization_roles" set "name" = 'แอดมิน', "legacy_role" = 'ADMIN', "is_owner" = false, "permissions" = '["organization.manage","project.manage"]'::jsonb, "updated_at" = now() where "legacy_role" = 'ADMIN';`,
     )
     this.addSql(
       `update "organization_roles" set "name" = 'สมาชิก', "legacy_role" = 'MEMBER', "is_owner" = false, "permissions" = '[]'::jsonb, "updated_at" = now() where "legacy_role" = 'MEMBER';`,
     )
     this.addSql(
-      `insert into "organization_roles" ("id", "organization_id", "name", "permissions", "is_owner", "legacy_role", "created_at", "updated_at") select md5('organization-role:owner:' || "o"."id")::uuid, "o"."id", 'เจ้าของ', '["organization.manage"]'::jsonb, true, 'OWNER', now(), now() from "organizations" "o" where not exists (select 1 from "organization_roles" "r" where "r"."organization_id" = "o"."id" and ("r"."is_owner" = true or "r"."legacy_role" = 'OWNER'));`,
+      `insert into "organization_roles" ("id", "organization_id", "name", "permissions", "is_owner", "legacy_role", "created_at", "updated_at") select md5('organization-role:owner:' || "o"."id")::uuid, "o"."id", 'เจ้าของ', '["organization.manage","project.manage"]'::jsonb, true, 'OWNER', now(), now() from "organizations" "o" where not exists (select 1 from "organization_roles" "r" where "r"."organization_id" = "o"."id" and ("r"."is_owner" = true or "r"."legacy_role" = 'OWNER'));`,
     )
     this.addSql(
-      `insert into "organization_roles" ("id", "organization_id", "name", "permissions", "is_owner", "legacy_role", "created_at", "updated_at") select md5('organization-role:admin:' || "o"."id")::uuid, "o"."id", 'แอดมิน', '["organization.manage"]'::jsonb, false, 'ADMIN', now(), now() from "organizations" "o" where "o"."type" = 'SHARED' and not exists (select 1 from "organization_roles" "r" where "r"."organization_id" = "o"."id" and "r"."legacy_role" = 'ADMIN');`,
+      `insert into "organization_roles" ("id", "organization_id", "name", "permissions", "is_owner", "legacy_role", "created_at", "updated_at") select md5('organization-role:admin:' || "o"."id")::uuid, "o"."id", 'แอดมิน', '["organization.manage","project.manage"]'::jsonb, false, 'ADMIN', now(), now() from "organizations" "o" where "o"."type" = 'SHARED' and not exists (select 1 from "organization_roles" "r" where "r"."organization_id" = "o"."id" and "r"."legacy_role" = 'ADMIN');`,
     )
     this.addSql(
       `insert into "organization_roles" ("id", "organization_id", "name", "permissions", "is_owner", "legacy_role", "created_at", "updated_at") select md5('organization-role:member:' || "o"."id")::uuid, "o"."id", 'สมาชิก', '[]'::jsonb, false, 'MEMBER', now(), now() from "organizations" "o" where "o"."type" = 'SHARED' and not exists (select 1 from "organization_roles" "r" where "r"."organization_id" = "o"."id" and "r"."legacy_role" = 'MEMBER');`,

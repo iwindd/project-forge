@@ -65,13 +65,19 @@ if (!organization) {
 const builtInRoles = [
   {
     name: 'เจ้าของ',
-    permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
+    permissions: [
+      ORGANIZATION_PERMISSIONS.MANAGE,
+      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+    ],
     isOwner: true,
     legacyRole: OrganizationMemberRole.OWNER
   },
   {
     name: 'แอดมิน',
-    permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
+    permissions: [
+      ORGANIZATION_PERMISSIONS.MANAGE,
+      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+    ],
     isOwner: false,
     legacyRole: OrganizationMemberRole.ADMIN
   },

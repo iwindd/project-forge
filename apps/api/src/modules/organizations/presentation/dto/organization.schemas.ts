@@ -21,8 +21,13 @@ const organizationRoleNameSchema = z
   .max(80, 'ชื่อบทบาทต้องไม่เกิน 80 ตัวอักษร');
 
 const organizationRolePermissionsSchema = z
-  .array(z.enum([ORGANIZATION_PERMISSIONS.MANAGE]))
-  .max(1, 'ไม่สามารถเลือกสิทธิ์ซ้ำได้');
+  .array(
+    z.enum([
+      ORGANIZATION_PERMISSIONS.MANAGE,
+      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+    ]),
+  )
+  .max(2, 'ไม่สามารถเลือกสิทธิ์ซ้ำได้');
 
 export const updateMemberRoleSchema = z
   .object({

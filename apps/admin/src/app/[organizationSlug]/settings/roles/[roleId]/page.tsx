@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { OrganizationRoleForm } from "../role-form";
 import {
   ORGANIZATION_MANAGE_PERMISSION,
+  ORGANIZATION_MANAGE_PROJECT_PERMISSION,
   type OrganizationRoleFormValues,
 } from "../role-form-schema";
 import classes from "../roles-page.module.css";
@@ -45,9 +46,14 @@ export default function EditOrganizationRolePage() {
   const initialValues: OrganizationRoleFormValues = role
     ? {
         name: role.name,
-        permissions: role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)
-          ? [ORGANIZATION_MANAGE_PERMISSION]
-          : [],
+        permissions: [
+          ...(role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)
+            ? [ORGANIZATION_MANAGE_PERMISSION]
+            : []),
+          ...(role.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION)
+            ? [ORGANIZATION_MANAGE_PROJECT_PERMISSION]
+            : [])
+        ],
       }
     : { name: "", permissions: [] };
 

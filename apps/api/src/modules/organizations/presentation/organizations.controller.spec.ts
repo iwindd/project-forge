@@ -116,7 +116,10 @@ describe('OrganizationsController', () => {
     ).resolves.toEqual({
       data: roles,
       meta: {
-        availablePermissions: [{ key: 'organization.manage' }],
+        availablePermissions: [
+          { key: 'organization.manage' },
+          { key: 'project.manage' },
+        ],
       },
     });
   });

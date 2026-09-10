@@ -243,6 +243,21 @@ describe('OrganizationService', () => {
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
+  it('requires the project permission for non-owner project mutations', async () => {
+    const org = organization();
+    const records = [
+      [OrganizationOrmEntity, org],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'member-id', role: OrganizationMemberRole.MEMBER, roleId: 'member-role-id' })],
+    ] as Array<[EntityConstructor<unknown>, unknown]>;
+    const em = new FakeEntityManager(records);
+    const service = createService(em);
+
+    await expect(
+      service.requireProjectManager('member-id', 'organization-id'),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
   it('defaults invitations to Member and rotates the pending invitation for the same email', async () => {
     const org = organization();
     const existingInvitation = Object.assign(new OrganizationInvitationOrmEntity(), {

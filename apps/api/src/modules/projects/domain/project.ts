@@ -5,15 +5,9 @@ export enum ProjectStatus {
   ARCHIVED = 'ARCHIVED',
 }
 
-export enum ProjectMemberRole {
-  OWNER = 'OWNER',
-  CONTRIBUTOR = 'CONTRIBUTOR',
-  VIEWER = 'VIEWER',
-}
-
 export type ProjectRecord = {
   id: string;
-  ownerId: string;
+  organizationId: string;
   name: string;
   githubUrl: string;
   githubOwner: string;
@@ -28,17 +22,8 @@ export type ProjectRecord = {
   archivedAt: Date | null;
 };
 
-export type ProjectMemberRecord = {
-  id: string;
-  projectId: string;
-  userId: string;
-  role: ProjectMemberRole;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 export function createProject(input: {
-  ownerId: string;
+  organizationId: string;
   name: string;
   githubUrl: string;
   githubOwner: string;
@@ -56,18 +41,6 @@ export function createProject(input: {
     createdAt: now,
     updatedAt: now,
     archivedAt: null,
-  };
-}
-
-export function createOwnerMember(projectId: string, userId: string): ProjectMemberRecord {
-  const now = new Date();
-  return {
-    id: randomUUID(),
-    projectId,
-    userId,
-    role: ProjectMemberRole.OWNER,
-    createdAt: now,
-    updatedAt: now,
   };
 }
 

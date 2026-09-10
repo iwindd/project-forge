@@ -4,6 +4,7 @@ import type { AuditLogPort } from '../../../../common/audit/audit.port.js';
 import { UNIT_OF_WORK } from '../../../../common/database/unit-of-work.port.js';
 import type { UnitOfWork } from '../../../../common/database/unit-of-work.port.js';
 import { InvalidInputError, NotFoundError } from '../../../../common/errors/application-error.js';
+import { OrganizationService } from '../../../organizations/application/organization.service.js';
 import { maskEnvironmentMetadata, parseGithubRepositoryUrl } from '../../domain/project.js';
 import type { UpdateProjectDto } from '../../presentation/dto/project.schemas.js';
 import { PROJECT_REPOSITORY } from '../ports/project.repository.js';
@@ -13,13 +14,15 @@ import type { ProjectRepository } from '../ports/project.repository.js';
 export class UpdateProjectUseCase {
   constructor(
     @Inject(PROJECT_REPOSITORY) private readonly projects: ProjectRepository,
+    private readonly organizations: OrganizationService,
     @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
-  execute(ownerId: string, id: string, input: UpdateProjectDto) {
+  execute(actorId: string, organizationId: string, id: string, input: UpdateProjectDto) {
     return this.unitOfWork.run(async () => {
-      const project = await this.projects.findByOwnerAndId(ownerId, id);
+      await this.organizations.requireProjectManager(actorId, organizationId);
+      const project = await this.projects.findByOrganizationAndId(organizationId, id);
       if (!project) throw new NotFoundError('Project was not found');
       const before = {
         name: project.name,
@@ -45,8 +48,8 @@ export class UpdateProjectUseCase {
       project.updatedAt = new Date();
       await this.projects.save(project);
       await this.audit.record({
-        actorId: ownerId,
-        targetUserId: ownerId,
+        actorId,
+        organizationId,
         action: 'PROJECT_UPDATED',
         resourceType: 'PROJECT',
         resourceId: project.id,
