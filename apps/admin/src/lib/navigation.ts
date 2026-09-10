@@ -1,4 +1,5 @@
 import {
+  IconFolders,
   IconHistory,
   IconLayoutDashboard,
   IconUser,
@@ -81,6 +82,17 @@ export const adminNavigation: AdminNavigationGroup[] = [
       routeItem('overview', {
         icon: IconLayoutDashboard,
         labelKey: 'overview'
+      })
+    ]
+  },
+  {
+    id: 'projects',
+    label: 'โปรเจกต์',
+    labelKey: 'projects',
+    items: [
+      routeItem('projects', {
+        icon: IconFolders,
+        labelKey: 'projects'
       })
     ]
   },
