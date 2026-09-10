@@ -32,7 +32,7 @@ const organizationRolePermissionsSchema = z
 
 export const updateMemberRoleSchema = z
   .object({
-    roleId: z.string().uuid().optional(),
+    roleId: databaseUuidSchema.optional(),
     role: legacyMemberRoleSchema.optional(),
   })
   .refine((value) => Boolean(value.roleId || value.role), {
@@ -52,11 +52,11 @@ export const updateOrganizationRoleSchema = z.object({
 export const updateMemberStatusSchema = z.object({ active: z.boolean() });
 
 export const createInvitationSchema = z.object({
-  email: z.string().email().optional().nullable(),
-  roleId: z.string().uuid().optional(),
-  role: z.enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER]).optional(),
-}).refine((value) => Boolean(value.roleId || value.role), {
-  message: 'A roleId or legacy role is required',
+  email: z.string().trim().email().optional().nullable(),
+  roleId: databaseUuidSchema.optional(),
+  role: z
+    .enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER])
+    .default(OrganizationMemberRole.MEMBER),
 });
 
 export const organizationIdParamSchema = z.object({

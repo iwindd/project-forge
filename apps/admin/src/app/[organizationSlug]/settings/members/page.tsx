@@ -9,6 +9,7 @@ import {
   useRemoveMemberMutation,
   useUpdateMemberRoleMutation,
   useUpdateMemberStatusMutation,
+  type OrganizationInvitation,
   type OrganizationMember,
   type OrganizationRoleSummary
 } from '@/lib/features/organization/organization-members-api'
@@ -150,10 +151,15 @@ export default function OrganizationMembersPage() {
     () =>
       roles.filter(
         (candidate): candidate is OrganizationRoleSummary & { id: string } =>
-          Boolean(candidate.id) && !candidate.isOwner
+          Boolean(candidate.id) &&
+          (candidate.legacyRole === 'ADMIN' || candidate.legacyRole === 'MEMBER')
       ),
     [roles]
   )
+  const defaultInviteRoleId =
+    assignableRoles.find(role => role.legacyRole === 'MEMBER')?.id ??
+    assignableRoles[0]?.id ??
+    ''
   const invitations = invitationsResult ?? []
   const allVisibleSelected =
     members.length > 0 &&
@@ -173,7 +179,7 @@ export default function OrganizationMembersPage() {
     nextInviteRowId.current += 1
     setInviteRows(rows => [
       ...rows,
-      { id, email: '', roleId: assignableRoles[0]?.id ?? '' }
+      { id, email: '', roleId: defaultInviteRoleId }
     ])
   }
 
@@ -192,7 +198,7 @@ export default function OrganizationMembersPage() {
           createInvitation({
             organizationId,
             email: row.email.trim() || null,
-            roleId: row.roleId || assignableRoles[0].id
+            roleId: row.roleId || defaultInviteRoleId
           }).unwrap()
         )
       )
@@ -207,6 +213,28 @@ export default function OrganizationMembersPage() {
       notifications.show({ message: t('inviteSuccess'), color: 'teal' })
     } catch {
       notifications.show({ message: t('inviteFailed'), color: 'red' })
+    }
+  }
+
+  const resendInvitation = async (invitation: OrganizationInvitation) => {
+    if (!organizationId || !invitation.email || !invitation.role.id) return
+
+    try {
+      const result = await createInvitation({
+        organizationId,
+        email: invitation.email,
+        roleId: invitation.role.id
+      }).unwrap()
+      setInviteLinks(links => [
+        ...links,
+        {
+          email: invitation.email,
+          url: `${window.location.origin}/admin/invitations/${result.token}`
+        }
+      ])
+      notifications.show({ message: t('resendSuccess'), color: 'teal' })
+    } catch {
+      notifications.show({ message: t('resendFailed'), color: 'red' })
     }
   }
 
@@ -312,7 +340,7 @@ export default function OrganizationMembersPage() {
                     />
                     <Select
                       label={t('role')}
-                      value={row.roleId || assignableRoles[0]?.id || null}
+                      value={row.roleId || defaultInviteRoleId || null}
                       data={assignableRoles.map(role => ({
                         value: role.id,
                         label: role.name
@@ -574,20 +602,22 @@ export default function OrganizationMembersPage() {
                                             </Menu.Item>
                                           ))
                                         : null}
-                                      <Menu.Item
-                                        onClick={() => changeStatus(member)}
-                                      >
-                                        {member.isActive
-                                          ? t('suspend')
-                                          : t('activate')}
-                                      </Menu.Item>
                                       {!member.role.isOwner ? (
-                                        <Menu.Item
-                                          color='red'
-                                          onClick={() => remove(member)}
-                                        >
-                                          {t('remove')}
-                                        </Menu.Item>
+                                        <>
+                                          <Menu.Item
+                                            onClick={() => changeStatus(member)}
+                                          >
+                                            {member.isActive
+                                              ? t('suspend')
+                                              : t('activate')}
+                                          </Menu.Item>
+                                          <Menu.Item
+                                            color='red'
+                                            onClick={() => remove(member)}
+                                          >
+                                            {t('remove')}
+                                          </Menu.Item>
+                                        </>
                                       ) : null}
                                     </Menu.Dropdown>
                                   </Menu>
@@ -657,6 +687,16 @@ export default function OrganizationMembersPage() {
                       {t('expiresAt')}{' '}
                       {format.dateTime(new Date(invitation.expiresAt), 'date')}
                     </Text>
+                    {invitation.email && invitation.role.id ? (
+                      <Button
+                        size='compact-sm'
+                        variant='subtle'
+                        loading={invitePending}
+                        onClick={() => void resendInvitation(invitation)}
+                      >
+                        {t('resend')}
+                      </Button>
+                    ) : null}
                   </Box>
                 ))
               ) : (
