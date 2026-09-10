@@ -8,6 +8,10 @@ Project Forge is an organization-scoped administration system. This context defi
 A person who can authenticate and participate in one or more organizations.
 _Avoid_: Account, member (when referring to the person globally)
 
+**User Profile**:
+The personal information associated with a User and managed by that User; Organization Member administration does not grant authority to edit it.
+_Avoid_: Member profile (when referring to User-owned personal information)
+
 **Connection**:
 A user's linked external identity through which the system can recognize or authenticate that user.
 _Avoid_: OAuth account, external account
