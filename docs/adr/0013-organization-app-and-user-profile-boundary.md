@@ -1,0 +1,3 @@
+# Organization app and User Profile boundary
+
+**Status: accepted.** `apps/admin` is the Organization app: it provides organization-scoped work, membership administration, organization roles, and organization-wide audit, but it does not expose the System Admin `/admin` surface or member profile/detail and per-member audit screens. An Organization may manage membership (invitations, roles, active status, and removal), while a User manages their own User Profile through `/account`; browser routes keep the `organizationSlug`, and the future System Admin UI remains a separate, undecided surface while its API namespace remains available.
