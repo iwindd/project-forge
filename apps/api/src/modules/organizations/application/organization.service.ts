@@ -167,6 +167,21 @@ export class OrganizationService {
     return result;
   }
 
+  async requireProjectAccess(userId: string, organizationId: string) {
+    return this.requireMembership(userId, organizationId);
+  }
+
+  async requireProjectManager(userId: string, organizationId: string) {
+    const result = await this.requireMembership(userId, organizationId);
+    if (
+      !result.role.isOwner &&
+      !result.role.permissions.includes(ORGANIZATION_PERMISSIONS.MANAGE_PROJECT)
+    ) {
+      throw new ForbiddenError('Project management access is required');
+    }
+    return result;
+  }
+
   async listRoles(actorId: string, organizationId: string) {
     await this.requireManager(actorId, organizationId);
     const organization = await this.requireOrganization(organizationId);
@@ -596,7 +611,10 @@ export class OrganizationService {
       {
         legacyRole: OrganizationMemberRole.OWNER,
         name: DEFAULT_ROLE_NAMES.owner,
-        permissions: [ORGANIZATION_PERMISSIONS.MANAGE] as OrganizationPermission[],
+        permissions: [
+          ORGANIZATION_PERMISSIONS.MANAGE,
+          ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+        ] as OrganizationPermission[],
         isOwner: true,
       },
       ...(organization.type === OrganizationType.SHARED
@@ -604,7 +622,10 @@ export class OrganizationService {
             {
               legacyRole: OrganizationMemberRole.ADMIN,
               name: DEFAULT_ROLE_NAMES.admin,
-              permissions: [ORGANIZATION_PERMISSIONS.MANAGE] as OrganizationPermission[],
+              permissions: [
+                ORGANIZATION_PERMISSIONS.MANAGE,
+                ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+              ] as OrganizationPermission[],
               isOwner: false,
             },
             {
@@ -666,7 +687,10 @@ export class OrganizationService {
     const owner = createOrganizationRole({
       organizationId,
       name: DEFAULT_ROLE_NAMES.owner,
-      permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
+      permissions: [
+        ORGANIZATION_PERMISSIONS.MANAGE,
+        ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+      ],
       isOwner: true,
       legacyRole: OrganizationMemberRole.OWNER,
     });
@@ -676,7 +700,10 @@ export class OrganizationService {
       createOrganizationRole({
         organizationId,
         name: DEFAULT_ROLE_NAMES.admin,
-        permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
+        permissions: [
+          ORGANIZATION_PERMISSIONS.MANAGE,
+          ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+        ],
         legacyRole: OrganizationMemberRole.ADMIN,
       }),
       createOrganizationRole({
@@ -764,7 +791,10 @@ export class OrganizationService {
           ? DEFAULT_ROLE_NAMES.admin
           : DEFAULT_ROLE_NAMES.member,
       permissions: fallback === OrganizationMemberRole.ADMIN || fallback === OrganizationMemberRole.OWNER
-        ? [ORGANIZATION_PERMISSIONS.MANAGE]
+        ? [
+            ORGANIZATION_PERMISSIONS.MANAGE,
+            ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+          ]
         : [],
       isOwner: fallback === OrganizationMemberRole.OWNER,
       legacyRole: fallback,

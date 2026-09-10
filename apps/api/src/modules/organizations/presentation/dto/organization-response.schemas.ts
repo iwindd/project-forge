@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
+import { ORGANIZATION_PERMISSIONS } from '../../domain/organization.js';
 
 const organizationDateSchema = z.string().min(1);
 
@@ -97,7 +98,12 @@ export const organizationRolesResponseSchema = z.object({
   data: organizationRoleListSchema,
   meta: z.object({
     availablePermissions: z.array(
-      z.object({ key: z.literal('organization.manage') }),
+      z.object({
+        key: z.enum([
+          ORGANIZATION_PERMISSIONS.MANAGE,
+          ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
+        ]),
+      }),
     ),
   }),
 });

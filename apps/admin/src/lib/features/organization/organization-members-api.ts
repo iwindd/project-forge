@@ -18,7 +18,7 @@ import {
 import type { OrganizationMemberRole } from './types'
 export type { OrganizationRole } from './types'
 
-type OrganizationPermission = 'organization.manage'
+type OrganizationPermission = 'organization.manage' | 'project.manage'
 
 export type OrganizationRoleSummary = z.infer<
   typeof organizationRoleSummarySchema

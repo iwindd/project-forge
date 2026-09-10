@@ -187,6 +187,8 @@
     "systemRole": "บทบาทระบบ",
     "manageOrganization": "จัดการองค์กร",
     "manageOrganizationDescription": "แก้ไขการตั้งค่า จัดการสมาชิก คำเชิญ และบทบาทขององค์กร",
+    "manageProject": "จัดการ Project",
+    "manageProjectDescription": "สร้าง แก้ไข เก็บ และกู้คืน Project ขององค์กร",
     "noPermissions": "ไม่มีสิทธิ์เพิ่มเติม",
     "edit": "แก้ไข",
     "delete": "ลบ",

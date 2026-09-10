@@ -10,7 +10,6 @@ import { AuditLogOrmEntity } from './src/common/audit/audit-log.orm-entity.js';
 import { AccessRequestOrmEntity } from './src/modules/access-requests/infrastructure/persistence/access-request.orm-entity.js';
 import { OAuthAccountOrmEntity } from './src/modules/auth/infrastructure/persistence/oauth-account.orm-entity.js';
 import { SessionOrmEntity } from './src/modules/auth/infrastructure/persistence/session.orm-entity.js';
-import { ProjectMemberOrmEntity } from './src/modules/projects/infrastructure/persistence/project-member.orm-entity.js';
 import { ProjectOrmEntity } from './src/modules/projects/infrastructure/persistence/project.orm-entity.js';
 import { UserOrmEntity } from './src/modules/users/infrastructure/persistence/user.orm-entity.js';
 import { ProfileOrmEntity } from './src/modules/users/infrastructure/persistence/profile.orm-entity.js';
@@ -38,7 +37,6 @@ export default defineConfig({
     AccessRequestOrmEntity,
     AuditLogOrmEntity,
     ProjectOrmEntity,
-    ProjectMemberOrmEntity,
   ],
   extensions: [Migrator],
   migrations: {

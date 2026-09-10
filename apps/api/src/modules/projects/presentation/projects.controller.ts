@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApprovedGuard } from '../../../common/auth/approved.guard.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import { apiSuccess } from '../../../common/http/api-response.js';
@@ -11,7 +10,8 @@ import { ListProjectsUseCase } from '../application/use-cases/list-projects-use-
 import { UpdateProjectUseCase } from '../application/use-cases/update-project-use-case.js';
 import {
   createProjectSchema,
-  projectIdParamSchema,
+  organizationIdParamSchema,
+  organizationProjectIdParamSchema,
   updateProjectSchema,
 } from './dto/project.schemas.js';
 import {
@@ -19,8 +19,8 @@ import {
   projectResponseEnvelopeSchema,
 } from './dto/project-response.schemas.js';
 
-@Controller('projects')
-@UseGuards(SessionGuard, ApprovedGuard)
+@Controller('organizations/:organizationId/projects')
+@UseGuards(SessionGuard)
 export class ProjectsController {
   constructor(
     private readonly listProjects: ListProjectsUseCase,
@@ -31,17 +31,27 @@ export class ProjectsController {
   ) {}
 
   @Get()
-  async list(@Principal() principal: AuthenticatedPrincipal) {
-    const projects = await this.listProjects.execute(principal.id);
+  async list(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+  ) {
+    const { organizationId } = organizationIdParamSchema.parse(rawParams);
+    const projects = await this.listProjects.execute(principal.id, organizationId);
     return projectListResponseSchema.parse(
       apiSuccess(projects.map(serializeProject)),
     );
   }
 
   @Post()
-  async create(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
+  async create(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+    @Body() body: unknown,
+  ) {
+    const { organizationId } = organizationIdParamSchema.parse(rawParams);
     const project = await this.createProject.execute(
       principal.id,
+      organizationId,
       createProjectSchema.parse(body),
     );
     return projectResponseEnvelopeSchema.parse(
@@ -51,8 +61,8 @@ export class ProjectsController {
 
   @Get(':id')
   async get(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
-    const { id } = projectIdParamSchema.parse(rawParams);
-    const project = await this.getProject.execute(principal.id, id);
+    const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
+    const project = await this.getProject.execute(principal.id, organizationId, id);
     return projectResponseEnvelopeSchema.parse(
       apiSuccess({ project: serializeProject(project) }),
     );
@@ -60,9 +70,10 @@ export class ProjectsController {
 
   @Patch(':id')
   async update(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() body: unknown) {
-    const { id } = projectIdParamSchema.parse(rawParams);
+    const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
     const project = await this.updateProject.execute(
       principal.id,
+      organizationId,
       id,
       updateProjectSchema.parse(body),
     );
@@ -73,8 +84,8 @@ export class ProjectsController {
 
   @Post(':id/archive')
   async archive(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
-    const { id } = projectIdParamSchema.parse(rawParams);
-    const project = await this.archiveProject.execute(principal.id, id);
+    const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
+    const project = await this.archiveProject.execute(principal.id, organizationId, id);
     return projectResponseEnvelopeSchema.parse(
       apiSuccess({ project: serializeProject(project) }),
     );

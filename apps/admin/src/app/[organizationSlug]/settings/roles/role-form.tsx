@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   ORGANIZATION_MANAGE_PERMISSION,
+  ORGANIZATION_MANAGE_PROJECT_PERMISSION,
   organizationRoleFormSchema,
   type OrganizationRoleFormValues,
 } from "./role-form-schema";
@@ -47,14 +48,34 @@ export function OrganizationRoleForm({
             description={t("manageOrganizationDescription")}
             checked={form.values.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)}
             error={form.errors.permissions}
-            onChange={(event) =>
+            onChange={(event) => {
+              const permissions = form.values.permissions.filter(
+                permission => permission !== ORGANIZATION_MANAGE_PERMISSION
+              )
               form.setFieldValue(
                 "permissions",
                 event.currentTarget.checked
-                  ? [ORGANIZATION_MANAGE_PERMISSION]
-                  : [],
+                  ? [ORGANIZATION_MANAGE_PERMISSION, ...permissions]
+                  : permissions,
               )
-            }
+            }}
+          />
+          <Checkbox
+            label={t("manageProject")}
+            description={t("manageProjectDescription")}
+            checked={form.values.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION)}
+            error={form.errors.permissions}
+            onChange={(event) => {
+              const permissions = form.values.permissions.filter(
+                permission => permission !== ORGANIZATION_MANAGE_PROJECT_PERMISSION
+              )
+              form.setFieldValue(
+                "permissions",
+                event.currentTarget.checked
+                  ? [...permissions, ORGANIZATION_MANAGE_PROJECT_PERMISSION]
+                  : permissions,
+              )
+            }}
           />
           <Group justify="flex-end">
             <Button component={Link} href={cancelHref} variant="default" type="button">

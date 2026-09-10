@@ -6,6 +6,7 @@ describe('UpdateProjectUseCase', () => {
   it('updates project fields and writes an audit record', async () => {
     const project = {
       id: 'project-id',
+      organizationId: 'organization-id',
       name: 'Old name',
       githubUrl: 'https://github.com/acme/demo',
       githubOwner: 'acme',
@@ -20,17 +21,22 @@ describe('UpdateProjectUseCase', () => {
       archivedAt: null,
     };
     const projects = {
-      findByOwnerAndId: vi.fn(async () => project),
+      findByOrganizationAndId: vi.fn(async () => project),
       save: vi.fn(async () => undefined),
     };
     const audit = { record: vi.fn(async () => undefined) };
+    const organizations = { requireProjectManager: vi.fn(async () => undefined) };
     const unitOfWork = { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
-    const useCase = new UpdateProjectUseCase(projects as never, audit as never, unitOfWork as never);
+    const useCase = new UpdateProjectUseCase(projects as never, organizations as never, audit as never, unitOfWork as never);
 
-    const result = await useCase.execute('owner-id', 'project-id', { name: 'New name' });
+    const result = await useCase.execute('actor-id', 'organization-id', 'project-id', { name: 'New name' });
 
     expect(result.name).toBe('New name');
     expect(projects.save).toHaveBeenCalledOnce();
+    expect(organizations.requireProjectManager).toHaveBeenCalledWith(
+      'actor-id',
+      'organization-id',
+    );
     expect(audit.record).toHaveBeenCalledOnce();
   });
 });

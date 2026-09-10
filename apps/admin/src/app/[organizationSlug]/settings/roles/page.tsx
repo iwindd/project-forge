@@ -28,7 +28,10 @@ import { IconAlertCircle, IconDots, IconLock, IconPencil, IconPlus, IconShieldCh
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ORGANIZATION_MANAGE_PERMISSION } from "./role-form-schema";
+import {
+  ORGANIZATION_MANAGE_PERMISSION,
+  ORGANIZATION_MANAGE_PROJECT_PERMISSION,
+} from "./role-form-schema";
 import classes from "./roles-page.module.css";
 
 export default function OrganizationRolesPage() {
@@ -121,9 +124,14 @@ export default function OrganizationRolesPage() {
                       <td>
                         {role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION) ? (
                           <Badge variant="light">{t("manageOrganization")}</Badge>
-                        ) : (
+                        ) : null}
+                        {role.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION) ? (
+                          <Badge variant="light">{t("manageProject")}</Badge>
+                        ) : null}
+                        {!role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION) &&
+                        !role.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION) ? (
                           <Text size="sm" c="dimmed">{t("noPermissions")}</Text>
-                        )}
+                        ) : null}
                       </td>
                       <td>{role.memberCount ?? 0}</td>
                       <td>{role.invitationCount ?? 0}</td>
