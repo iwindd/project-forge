@@ -19,11 +19,13 @@ import { schemaResolver, useForm } from '@mantine/form'
 import {
   IconBuilding,
   IconCheck,
+  IconCopy,
   IconSearch,
   IconSelector,
   IconUsers
 } from '@tabler/icons-react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import {
@@ -64,6 +66,7 @@ function canInviteMembers(organization: Organization | undefined) {
 }
 
 export function OrganizationSwitcher() {
+  const t = useTranslations('OrganizationMembers')
   const {
     organizations,
     activeId,
@@ -80,6 +83,7 @@ export function OrganizationSwitcher() {
   const [inviteOpened, setInviteOpened] = useState(false)
   const [search, setSearch] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const pending = switchPending || invitationCreating
   const inviteForm = useForm<InviteMemberFormValues>({
@@ -107,11 +111,22 @@ export function OrganizationSwitcher() {
       setInviteLink(
         `${window.location.origin}/admin/invitations/${result.token}`
       )
+      setCopiedInviteLink(false)
       inviteForm.setFieldValue('email', '')
     } catch (error) {
       setInviteError(
         getBrowserApiErrorMessage(error, 'ไม่สามารถสร้างลิงก์เชิญได้')
       )
+    }
+  }
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopiedInviteLink(true)
+    } catch {
+      setInviteError(t('copyInviteFailed'))
     }
   }
 
@@ -261,6 +276,7 @@ export function OrganizationSwitcher() {
         onClose={() => {
           setInviteOpened(false)
           setInviteError(null)
+          setCopiedInviteLink(false)
         }}
         title='เชิญสมาชิกเข้า Organization'
       >
@@ -291,9 +307,28 @@ export function OrganizationSwitcher() {
               สร้างลิงก์เชิญ
             </Button>
             {inviteLink ? (
-              <Text size='sm' style={{ wordBreak: 'break-all' }}>
-                {inviteLink}
-              </Text>
+              <Stack gap='xs'>
+                <Text size='sm' style={{ wordBreak: 'break-all' }}>
+                  {inviteLink}
+                </Text>
+                <Button
+                  type='button'
+                  variant='subtle'
+                  size='xs'
+                  leftSection={
+                    copiedInviteLink ? (
+                      <IconCheck size={14} />
+                    ) : (
+                      <IconCopy size={14} />
+                    )
+                  }
+                  onClick={() => void copyInviteLink()}
+                >
+                  {copiedInviteLink
+                    ? t('copiedInviteLink')
+                    : t('copyInviteLink')}
+                </Button>
+              </Stack>
             ) : null}
             {inviteError ? <Alert color='red'>{inviteError}</Alert> : null}
           </Stack>
