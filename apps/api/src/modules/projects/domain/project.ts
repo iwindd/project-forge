@@ -63,9 +63,11 @@ export function parseGithubRepositoryUrl(value: string): {
     }
     const parts = url.pathname.split('/').filter(Boolean);
     if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
-    const name = parts[1].replace(/\.git$/, '');
-    if (!/^[A-Za-z0-9_.-]+$/.test(parts[0]) || !/^[A-Za-z0-9_.-]+$/.test(name)) return null;
-    return { owner: parts[0], name, url: `https://github.com/${parts[0]}/${name}` };
+    // GitHub repository identity is case-insensitive, so canonicalize owner and name.
+    const owner = parts[0].toLowerCase();
+    const name = parts[1].replace(/\.git$/, '').toLowerCase();
+    if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(name)) return null;
+    return { owner, name, url: `https://github.com/${owner}/${name}` };
   } catch {
     return null;
   }
