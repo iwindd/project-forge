@@ -5,4 +5,5 @@ export type GithubProfile = {
   avatar_url?: string | null;
   email?: string | null;
   emailVerified?: boolean;
+  verifiedEmails?: string[];
 };

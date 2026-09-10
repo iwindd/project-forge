@@ -573,9 +573,14 @@ export class OrganizationService {
     }
     const organization = await this.requireOrganization(invitation.organizationId);
     const connection = await this.em.findOne(ConnectionOrmEntity, { userId, provider: 'GITHUB' });
+    const invitationEmail = invitation.email.toLowerCase();
     if (
-      !connection?.providerEmailVerified ||
-      connection.providerEmail?.toLowerCase() !== invitation.email.toLowerCase()
+      !connection ||
+      !(
+        connection.providerVerifiedEmails.includes(invitationEmail) ||
+        (connection.providerEmailVerified &&
+          connection.providerEmail?.toLowerCase() === invitationEmail)
+      )
     ) {
       throw new ForbiddenError('This invitation requires a matching verified GitHub email address');
     }
