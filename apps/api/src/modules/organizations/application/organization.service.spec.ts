@@ -146,6 +146,7 @@ function createService(em: FakeEntityManager) {
     em as never,
     { record: vi.fn() } as never,
     { record: vi.fn() } as never,
+    { run: vi.fn(async <T>(work: () => Promise<T>) => work()) } as never,
   );
 }
 

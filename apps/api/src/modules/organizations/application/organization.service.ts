@@ -1,10 +1,12 @@
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
 import type { AuditLogPort } from '../../../common/audit/audit.port.js';
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js';
 import type { SecurityLogPort } from '../../../common/security/security-log.port.js';
+import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js';
+import type { UnitOfWork } from '../../../common/database/unit-of-work.port.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -58,6 +60,7 @@ export class OrganizationService {
     private readonly em: EntityManager,
     @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
     @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
   async listForUser(userId: string) {
@@ -417,6 +420,17 @@ export class OrganizationService {
   }
 
   async createInvitation(actorId: string, organizationId: string, email: string, input: RoleInput) {
+    return this.unitOfWork.run(() =>
+      this.createInvitationInTransaction(actorId, organizationId, email, input),
+    );
+  }
+
+  private async createInvitationInTransaction(
+    actorId: string,
+    organizationId: string,
+    email: string,
+    input: RoleInput,
+  ) {
     await this.requireManager(actorId, organizationId);
     const role = await this.resolveRequestedRole(
       organizationId,
@@ -438,7 +452,7 @@ export class OrganizationService {
       organizationId,
       email: normalizedEmail,
       status: OrganizationInvitationStatus.PENDING,
-    });
+    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
     const invitation = existingInvitation ?? createOrganizationInvitation({
       organizationId,
       invitedBy: actorId,
@@ -504,12 +518,22 @@ export class OrganizationService {
   }
 
   async cancelInvitation(actorId: string, organizationId: string, invitationId: string) {
+    return this.unitOfWork.run(() =>
+      this.cancelInvitationInTransaction(actorId, organizationId, invitationId),
+    );
+  }
+
+  private async cancelInvitationInTransaction(
+    actorId: string,
+    organizationId: string,
+    invitationId: string,
+  ) {
     await this.requireManager(actorId, organizationId);
     const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
       id: invitationId,
       organizationId,
       status: OrganizationInvitationStatus.PENDING,
-    });
+    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
     if (!invitation) throw new NotFoundError('Pending organization invitation was not found');
 
     invitation.status = OrganizationInvitationStatus.CANCELLED;
@@ -527,10 +551,16 @@ export class OrganizationService {
   }
 
   async acceptInvitation(userId: string, token: string) {
+    return this.unitOfWork.run(() =>
+      this.acceptInvitationInTransaction(userId, token),
+    );
+  }
+
+  private async acceptInvitationInTransaction(userId: string, token: string) {
     const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
       tokenHash: this.hashToken(token),
       status: OrganizationInvitationStatus.PENDING,
-    });
+    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
     if (!invitation) throw new NotFoundError('Invitation was not found or has already been used');
     if (invitation.expiresAt.getTime() <= Date.now()) {
       invitation.status = OrganizationInvitationStatus.EXPIRED;
