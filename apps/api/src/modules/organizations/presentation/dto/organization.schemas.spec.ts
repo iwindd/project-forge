@@ -24,4 +24,8 @@ describe('createInvitationSchema', () => {
       }),
     ).toThrow();
   });
+
+  it('requires an invitation email', () => {
+    expect(() => createInvitationSchema.parse({})).toThrow();
+  });
 });

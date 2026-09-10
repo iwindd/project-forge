@@ -75,7 +75,7 @@ export type OrganizationInvitationRecord = {
   id: string;
   organizationId: string;
   invitedBy: string;
-  email: string | null;
+  email: string;
   tokenHash: string;
   role: OrganizationMemberRole;
   roleId: string | null;
@@ -148,7 +148,7 @@ export function createOrganizationMember(input: {
 export function createOrganizationInvitation(input: {
   organizationId: string;
   invitedBy: string;
-  email: string | null;
+  email: string;
   tokenHash: string;
   role: OrganizationMemberRole;
   roleId?: string | null;

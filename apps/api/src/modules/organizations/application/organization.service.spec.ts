@@ -18,6 +18,7 @@ import { OrganizationOrmEntity } from '../infrastructure/persistence/organizatio
 import { OrganizationRoleOrmEntity } from '../infrastructure/persistence/organization-role.orm-entity.js';
 import { AccessStatus } from '../../users/domain/user.js';
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js';
+import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/connection.orm-entity.js';
 import { OrganizationService } from './organization.service.js';
 
 type EntityConstructor<T> = new () => T;
@@ -301,6 +302,76 @@ describe('OrganizationService', () => {
     ).rejects.toBeInstanceOf(InvalidInputError);
   });
 
+  it('cancels a pending invitation through organization management', async () => {
+    const org = organization();
+    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), {
+      id: 'invitation-id',
+      organizationId: 'organization-id',
+      invitedBy: 'owner-id',
+      email: 'person@example.com',
+      tokenHash: 'token-hash',
+      role: OrganizationMemberRole.MEMBER,
+      roleId: 'member-role-id',
+      status: OrganizationInvitationStatus.PENDING,
+      expiresAt: new Date('2026-01-08T00:00:00.000Z'),
+      acceptedBy: null,
+      acceptedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+    const records = [
+      [OrganizationOrmEntity, org],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationInvitationOrmEntity, invitation],
+    ] as Array<[EntityConstructor<unknown>, unknown]>;
+    const em = new FakeEntityManager(records);
+    const service = createService(em);
+
+    await expect(
+      service.cancelInvitation('owner-id', 'organization-id', 'invitation-id'),
+    ).resolves.toEqual({ ok: true });
+    expect(invitation.status).toBe(OrganizationInvitationStatus.CANCELLED);
+  });
+
+  it('rejects invitation acceptance without a matching verified GitHub email', async () => {
+    const org = organization();
+    const token = 'invite-token';
+    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), {
+      id: 'invitation-id',
+      organizationId: 'organization-id',
+      invitedBy: 'owner-id',
+      email: 'person@example.com',
+      tokenHash: createHash('sha256').update(token).digest('hex'),
+      role: OrganizationMemberRole.MEMBER,
+      roleId: 'member-role-id',
+      status: OrganizationInvitationStatus.PENDING,
+      expiresAt: new Date(Date.now() + 60_000),
+      acceptedBy: null,
+      acceptedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+    const records = [
+      [OrganizationOrmEntity, org],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationInvitationOrmEntity, invitation],
+      [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
+        userId: 'member-id',
+        provider: 'GITHUB',
+        providerEmail: 'person@example.com',
+        providerEmailVerified: false,
+      })],
+      [UserOrmEntity, user({ accessStatus: AccessStatus.PENDING })],
+    ] as Array<[EntityConstructor<unknown>, unknown]>;
+    const em = new FakeEntityManager(records);
+    const service = createService(em);
+
+    await expect(service.acceptInvitation('member-id', token)).rejects.toThrow(
+      'matching verified GitHub email',
+    );
+    expect(invitation.status).toBe(OrganizationInvitationStatus.PENDING);
+  });
+
   it('persists an expired invitation before rejecting acceptance', async () => {
     const org = organization();
     const token = 'expired-token';
@@ -308,7 +379,7 @@ describe('OrganizationService', () => {
       id: 'expired-invitation-id',
       organizationId: 'organization-id',
       invitedBy: 'owner-id',
-      email: null,
+      email: 'person@example.com',
       tokenHash: createHash('sha256').update(token).digest('hex'),
       role: OrganizationMemberRole.MEMBER,
       roleId: 'member-role-id',

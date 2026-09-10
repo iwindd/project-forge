@@ -5,15 +5,9 @@ import {
   OrganizationMemberRole,
 } from '../../domain/organization.js';
 
-export const createOrganizationSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  slug: z.string().trim().min(1).max(60).optional(),
-});
-
 export const updateOrganizationSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
 });
-
 const legacyMemberRoleSchema = z.enum([
   OrganizationMemberRole.OWNER,
   OrganizationMemberRole.ADMIN,
@@ -52,7 +46,7 @@ export const updateOrganizationRoleSchema = z.object({
 export const updateMemberStatusSchema = z.object({ active: z.boolean() });
 
 export const createInvitationSchema = z.object({
-  email: z.string().trim().email().optional().nullable(),
+  email: z.string().trim().email(),
   roleId: databaseUuidSchema.optional(),
   role: z
     .enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER])
@@ -69,6 +63,9 @@ export const organizationRoleParamSchema = organizationIdParamSchema.extend({
 
 export const organizationMemberParamSchema = organizationIdParamSchema.extend({
   userId: databaseUuidSchema,
+});
+export const organizationInvitationParamSchema = organizationIdParamSchema.extend({
+  invitationId: databaseUuidSchema,
 });
 
 export const invitationTokenParamSchema = z.object({
@@ -88,5 +85,3 @@ export const organizationMembersQuerySchema = z.object({
   sortBy: z.enum(['name', 'role', 'createdAt']).optional().default('createdAt'),
   sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
 });
-
-export type CreateOrganizationDto = z.infer<typeof createOrganizationSchema>;

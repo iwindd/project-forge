@@ -66,8 +66,13 @@ type AcceptInvitationResponse = z.infer<typeof acceptInvitationResponseSchema>
 
 type CreateInvitationInput = {
   organizationId: string
-  email?: string | null
+  email: string
   roleId: string
+}
+
+type CancelInvitationInput = {
+  organizationId: string
+  invitationId: string
 }
 
 type UpdateMemberRoleInput = {
@@ -232,9 +237,20 @@ export const organizationMembersApi = api.injectEndpoints({
       query: ({ organizationId, email, roleId }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/invitations`,
         method: 'POST',
-        body: { email: email || null, roleId }
+        body: { email, roleId }
       }),
       transformResponse: parseCreateInvitationResponse,
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: 'OrganizationInvitations', id: organizationId },
+        { type: 'OrganizationRoles', id: organizationId }
+      ]
+    }),
+    cancelInvitation: builder.mutation<{ ok: true }, CancelInvitationInput>({
+      query: ({ organizationId, invitationId }) => ({
+        url: `organizations/${encodeURIComponent(organizationId)}/invitations/${encodeURIComponent(invitationId)}`,
+        method: 'DELETE'
+      }),
+      transformResponse: parseDeleteRoleResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationInvitations', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }
@@ -296,6 +312,7 @@ export const organizationMembersApi = api.injectEndpoints({
 })
 
 export const {
+  useCancelInvitationMutation,
   useCreateInvitationMutation,
   useCreateRoleMutation,
   useDeleteRoleMutation,

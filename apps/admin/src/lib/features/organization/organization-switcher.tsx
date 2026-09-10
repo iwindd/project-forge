@@ -8,7 +8,6 @@ import {
   Avatar,
   Badge,
   Button,
-  Divider,
   Menu,
   Modal,
   Select,
@@ -20,45 +19,27 @@ import { schemaResolver, useForm } from '@mantine/form'
 import {
   IconBuilding,
   IconCheck,
-  IconPlus,
   IconSearch,
   IconSelector,
   IconUsers
 } from '@tabler/icons-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import {
   useCreateInvitationMutation,
   useGetRolesQuery
 } from './organization-members-api'
-import { useCreateOrganizationMutation } from './organization-api'
 import { useOrganizationContext } from './organization-provider'
 import { databaseUuidSchema } from './organization-schemas'
 import type { Organization } from './types'
 import classes from './organization-switcher.module.css'
 
-export const createOrganizationFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, 'กรุณาระบุชื่อ Organization')
-    .max(120, 'ชื่อ Organization ต้องไม่เกิน 120 ตัวอักษร')
-})
-
 export const inviteMemberFormSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email('กรุณาระบุอีเมลให้ถูกต้อง')
-    .or(z.literal('')),
+  email: z.string().trim().email('กรุณาระบุอีเมลให้ถูกต้อง'),
   roleId: databaseUuidSchema
 })
 
-type CreateOrganizationFormValues = z.infer<
-  typeof createOrganizationFormSchema
->
 type InviteMemberFormValues = z.infer<typeof inviteMemberFormSchema>
 
 function getOrganizationInitial(name: string) {
@@ -84,30 +65,19 @@ export function OrganizationSwitcher() {
     activeId,
     activeOrganization,
     pending: switchPending,
-    loadOrganizations,
     switchOrganization
   } = useOrganizationContext()
-  const router = useRouter()
-  const [createOrganizationMutation, { isLoading: organizationCreating }] =
-    useCreateOrganizationMutation()
   const [createInvitationMutation, { isLoading: invitationCreating }] =
     useCreateInvitationMutation()
   const { data: rolesResult } = useGetRolesQuery(
     { organizationId: activeOrganization?.id ?? '' },
     { skip: !activeOrganization || !canInviteMembers(activeOrganization) }
   )
-  const [createOpened, setCreateOpened] = useState(false)
   const [inviteOpened, setInviteOpened] = useState(false)
   const [search, setSearch] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [createError, setCreateError] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
-  const pending = switchPending || organizationCreating || invitationCreating
-  const createForm = useForm<CreateOrganizationFormValues>({
-    initialValues: { name: '' },
-    validate: schemaResolver(createOrganizationFormSchema),
-    validateInputOnBlur: true
-  })
+  const pending = switchPending || invitationCreating
   const inviteForm = useForm<InviteMemberFormValues>({
     initialValues: { email: '', roleId: '' },
     validate: schemaResolver(inviteMemberFormSchema),
@@ -116,26 +86,17 @@ export function OrganizationSwitcher() {
   const inviteRoles = useMemo(
     () =>
       (rolesResult?.data ?? []).filter(
-        role => Boolean(role.id) && !role.isOwner
+        role =>
+          Boolean(role.id) &&
+          (role.legacyRole === 'ADMIN' || role.legacyRole === 'MEMBER')
       ),
     [rolesResult?.data]
   )
-  const selectedInviteRoleId = inviteForm.values.roleId || inviteRoles[0]?.id || ''
-
-  const createOrganization = async (values: CreateOrganizationFormValues) => {
-    setCreateError(null)
-    try {
-      const result = await createOrganizationMutation(values).unwrap()
-      createForm.reset()
-      setCreateOpened(false)
-      await loadOrganizations()
-      router.push(`/${encodeURIComponent(result.organization.slug)}`)
-    } catch (error) {
-      setCreateError(
-        getBrowserApiErrorMessage(error, 'ไม่สามารถสร้าง Organization ได้')
-      )
-    }
-  }
+  const defaultInviteRoleId =
+    inviteRoles.find(role => role.legacyRole === 'MEMBER')?.id ??
+    inviteRoles[0]?.id ??
+    ''
+  const selectedInviteRoleId = inviteForm.values.roleId || defaultInviteRoleId
 
   const createInvitation = async (values: InviteMemberFormValues) => {
     if (!activeOrganization) return
@@ -144,7 +105,7 @@ export function OrganizationSwitcher() {
     try {
       const result = await createInvitationMutation({
         organizationId: activeOrganization.id,
-        email: values.email || null,
+        email: values.email,
         roleId: values.roleId
       }).unwrap()
       setInviteLink(
@@ -158,16 +119,10 @@ export function OrganizationSwitcher() {
     }
   }
 
-  const openCreateOrganization = () => {
-    setCreateError(null)
-    createForm.reset()
-    setCreateOpened(true)
-  }
-
   const openInviteMembers = () => {
     setInviteError(null)
-    if (!inviteForm.values.roleId && inviteRoles[0]?.id) {
-      inviteForm.setFieldValue('roleId', inviteRoles[0].id)
+    if (!inviteForm.values.roleId && defaultInviteRoleId) {
+      inviteForm.setFieldValue('roleId', defaultInviteRoleId)
     }
     setInviteOpened(true)
   }
@@ -287,22 +242,6 @@ export function OrganizationSwitcher() {
             </Stack>
           )}
 
-          <Divider my='sm' />
-
-          <Menu.Item
-            leftSection={<IconPlus size={18} />}
-            onClick={openCreateOrganization}
-          >
-            <Stack gap={0}>
-              <Text size='sm' fw={600}>
-                สร้าง Organization
-              </Text>
-              <Text size='xs' c='dimmed'>
-                สร้าง workspace สำหรับทีมของคุณ
-              </Text>
-            </Stack>
-          </Menu.Item>
-
           {showInviteAction && (
             <Menu.Item
               leftSection={<IconUsers size={18} />}
@@ -322,31 +261,6 @@ export function OrganizationSwitcher() {
       </Menu>
 
       <Modal
-        opened={createOpened}
-        onClose={() => {
-          setCreateOpened(false)
-          setCreateError(null)
-        }}
-        title='สร้าง Organization'
-      >
-        <form onSubmit={createForm.onSubmit(createOrganization)}>
-          <Stack>
-            <TextInput
-              label='ชื่อ Organization'
-              {...createForm.getInputProps('name')}
-            />
-            <Button
-              type='submit'
-              loading={organizationCreating || createForm.submitting}
-            >
-              สร้าง
-            </Button>
-            {createError ? <Alert color='red'>{createError}</Alert> : null}
-          </Stack>
-        </form>
-      </Modal>
-
-      <Modal
         opened={inviteOpened}
         onClose={() => {
           setInviteOpened(false)
@@ -357,7 +271,8 @@ export function OrganizationSwitcher() {
         <form onSubmit={inviteForm.onSubmit(createInvitation)}>
           <Stack>
             <TextInput
-              label='อีเมลสำหรับตรวจสอบสิทธิ์ (ไม่บังคับ)'
+              label='อีเมลสำหรับตรวจสอบสิทธิ์'
+              required
               {...inviteForm.getInputProps('email')}
             />
             <Select

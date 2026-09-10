@@ -45,12 +45,12 @@ describe('AuthController', () => {
     )
   })
 
-  it('does not keep a session cookie for a non-approved OAuth login', async () => {
+  it('keeps a session cookie for a pending OAuth login without organization access', async () => {
     const completeGithubLogin = {
       execute: vi.fn().mockResolvedValue({
         principal: { accessStatus: AccessStatus.PENDING },
-        sessionToken: null,
-        organizationSlug: 'personal-user'
+        sessionToken: 'pending-session-token',
+        organizationSlug: null
       })
     }
     const response = {
@@ -76,14 +76,16 @@ describe('AuthController', () => {
       response as never
     )
 
-    expect(response.cookie).not.toHaveBeenCalledWith(
+    expect(response.cookie).toHaveBeenCalledWith(
       'pf_session',
-      expect.anything(),
-      expect.anything()
+      'pending-session-token',
+      expect.objectContaining({ httpOnly: true })
     )
-    expect(response.clearCookie).toHaveBeenCalledWith('pf_session', { path: '/' })
+    expect(response.clearCookie).not.toHaveBeenCalledWith('pf_session', {
+      path: '/'
+    })
     expect(response.redirect).toHaveBeenCalledWith(
-      'http://localhost:5051/admin/login?status=pending'
+      'http://localhost:5051/account'
     )
   })
 
