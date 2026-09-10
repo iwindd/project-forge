@@ -5,6 +5,20 @@ import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema
 const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 /**
+ * A bare credential (GitHub token, API key, cloud access key id) is identifier-shaped, so the
+ * variable-name pattern alone would accept it and store the secret itself as the key name. Mirror
+ * the Admin rule and reject any known credential prefix followed by 16 or more token characters,
+ * so a token-shaped key cannot be stored even if a client sends one.
+ */
+const CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN =
+  /^(ghp_|gho_|ghu_|ghs_|ghr_|github_pat_|glpat-|sk_live_|sk_test_|sk-|xoxb-|xoxp-|npm_|AKIA|ASIA)[A-Za-z0-9_-]{16,}$/;
+
+const environmentVariableNameSchema = z
+  .string()
+  .regex(ENVIRONMENT_VARIABLE_NAME_PATTERN)
+  .refine((name) => !CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN.test(name));
+
+/**
  * Validated field shapes shared by create and update, declared once and WITHOUT defaults.
  * Create layers its defaults on top; update keeps every field bare `.optional()`.
  */
@@ -14,7 +28,7 @@ const projectFields = {
   sourceBranch: z.string().trim().min(1).max(120),
   targetBranch: z.string().trim().min(1).max(120),
   nodeVersion: z.string().trim().max(40),
-  environmentMetadata: z.record(z.string().regex(ENVIRONMENT_VARIABLE_NAME_PATTERN), z.unknown()),
+  environmentMetadata: z.record(environmentVariableNameSchema, z.unknown()),
 };
 
 export const createProjectSchema = z.object({

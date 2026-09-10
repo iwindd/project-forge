@@ -13,6 +13,7 @@ describe('createProjectSchema environment metadata', () => {
         DATABASE_URL: 'do-not-store-this',
         API_TOKEN: 'do-not-store-this',
         NODE_ENV: 'do-not-store-this',
+        npm_cache_dir: 'do-not-store-this',
       },
     });
 
@@ -20,6 +21,7 @@ describe('createProjectSchema environment metadata', () => {
       DATABASE_URL: 'do-not-store-this',
       API_TOKEN: 'do-not-store-this',
       NODE_ENV: 'do-not-store-this',
+      npm_cache_dir: 'do-not-store-this',
     });
   });
 
@@ -47,6 +49,21 @@ describe('createProjectSchema environment metadata', () => {
       ).toThrow();
     },
   );
+
+  it.each([
+    'ghp_A1b2C3d4E5f6G7h8I9j0',
+    'github_pat_11ABCDEFG0abcdefghij_kl',
+    'sk_live_0123456789abcdef',
+    'AKIAIOSFODNN7EXAMPLE',
+    'npm_abcdefghijklmnop1234',
+  ])('rejects the credential-shaped key name %s', (name) => {
+    expect(() =>
+      createProjectSchema.parse({
+        ...request,
+        environmentMetadata: { [name]: 'configured' },
+      }),
+    ).toThrow();
+  });
 });
 
 describe('createProjectSchema create-time defaults', () => {

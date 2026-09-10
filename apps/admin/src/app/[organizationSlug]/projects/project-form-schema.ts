@@ -7,6 +7,21 @@ const GITHUB_REPOSITORY_SEGMENT_PATTERN = /^[A-Za-z0-9_.-]+$/
 /** A stored environment attribute may only ever be a variable name. */
 const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 
+/**
+ * A bare credential pasted without `=` (a GitHub token, an API key, a cloud access key id) is
+ * identifier-shaped, so the variable-name filter alone would accept it and store the secret itself
+ * as the key name. Any known credential prefix followed by 16 or more token characters is dropped.
+ */
+const CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN =
+  /^(ghp_|gho_|ghu_|ghs_|ghr_|github_pat_|glpat-|sk_live_|sk_test_|sk-|xoxb-|xoxp-|npm_|AKIA|ASIA)[A-Za-z0-9_-]{16,}$/
+
+function isStorableEnvironmentVariableName(name: string) {
+  return (
+    ENVIRONMENT_VARIABLE_NAME_PATTERN.test(name) &&
+    !CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN.test(name)
+  )
+}
+
 export type ProjectFormMessages = {
   nameMax: string
   githubUrlRequired: string
@@ -105,15 +120,16 @@ export function toProjectFormValues(project: Project): ProjectFormValues {
 
 /**
  * Environment variable names only; the API masks every supplied value.
- * A pasted `KEY=value` line contributes only its variable name, and any line
- * whose name is not a valid variable name is dropped, so a value can never be
- * smuggled into a stored key.
+ * A pasted `KEY=value` line contributes only its variable name, and any line whose name is not a
+ * valid variable name is dropped, so a value can never be smuggled into a stored key. A bare
+ * credential (a pasted token) is also dropped, because it is identifier-shaped and would otherwise
+ * be stored verbatim as the key name.
  */
 export function parseEnvironmentMetadata(value: string) {
   const names = value
     .split(/\r?\n/)
     .map(variableNameOf)
-    .filter(name => ENVIRONMENT_VARIABLE_NAME_PATTERN.test(name))
+    .filter(name => isStorableEnvironmentVariableName(name))
 
   return Object.fromEntries(
     Array.from(new Set(names)).map(name => [
