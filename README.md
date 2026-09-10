@@ -7,8 +7,8 @@ Project Forge คือระบบเว็บ self-hosted สำหรับ�
 ## Phase 1 ที่ทำเสร็จใน workspace นี้
 
 - `apps/api` — NestJS API, PostgreSQL/MikroORM, GitHub OAuth, session cookie, access request, admin policies, audit log และ Project metadata CRUD
-- `apps/web` — Next.js App Router, login/access states, protected user shell, Projects list/add/edit/archive และ `/admin` users/access requests
-- `apps/web` เรียก API ผ่าน `src/lib/api.ts` เท่านั้น; ไม่มีการ import database หรือ MikroORM จาก web
+- `apps/admin` — Next.js App Router, login/access states, protected user shell, Projects list/add/edit/archive และ `/admin` users/access requests
+- `apps/admin` เรียก API ผ่าน canonical clients (`src/lib/api/api.ts` สำหรับ browser และ `src/lib/api-server.ts` สำหรับ SSR); ไม่มีการ import database หรือ MikroORM จาก admin app
 - Add Project ยังเป็น metadata-only: ไม่ clone, ไม่สร้าง sandbox, ไม่เรียก Hermes, ไม่ install และไม่ build
 - ไม่มี Discord, Hermes, Chat, GitHub App, Issues หรือ Pull Requests ใน Phase 1
 
@@ -21,10 +21,10 @@ pnpm install
 docker compose up -d postgres
 pnpm db:migrate
 pnpm dev:api
-pnpm dev:web
+pnpm dev:admin
 ```
 
-เว็บอยู่ที่ `http://localhost:3000` และ API อยู่ที่ `http://localhost:5050/api/v1` ส่วน PostgreSQL ของ Project Forge ใช้ host port `55432` เพื่อไม่ชนกับ project-bot ที่ใช้ `5433`
+Admin app อยู่ที่ `http://localhost:5051` และ API อยู่ที่ `http://localhost:5050/api/v1` ส่วน PostgreSQL ของ Project Forge ใช้ host port `55432` เพื่อไม่ชนกับ project-bot ที่ใช้ `5433`
 
 ตั้งค่า GitHub OAuth ใน `.env` โดยใช้ callback:
 
@@ -63,8 +63,8 @@ GET http://localhost:5050/api/v1/health
 
 ```text
 Browser
-  -> Next.js web
-  -> NestJS API
+  -> Next.js admin app (apps/admin)
+  -> NestJS API (apps/api)
       -> PostgreSQL
       -> Redis/job queue
       -> Hermes adapter
@@ -73,7 +73,7 @@ Browser
   -> NestJS worker
 ```
 
-Next.js ดูแล UI และเรียก NestJS API ผ่าน API client เท่านั้น ส่วน NestJS เป็นเจ้าของ business rules, authorization, state transitions และ external side effects งาน AI ต้องรันผ่าน worker ที่มี checkpoint ไม่ถืออายุงานไว้กับ HTTP request ระบบไม่มี public AI endpoint และ approved internal users เท่านั้นจึงสร้างงาน AI ได้
+Next.js admin app ดูแล UI และเรียก NestJS API ผ่าน API client เท่านั้น ส่วน NestJS เป็นเจ้าของ business rules, authorization, state transitions และ external side effects งาน AI ต้องรันผ่าน worker ที่มี checkpoint ไม่ถืออายุงานไว้กับ HTTP request ระบบไม่มี public AI endpoint และ approved internal users เท่านั้นจึงสร้างงาน AI ได้
 
 ## Phase order
 

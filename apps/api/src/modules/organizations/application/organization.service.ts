@@ -12,7 +12,6 @@ import {
   NotFoundError,
 } from '../../../common/errors/application-error.js';
 import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/connection.orm-entity.js';
-import { ProfileOrmEntity } from '../../users/infrastructure/persistence/profile.orm-entity.js';
 import { AccessStatus } from '../../users/domain/user.js';
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js';
 import {
@@ -315,40 +314,6 @@ export class OrganizationService {
     return { ok: true as const };
   }
 
-  async listMembers(userId: string, organizationId: string) {
-    const { organization } = await this.requireMembership(userId, organizationId);
-    const members = await this.em.find(OrganizationMemberOrmEntity, {
-      organizationId,
-      status: { $ne: OrganizationMemberStatus.REMOVED },
-    }, { orderBy: { joinedAt: 'ASC' } });
-    const userIds = members.map((member) => member.userId);
-    const users = userIds.length
-      ? await this.em.find(UserOrmEntity, { id: { $in: userIds } })
-      : [];
-    const githubConnections = userIds.length
-      ? await this.em.find(ConnectionOrmEntity, { userId: { $in: userIds }, provider: 'GITHUB' })
-      : [];
-    const roles = await this.ensureDefaultRoles(organization);
-    const roleMap = new Map(roles.map((role) => [role.id, role]));
-    const legacyRoleMap = new Map(roles.filter((role) => role.legacyRole).map((role) => [role.legacyRole, role]));
-    const userMap = new Map(users.map((user) => [user.id, user]));
-    const emailMap = new Map(githubConnections.map((connection) => [connection.userId, connection.providerEmail]));
-    return members.map((member) => {
-      const user = userMap.get(member.userId);
-      return {
-        id: member.userId,
-        membershipId: member.id,
-        name: user?.name ?? user?.githubLogin ?? 'Unknown user',
-        email: emailMap.get(member.userId) ?? user?.githubLogin ?? null,
-        role: this.roleView(roleMap.get(member.roleId ?? '') ?? legacyRoleMap.get(member.role), member.role),
-        status: member.status,
-        isActive: member.status === OrganizationMemberStatus.ACTIVE && Boolean(user?.isActive && user.accessStatus !== AccessStatus.SUSPENDED),
-        createdAt: user?.createdAt.toISOString() ?? member.joinedAt.toISOString(),
-        updatedAt: user?.updatedAt.toISOString() ?? member.updatedAt.toISOString(),
-      };
-    });
-  }
-
   async getMember(userId: string, organizationId: string, targetUserId: string) {
     await this.requireMembership(userId, organizationId);
     const membership = await this.em.findOne(OrganizationMemberOrmEntity, {
@@ -372,36 +337,6 @@ export class OrganizationService {
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
-  }
-
-  async updateMemberName(actorId: string, organizationId: string, targetUserId: string, name: string) {
-    await this.requireManager(actorId, organizationId);
-    const user = await this.em.findOne(UserOrmEntity, { id: targetUserId });
-    if (!user) throw new NotFoundError('User was not found');
-    const normalizedName = name.trim();
-    if (!normalizedName) throw new InvalidInputError('User name is required');
-    const before = { name: user.name };
-    user.name = normalizedName;
-    user.updatedAt = new Date();
-    const profile = await this.em.findOne(ProfileOrmEntity, { userId: targetUserId });
-    if (profile) {
-      profile.displayName = normalizedName;
-      profile.updatedAt = new Date();
-      this.em.persist(profile);
-    }
-    this.em.persist(user);
-    await this.audit.record({
-      organizationId,
-      actorId,
-      targetUserId,
-      action: 'ORGANIZATION_MEMBER_NAME_CHANGED',
-      resourceType: 'PROFILE',
-      resourceId: targetUserId,
-      before,
-      after: { name: normalizedName },
-    });
-    await this.em.flush();
-    return this.getMember(actorId, organizationId, targetUserId);
   }
 
   async updateOrganization(actorId: string, organizationId: string, name: string) {

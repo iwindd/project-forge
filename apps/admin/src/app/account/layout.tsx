@@ -1,9 +1,12 @@
 import { ProfileProvider } from '@/app/admin/(main)/profile/components/profile-context'
 import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
+import { ForbiddenState } from '@/components/forbidden-state'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { PageHeader } from '@/components/page-header'
 import { AppProvider } from '@/components/providers/app-provider'
+import { createPreloadedState } from '@/lib/store'
+import { isApiServerForbidden } from '@/lib/api-server'
 import { getProfile } from '@/servers/profile/queries/get-profile'
 import { fontClasses } from '@/themes/shadcn/font'
 import { Container, mantineHtmlProps } from '@mantine/core'
@@ -29,23 +32,23 @@ export default async function AccountLayout({
     redirect('/admin/login')
   }
 
-  const organization =
-    session.organizations.find(
-      candidate => candidate.id === session.user.activeOrganizationId
-    ) ?? session.organizations[0]
+  let profile = null
+  let forbidden = false
 
-  if (!organization) {
-    redirect('/admin/login?error=organization_unavailable')
+  try {
+    profile = await getProfile()
+  } catch (error) {
+    if (!isApiServerForbidden(error)) throw error
+    forbidden = true
   }
 
-  const profile = await getProfile()
-
-  if (!profile) {
+  if (!profile && !forbidden) {
     notFound()
   }
 
   const locale = await getLocale()
   const messages = await getMessages()
+  const preloadedState = await createPreloadedState({ user: session.user }, [])
 
   return (
     <html
@@ -59,23 +62,19 @@ export default async function AccountLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AppProvider
-            preloadedState={{
-              auth: { user: session.user }
-            }}
-          >
-            <AdminShell
-              user={session.user}
-              organizationSlug={organization.slug}
-              navigationMode='account'
-            >
-              <ProfileProvider profile={profile}>
-                <Container w='100%' size='xl'>
-                  <PageHeader title='บัญชีของฉัน' />
-                  {children}
-                </Container>
-              </ProfileProvider>
-            </AdminShell>
+          <AppProvider preloadedState={preloadedState}>
+            {forbidden ? (
+              <ForbiddenState />
+            ) : (
+              <AdminShell user={session.user} navigationMode='account'>
+                <ProfileProvider profile={profile!}>
+                  <Container w='100%' size='xl'>
+                    <PageHeader title='บัญชีของฉัน' />
+                    {children}
+                  </Container>
+                </ProfileProvider>
+              </AdminShell>
+            )}
           </AppProvider>
         </NextIntlClientProvider>
       </body>

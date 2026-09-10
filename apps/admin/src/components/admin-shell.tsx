@@ -23,11 +23,13 @@ import type { SidebarNavigationMode } from "./navigation/navigation-utils";
 export function AdminShell({
   user,
   organizationSlug,
+  organizationId,
   navigationMode = "app",
   children,
 }: Readonly<{
   user: AdminUser;
-  organizationSlug: string;
+  organizationSlug?: string;
+  organizationId?: string;
   navigationMode?: SidebarNavigationMode;
   children: ReactNode;
 }>) {
@@ -102,12 +104,21 @@ export function AdminShell({
     </AppShell>
   );
 
-  if (navigationMode === "account") {
+  if (navigationMode === 'account') {
     return shell;
   }
 
+  if (!organizationSlug || !organizationId) {
+    throw new Error(
+      'AdminShell requires organization scope outside account navigation mode'
+    );
+  }
+
   return (
-    <OrganizationProvider organizationSlug={organizationSlug}>
+    <OrganizationProvider
+      organizationSlug={organizationSlug}
+      organizationId={organizationId}
+    >
       {shell}
     </OrganizationProvider>
   );

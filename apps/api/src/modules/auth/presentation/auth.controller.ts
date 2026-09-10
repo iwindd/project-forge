@@ -11,7 +11,10 @@ import {
   UseGuards
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
-import { z } from 'zod'
+import {
+  apiNullSuccessResponseSchema,
+  apiSuccess,
+} from '../../../common/http/api-response.js'
 import type { AuditLogPort } from '../../../common/audit/audit.port.js'
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js'
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
@@ -22,7 +25,6 @@ import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js'
 import { getCookie } from '../../../common/http/request-context.js'
 import type { SecurityLogPort } from '../../../common/security/security-log.port.js'
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js'
-import { OrganizationService } from '../../organizations/application/organization.service.js'
 import type { UserRepository } from '../../users/application/ports/user.repository.js'
 import { USER_REPOSITORY } from '../../users/application/ports/user.repository.js'
 import type { AuthConfig } from '../application/ports/auth.ports.js'
@@ -31,11 +33,13 @@ import { CompleteGithubLoginUseCase } from '../application/use-cases/complete-gi
 import { LogoutUseCase } from '../application/use-cases/logout-use-case.js'
 import { StartGithubLoginUseCase } from '../application/use-cases/start-github-login-use-case.js'
 import { ProfileConnectionRepository } from '../infrastructure/persistence/profile-connection.repository.js'
-
-const updateProfileSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  reason: z.string().trim().max(1000).optional().default('')
-})
+import {
+  authMeDataSchema,
+  authMeResponseSchema,
+  authUpdateMeResponseSchema,
+  githubCallbackQuerySchema,
+  updateProfileSchema,
+} from './dto/auth.schemas.js'
 
 @Controller('auth')
 export class AuthController {
@@ -48,7 +52,6 @@ export class AuthController {
     @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
     private readonly profileConnections: ProfileConnectionRepository,
-    private readonly organizations: OrganizationService,
     @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort
   ) {}
 
@@ -71,30 +74,34 @@ export class AuthController {
 
   @Get('github/callback')
   async callback(
-    @Query('code') code: string | undefined,
-    @Query('state') state: string | undefined,
+    @Query() query: unknown,
     @Req() request: Request,
     @Res() response: Response
   ) {
+    const parsedQuery = githubCallbackQuerySchema.safeParse(query)
     const expected = getCookie(request, 'pf_oauth_state')
-    if (!code || !state || state !== expected) {
+    if (!parsedQuery.success || parsedQuery.data.state !== expected) {
       return response.redirect(
         this.adminRedirect('/admin/login?error=invalid_oauth_state')
       )
     }
     try {
-      const result = await this.completeGithubLogin.execute(code)
+      const result = await this.completeGithubLogin.execute(parsedQuery.data.code)
       response.clearCookie('pf_oauth_state', { path: '/' })
-      response.cookie('pf_session', result.sessionToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: this.config.cookieSecure,
-        maxAge: this.config.sessionTtlSeconds * 1000,
-        path: '/'
-      })
+      if (result.sessionToken) {
+        response.cookie('pf_session', result.sessionToken, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: this.config.cookieSecure,
+          maxAge: this.config.sessionTtlSeconds * 1000,
+          path: '/'
+        })
+      } else {
+        response.clearCookie('pf_session', { path: '/' })
+      }
       const destination =
         result.principal.accessStatus === 'APPROVED'
-          ? '/'
+          ? `/${encodeURIComponent(result.organizationSlug)}`
           : '/admin/login?status=pending'
       return response.redirect(this.adminRedirect(destination))
     } catch (error) {
@@ -112,9 +119,12 @@ export class AuthController {
   @UseGuards(SessionGuard)
   async me(@Principal() principal: AuthenticatedPrincipal) {
     const profile = await this.profileConnections.findProfile(principal.id)
-    const organizations = await this.organizations.listForUser(principal.id)
-    return {
-      user: principal,
+    const data = {
+      user: {
+        ...principal,
+        createdAt: principal.createdAt.toISOString(),
+        updatedAt: principal.updatedAt.toISOString(),
+      },
       profile: profile
         ? {
             id: principal.id,
@@ -126,14 +136,8 @@ export class AuthController {
             updatedAt: profile.updatedAt.toISOString()
           }
         : null,
-      organizations: organizations.map(({ organization, role }) => ({
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-        type: organization.type,
-        role
-      }))
     }
+    return authMeResponseSchema.parse(apiSuccess(authMeDataSchema.parse(data)))
   }
 
   @Patch('me')
@@ -143,7 +147,7 @@ export class AuthController {
     @Body() body: unknown
   ) {
     const input = updateProfileSchema.parse(body)
-    return this.unitOfWork.run(async () => {
+    const data = await this.unitOfWork.run(async () => {
       const user = await this.users.findById(principal.id)
       if (!user) return { user: principal }
       const name = input.name.trim()
@@ -170,6 +174,13 @@ export class AuthController {
       }
       return { user: { ...user } }
     })
+    return authUpdateMeResponseSchema.parse(apiSuccess({
+      user: {
+        ...data.user,
+        createdAt: data.user.createdAt.toISOString(),
+        updatedAt: data.user.updatedAt.toISOString(),
+      },
+    }))
   }
 
   @Post('logout')
@@ -180,11 +191,13 @@ export class AuthController {
     ).principal
     await this.logout.execute(getCookie(request, 'pf_session'))
     await this.security.record({
-      organizationId: principal?.activeOrganizationId ?? null,
+      organizationId: null,
       userId: principal?.id ?? null,
       event: 'LOGOUT'
     })
     response.clearCookie('pf_session', { path: '/' })
-    return response.status(204).send()
+    return response
+      .status(200)
+      .json(apiNullSuccessResponseSchema.parse(apiSuccess(null)))
   }
 }

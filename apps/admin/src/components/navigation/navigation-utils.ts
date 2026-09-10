@@ -6,7 +6,6 @@ import {
 import {
   accountNavigation,
   adminNavigation,
-  adminRootNavigation,
   type AdminNavigationGroup,
   type AdminNavigationItem
 } from '@/lib/navigation'
@@ -70,7 +69,7 @@ export function useNavigationGroups(
     return accountNavigation
   }
 
-  return mode === 'admin' ? adminRootNavigation : adminGroups
+  return mode === 'admin' ? [] : adminGroups
 }
 
 export function getNavItems(groups: NavGroup[]) {

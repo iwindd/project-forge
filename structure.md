@@ -9,7 +9,7 @@ Reference เหล่านี้ใช้เป็นแนวทางเท�
 ~~~text
 project-forge/
 ├── apps/
-│   ├── web/                         # Next.js: user-facing application
+│   ├── admin/                       # Next.js: admin and organization application
 │   └── api/                         # NestJS: HTTP API and domain use cases
 ├── infra/
 │   ├── compose/                     # local/self-host services
@@ -21,12 +21,12 @@ project-forge/
 └── phase_1.md
 ~~~
 
-เริ่มเป็น monorepo แบบ pnpm workspace เพื่อแยก deployable apps โดยไม่มี packages/shared หรือ packages/ui ในรุ่นแรก แต่ละ app มี types/schema ของตัวเองและ web เรียก API ผ่าน client layer ส่วน Next.js ใช้ App Router และ route group/layout แบบ apptech ปัจจุบันมีเพียง `apps/web` กับ `apps/api`; worker จะเพิ่มเมื่อเริ่ม background workflow ใน phase หลัง
+เริ่มเป็น monorepo แบบ pnpm workspace เพื่อแยก deployable apps โดยไม่มี packages/shared หรือ packages/ui ในรุ่นแรก แต่ละ app มี types/schema ของตัวเอง และ `apps/admin` เรียก API ผ่าน client layer ส่วน Next.js ใช้ App Router และ route group/layout แบบ apptech ปัจจุบันมีเพียง `apps/admin` กับ `apps/api`; worker จะเพิ่มเมื่อเริ่ม background workflow ใน phase หลัง
 
-## Web application
+## Admin application
 
 ~~~text
-apps/web/src/
+apps/admin/src/
 ├── app/
 │   ├── (auth)/                       # login, access-pending, access-blocked
 │   ├── (main)/
@@ -37,7 +37,7 @@ apps/web/src/
 │   │       ├── new/page.tsx          # add project
 │   │       └── [projectId]/page.tsx  # project detail/edit
 │   ├── layout.tsx                    # minimal document/root setup
-│   └── admin/                        # internal admin routes within this web app
+│   └── admin/                        # internal admin routes within this Next.js app
 ├── components/
 │   ├── layout/                       # app shell, nav, account menu
 │   ├── projects/                     # cards, form, status, detail
@@ -45,23 +45,22 @@ apps/web/src/
 ├── features/
 │   ├── auth/
 │   └── projects/
-└── libs/api/                         # typed NestJS API client; no database access
+└── lib/api/                          # typed NestJS API client; no database access
 ~~~
 
-Apptech เป็น reference สำหรับ App Router layouts, providers, page header, navigation, responsive behavior และ error/loading screens โดย admin อยู่ใน web app เดียวกันที่ /admin และใช้ protected layout แยกจาก user pages
+Apptech เป็น reference สำหรับ App Router layouts, providers, page header, navigation, responsive behavior และ error/loading screens โดย admin อยู่ใน Next.js app ที่ `/admin` และใช้ protected layout แยกจาก account และ organization routes
 
-## Admin area ใน web app
+## Admin routes
 
 ~~~text
-apps/web/src/app/admin/
-├── app/
-│   ├── (auth)/layout.tsx             # admin login/blocked states
-│   ├── admin/layout.tsx              # admin guard + admin shell
-│   └── admin/
-│       ├── page.tsx                  # dashboard summary
-│       ├── users/page.tsx             # user table
-│       ├── users/[userId]/page.tsx   # user detail
-│       └── access-requests/page.tsx  # pending requests
+apps/admin/src/
+├── app/admin/
+│   ├── (auth)/                       # admin login/blocked states
+│   ├── (main)/                       # admin guard + admin shell
+│   │   ├── home/page.tsx             # dashboard summary
+│   │   ├── users/page.tsx            # user table
+│   │   └── audit-logs/page.tsx       # security history
+│   └── invitations/[token]/page.tsx  # invitation acceptance
 ├── components/
 │   ├── admin-shell.tsx
 │   ├── admin-header.tsx
@@ -75,12 +74,12 @@ apps/web/src/app/admin/
 ├── features/
 │   ├── users/
 │   └── access-requests/
-└── libs/api/                         # typed NestJS API access; no database access
+└── lib/api/                          # typed NestJS API access; no database access
 ~~~
 
-Apptech เป็น reference สำหรับ header, sidebar, page header และ theme ส่วน Pawpal เป็น reference สำหรับ user list/detail, permission navigation, filter, action menu, status action และ history layout โดยไม่มี frontend admin app แยก
+Apptech เป็น reference สำหรับ header, sidebar, page header และ theme ส่วน Pawpal เป็น reference สำหรับ user list/detail, permission navigation, filter, action menu, status action และ history layout โดย `apps/admin` เป็น frontend admin app หลัก
 
-ระบบยังแยก user area กับ admin area ด้วย route group/layout ภายใน web app เดียวกัน เพราะ navigation, provider, authorization และ error boundary คนละชุด การซ่อนเมนูไม่ใช่การป้องกันสิทธิ์ /admin ต้องมี server-side authorization ของ NestJS และ protected admin layout
+ระบบยังแยก account, organization และ admin area ด้วย route group/layout ภายใน Next.js app เดียวกัน เพราะ navigation, provider, authorization และ error boundary คนละชุด การซ่อนเมนูไม่ใช่การป้องกันสิทธิ์ `/admin` ต้องมี server-side authorization ของ NestJS และ protected admin layout
 
 ## NestJS API structure
 
@@ -120,9 +119,9 @@ Hermes, Chat, Sandbox, Issues และ Pull Requests จะยังไม่�
 
 ## API client boundary
 
-Next.js เรียก NestJS ผ่าน apps/web/src/lib/api.ts แยก API client กับ UI ให้ชัด API client จัดการ base URL, credentials, error envelope, pagination และ request IDs ฝั่ง web ไม่ import MikroORM entity, database config หรือ API private secret
+Next.js เรียก NestJS ผ่าน `apps/admin/src/lib/api/api.ts` สำหรับ browser และ `apps/admin/src/lib/api-server.ts` สำหรับ SSR แยก API client กับ UI ให้ชัด API client จัดการ base URL, credentials, error envelope, pagination และ request IDs ฝั่ง admin ไม่ import MikroORM entity, database config หรือ API private secret
 
-Phase 1 ใช้ UI components ภายใน apps/web/src/components/ ไปก่อน ไม่แยก packages/ui หรือ type declaration package เพื่อให้ขอบเขตเล็กและเปลี่ยน UI ได้เร็ว เมื่อมี duplication ที่พิสูจน์แล้วค่อย extract ใน phase หลัง
+Phase 1 ใช้ UI components ภายใน `apps/admin/src/components/` ไปก่อน ไม่แยก packages/ui หรือ type declaration package เพื่อให้ขอบเขตเล็กและเปลี่ยน UI ได้เร็ว เมื่อมี duplication ที่พิสูจน์แล้วค่อย extract ใน phase หลัง
 
 ## Database baseline
 
@@ -161,8 +160,8 @@ Phase 1 role มี ADMIN และ USER; access status มี PENDING, APPROVED
 
 ## Routing and layout rules
 
-- apps/web มี public/auth layout และ authenticated main layout แยกกัน
-- apps/web มี protected admin layout ภายใน web app
+- apps/admin มี public/auth layout และ authenticated main layout แยกกัน
+- apps/admin มี protected admin layout ภายใน Next.js app
 - route config เป็น source สำหรับ sidebar, breadcrumbs และ permission hints
 - direct URL access ต้องถูกตรวจซ้ำที่ server/API
 - global root layout มีเฉพาะ document, fonts และ providers ที่จำเป็น
@@ -173,8 +172,7 @@ Phase 1 role มี ADMIN และ USER; access status มี PENDING, APPROVED
 
 ~~~text
 pnpm dev:api
-pnpm dev:web
-pnpm dev:web
+pnpm dev:admin
 pnpm db:migrate
 pnpm db:seed
 pnpm check-types

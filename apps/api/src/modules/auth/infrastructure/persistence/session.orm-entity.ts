@@ -12,9 +12,6 @@ export class SessionOrmEntity {
   @Property({ type: 'uuid' })
   userId!: string;
 
-  @Property({ type: 'uuid', nullable: true })
-  activeOrganizationId: string | null = null;
-
   @Property({ type: 'text', unique: true })
   tokenHash!: string;
 

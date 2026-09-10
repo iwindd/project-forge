@@ -2,7 +2,9 @@ import { auth } from '@/auth'
 import { AdminShell } from '@/components/admin-shell'
 import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
 import { AppProvider } from '@/components/providers/app-provider'
-import { apiServerFetch } from '@/lib/api-server'
+import { createPreloadedState } from '@/lib/store'
+import { scopeUserToOrganization } from '@/session'
+import { getOrganizations } from '@/servers/organization/queries/get-organizations'
 import { fontClasses } from '@/themes/shadcn/font'
 import { mantineHtmlProps } from '@mantine/core'
 import '@mantine/tiptap/styles.css'
@@ -35,7 +37,9 @@ export default async function OrganizationLayout({
     redirect('/admin/login')
   }
 
-  const organization = session.organizations.find(
+  const organizations = await getOrganizations()
+
+  const organization = organizations.find(
     candidate => candidate.slug === organizationSlug
   )
 
@@ -43,19 +47,10 @@ export default async function OrganizationLayout({
     notFound()
   }
 
-  if (session.user.activeOrganizationId !== organization.id) {
-    try {
-      await apiServerFetch(
-        `organizations/${encodeURIComponent(organization.id)}/switch`,
-        { method: 'POST' }
-      )
-    } catch {
-      notFound()
-    }
-  }
-
   const locale = await getLocale()
   const messages = await getMessages()
+  const user = scopeUserToOrganization(session.user, organization)
+  const preloadedState = await createPreloadedState({ user }, organizations)
 
   return (
     <html
@@ -69,14 +64,11 @@ export default async function OrganizationLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AppProvider
-            preloadedState={{
-              auth: { user: session.user }
-            }}
-          >
+          <AppProvider preloadedState={preloadedState}>
             <AdminShell
-              user={session.user}
+              user={user}
               organizationSlug={organization.slug}
+              organizationId={organization.id}
             >
               {children}
             </AdminShell>

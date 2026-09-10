@@ -1,8 +1,8 @@
 'use client'
 
 import { useAppDispatch } from '@/hooks'
+import { api } from '@/lib/api/api'
 import { auditLogsApi } from '@/lib/features/audit-log/audit-logs-api'
-import { organizationMembersApi } from '@/lib/features/organization/organization-members-api'
 import { usersApi } from '@/lib/features/user/users-api'
 import { useCallback } from 'react'
 
@@ -30,9 +30,7 @@ export function useAdminCacheInvalidation() {
   )
 
   const resetAllAdminApiCaches = useCallback(() => {
-    dispatch(usersApi.util.resetApiState())
-    dispatch(auditLogsApi.util.resetApiState())
-    dispatch(organizationMembersApi.util.resetApiState())
+    dispatch(api.util.resetApiState())
   }, [dispatch])
 
   return { invalidateAdminCaches, resetAllAdminApiCaches }

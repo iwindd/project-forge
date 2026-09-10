@@ -1,5 +1,18 @@
 import { z } from 'zod';
+import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
 import { AccessStatus, UserRole } from '../../domain/user.js';
+
+export const userIdParamSchema = z.object({ id: databaseUuidSchema });
+
+export const userListQuerySchema = z.object({
+  search: z.string().trim().max(200).optional(),
+  status: z.enum(['all', 'active', 'inactive']).optional().default('all'),
+  role: z.enum(['ADMIN', 'EDITOR']).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(5).max(100).optional().default(25),
+  sortBy: z.enum(['name', 'email', 'role', 'isActive', 'createdAt']).optional().default('createdAt'),
+  sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
+});
 
 export const changeUserStatusSchema = z.object({
   status: z.enum([AccessStatus.APPROVED, AccessStatus.REJECTED, AccessStatus.SUSPENDED]),

@@ -24,25 +24,6 @@ const adminRoutes = ROUTER({
       }
     }
   },
-  admin: {
-    path: '/admin',
-    label: 'ระบบจัดการ',
-    hiddenBreadcrumb: true,
-    children: {
-      users: {
-        path: '/admin/users',
-        label: 'ผู้ใช้งาน',
-        navigationLabelKey: 'users',
-        permission: 'manageUsers'
-      },
-      activities: {
-        path: '/admin/activities',
-        label: 'ประวัติการทำรายการ',
-        navigationLabelKey: 'auditLogs',
-        permission: 'viewAuditLogs'
-      }
-    }
-  },
   profile: {
     path: '/:organizationSlug/profile',
     label: 'โปรไฟล์',
@@ -68,27 +49,13 @@ const adminRoutes = ROUTER({
         path: '/:organizationSlug/users',
         label: 'ผู้ใช้งาน',
         navigationLabelKey: 'users',
-        permission: 'manageUsers',
-        children: {
-          profile: {
-            path: '/:organizationSlug/users/:userId/profile',
-            label: 'รายละเอียดผู้ใช้งาน',
-            navigationLabelKey: 'userDetail',
-            permission: 'manageUsers'
-          },
-          logging: {
-            path: '/:organizationSlug/users/:userId/logging',
-            label: 'ประวัติการทำรายการ',
-            navigationLabelKey: 'auditLogs',
-            permission: 'manageUsers'
-          }
-        }
+        permission: 'manageUsers'
       },
       auditLogs: {
         path: '/:organizationSlug/audit-logs',
         label: 'ประวัติการทำรายการ',
         navigationLabelKey: 'auditLogs',
-        permission: 'viewAuditLogs'
+        permission: 'manageOrganization'
       }
     }
   },

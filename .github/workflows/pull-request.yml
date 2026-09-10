@@ -16,26 +16,49 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Prepare CI environment
         run: cp .env.example .env
 
-      - name: Lint
-        run: npm run lint
+      - name: API lint
+        run: pnpm --filter @project-forge/api lint
 
-      - name: Test
-        run: npm test
+      - name: API test
+        run: pnpm --filter @project-forge/api test
 
-      - name: Build
-        run: npm run build
+      - name: API typecheck
+        run: pnpm --filter @project-forge/api check-types
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: API build
+        run: pnpm --filter @project-forge/api build
+
+      - name: Admin lint
+        run: pnpm --filter @project-forge/admin lint
+
+      - name: Admin test
+        run: pnpm --filter @project-forge/admin test
+
+      - name: Admin typecheck
+        run: pnpm --filter @project-forge/admin typecheck
+
+      - name: Admin client-boundary check
+        run: pnpm --filter @project-forge/admin check:admin-client-boundary
+
+      - name: Admin UI i18n check
+        run: pnpm --filter @project-forge/admin check:ui-i18n
+
+      - name: Admin build
+        run: pnpm --filter @project-forge/admin build

@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   Res,
+  NotFoundException,
   UseGuards
 } from '@nestjs/common'
 import type { Response } from 'express'
@@ -15,20 +16,23 @@ import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
 import { Principal } from '../../../common/auth/principal.decorator.js'
 import { SessionGuard } from '../../../common/auth/session.guard.js'
 import { UserSecurityLogOrmEntity } from '../../../common/security/user-security-log.orm-entity.js'
+import { apiSuccess } from '../../../common/http/api-response.js'
 import { OrganizationService } from '../../organizations/application/organization.service.js'
 import { ORGANIZATION_PERMISSIONS } from '../../organizations/domain/organization.js'
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js'
-
-type AuditQuery = {
-  search?: string
-  actions?: string
-  resourceTypes?: string
-  from?: string
-  to?: string
-  organizationId?: string
-  page?: string
-  limit?: string
-}
+import {
+  auditLogIdParamSchema,
+  auditLogOrganizationParamSchema,
+  auditLogOrganizationUserParamSchema,
+  auditLogQuerySchema,
+  auditLogUserParamSchema,
+  type AuditLogQuery
+} from './dto/audit-log.schemas.js'
+import {
+  auditLogExportResponseSchema,
+  auditLogListResponseSchema,
+  securityLogListResponseSchema
+} from './dto/audit-log-response.schemas.js'
 
 @Controller('audit-logs')
 @UseGuards(SessionGuard)
@@ -40,30 +44,36 @@ export class AuditLogsController {
 
   @Get()
   @UseGuards(AdminGuard)
-  list(@Query() query: AuditQuery) {
+  list(@Query() rawQuery: unknown) {
+    const query = auditLogQuerySchema.parse(rawQuery)
     return this.queryLogs(query, 'all')
   }
 
   @Get('me')
   listMine(
     @Principal() principal: AuthenticatedPrincipal,
-    @Query() query: AuditQuery
+    @Query() rawQuery: unknown
   ) {
+    const query = auditLogQuerySchema.parse(rawQuery)
     return this.queryLogs(query, { userId: principal.id })
   }
 
   @Get('users/:userId')
   @UseGuards(AdminGuard)
-  listUser(@Param('userId') userId: string, @Query() query: AuditQuery) {
+  listUser(@Param() rawParams: unknown, @Query() rawQuery: unknown) {
+    const { userId } = auditLogUserParamSchema.parse(rawParams)
+    const query = auditLogQuerySchema.parse(rawQuery)
     return this.queryLogs(query, { userId })
   }
 
   @Get('organization/:organizationId')
   async listOrganization(
     @Principal() principal: AuthenticatedPrincipal,
-    @Param('organizationId') organizationId: string,
-    @Query() query: AuditQuery
+    @Param() rawParams: unknown,
+    @Query() rawQuery: unknown
   ) {
+    const { organizationId } = auditLogOrganizationParamSchema.parse(rawParams)
+    const query = auditLogQuerySchema.parse(rawQuery)
     await this.requireOrganizationViewer(principal, organizationId)
     return this.queryLogs(query, { organizationId })
   }
@@ -71,10 +81,12 @@ export class AuditLogsController {
   @Get('organization/:organizationId/users/:userId')
   async listOrganizationUser(
     @Principal() principal: AuthenticatedPrincipal,
-    @Param('organizationId') organizationId: string,
-    @Param('userId') userId: string,
-    @Query() query: AuditQuery
+    @Param() rawParams: unknown,
+    @Query() rawQuery: unknown
   ) {
+    const { organizationId, userId } =
+      auditLogOrganizationUserParamSchema.parse(rawParams)
+    const query = auditLogQuerySchema.parse(rawQuery)
     await this.requireOrganizationViewer(principal, organizationId)
     return this.queryLogs(query, { organizationId, userId })
   }
@@ -82,17 +94,20 @@ export class AuditLogsController {
   @Get('security/me')
   listMySecurityLogs(
     @Principal() principal: AuthenticatedPrincipal,
-    @Query() query: AuditQuery
+    @Query() rawQuery: unknown
   ) {
+    const query = auditLogQuerySchema.parse(rawQuery)
     return this.querySecurityLogs(query, { userId: principal.id })
   }
 
   @Get('security/organization/:organizationId')
   async listOrganizationSecurityLogs(
     @Principal() principal: AuthenticatedPrincipal,
-    @Param('organizationId') organizationId: string,
-    @Query() query: AuditQuery
+    @Param() rawParams: unknown,
+    @Query() rawQuery: unknown
   ) {
+    const { organizationId } = auditLogOrganizationParamSchema.parse(rawParams)
+    const query = auditLogQuerySchema.parse(rawQuery)
     await this.requireOrganizationViewer(principal, organizationId)
     return this.querySecurityLogs(query, { organizationId })
   }
@@ -100,63 +115,72 @@ export class AuditLogsController {
   @Get('security/organization/:organizationId/users/:userId')
   async listOrganizationUserSecurityLogs(
     @Principal() principal: AuthenticatedPrincipal,
-    @Param('organizationId') organizationId: string,
-    @Param('userId') userId: string,
-    @Query() query: AuditQuery
+    @Param() rawParams: unknown,
+    @Query() rawQuery: unknown
   ) {
+    const { organizationId, userId } =
+      auditLogOrganizationUserParamSchema.parse(rawParams)
+    const query = auditLogQuerySchema.parse(rawQuery)
     await this.requireOrganizationViewer(principal, organizationId)
     return this.querySecurityLogs(query, { organizationId, userId })
   }
 
   @Get(':id/export')
   @UseGuards(AdminGuard)
-  async export(@Param('id') id: string, @Res() response: Response) {
+  async export(@Param() rawParams: unknown, @Res() response: Response) {
+    const { id } = auditLogIdParamSchema.parse(rawParams)
     const log = await this.em.findOne(AuditLogOrmEntity, { id })
-    if (!log)
-      return response.status(404).json({ message: 'Audit log was not found' })
-    return response.json(log)
+    if (!log) throw newAuditLogNotFound()
+    return response.json(
+      auditLogExportResponseSchema.parse(apiSuccess(serializeAuditLogExport(log)))
+    )
   }
 
   @Get('me/:id/export')
   async exportMine(
-    @Param('id') id: string,
+    @Param() rawParams: unknown,
     @Principal() principal: AuthenticatedPrincipal,
     @Res() response: Response
   ) {
+    const { id } = auditLogIdParamSchema.parse(rawParams)
     const log = await this.em.findOne(AuditLogOrmEntity, { id })
     if (
       !log ||
       (log.actorId !== principal.id && log.targetUserId !== principal.id)
     ) {
-      return response.status(404).json({ message: 'Audit log was not found' })
+      throw newAuditLogNotFound()
     }
-    return response.json(log)
+    return response.json(
+      auditLogExportResponseSchema.parse(apiSuccess(serializeAuditLogExport(log)))
+    )
   }
 
   @Get('organization/:organizationId/:id/export')
   async exportOrganization(
-    @Param('organizationId') organizationId: string,
-    @Param('id') id: string,
+    @Param() rawParams: unknown,
     @Principal() principal: AuthenticatedPrincipal,
     @Res() response: Response
   ) {
+    const { organizationId, id } =
+      auditLogOrganizationParamSchema.extend(auditLogIdParamSchema.shape).parse(rawParams)
     await this.requireOrganizationViewer(principal, organizationId)
     const log = await this.em.findOne(AuditLogOrmEntity, { id, organizationId })
-    if (!log)
-      return response.status(404).json({ message: 'Audit log was not found' })
-    return response.json(log)
+    if (!log) throw newAuditLogNotFound()
+    return response.json(
+      auditLogExportResponseSchema.parse(apiSuccess(serializeAuditLogExport(log)))
+    )
   }
 
   private async queryLogs(
-    query: AuditQuery,
+    query: AuditLogQuery,
     scope:
       | 'all'
       | { userId: string }
       | { organizationId: string }
       | { organizationId: string; userId: string }
   ) {
-    const page = Math.max(Number(query.page) || 1, 1)
-    const limit = Math.min(Math.max(Number(query.limit) || 25, 1), 100)
+    const page = query.page
+    const limit = query.limit
     const where: FilterQuery<AuditLogOrmEntity> = {}
 
     const andConditions: FilterQuery<AuditLogOrmEntity>[] = []
@@ -215,8 +239,8 @@ export class AuditLogsController {
         : null
     }
 
-    return {
-      data: logs.map(log => ({
+    return auditLogListResponseSchema.parse(apiSuccess(
+      logs.map(log => ({
         id: log.id,
         createdAt: log.createdAt.toISOString(),
         action: log.action,
@@ -231,21 +255,24 @@ export class AuditLogsController {
         hasBefore: Boolean(log.beforeJson),
         hasAfter: Boolean(log.afterJson)
       })),
-      total,
-      page,
-      limit
-    }
+      {
+        total,
+        page,
+        pageSize: limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    ))
   }
 
   private async querySecurityLogs(
-    query: AuditQuery,
+    query: AuditLogQuery,
     scope:
       | { userId: string }
       | { organizationId: string }
       | { organizationId: string; userId: string }
   ) {
-    const page = Math.max(Number(query.page) || 1, 1)
-    const limit = Math.min(Math.max(Number(query.limit) || 25, 1), 100)
+    const page = query.page
+    const limit = query.limit
     const where: FilterQuery<UserSecurityLogOrmEntity> =
       'organizationId' in scope && 'userId' in scope
         ? {
@@ -272,8 +299,8 @@ export class AuditLogsController {
         offset: (page - 1) * limit
       }
     )
-    return {
-      data: logs.map(log => ({
+    return securityLogListResponseSchema.parse(apiSuccess(
+      logs.map(log => ({
         id: log.id,
         organizationId: log.organizationId,
         userId: log.userId,
@@ -284,10 +311,13 @@ export class AuditLogsController {
         metadata: log.metadata,
         createdAt: log.createdAt.toISOString()
       })),
-      total,
-      page,
-      limit
-    }
+      {
+        total,
+        page,
+        pageSize: limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    ))
   }
 
   private async requireOrganizationViewer(
@@ -310,5 +340,29 @@ export class AuditLogsController {
       })
     }
     return role
+  }
+}
+
+function newAuditLogNotFound() {
+  return new NotFoundException({
+    code: 'AUDIT_LOG_NOT_FOUND',
+    message: 'Audit log was not found'
+  })
+}
+
+function serializeAuditLogExport(log: AuditLogOrmEntity) {
+  return {
+    id: log.id,
+    organizationId: log.organizationId,
+    actorId: log.actorId,
+    targetUserId: log.targetUserId,
+    action: log.action,
+    resourceType: log.resourceType,
+    resourceId: log.resourceId,
+    beforeJson: log.beforeJson,
+    afterJson: log.afterJson,
+    reason: log.reason,
+    requestId: log.requestId,
+    createdAt: log.createdAt.toISOString()
   }
 }

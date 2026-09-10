@@ -11,7 +11,7 @@ type SidebarDrawerProps = {
   opened: boolean
   onCloseAction: () => void
   user: AdminUser
-  organizationSlug: string
+  organizationSlug?: string
   navigationMode?: SidebarNavigationMode
 }
 

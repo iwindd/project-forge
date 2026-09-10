@@ -1,8 +1,10 @@
 'use client'
 
+import { getBrowserApiErrorMessage } from '@/lib/api/api'
 import { getPath } from '@/routes'
 import {
   ActionIcon,
+  Alert,
   Avatar,
   Badge,
   Button,
@@ -14,6 +16,7 @@ import {
   Text,
   TextInput
 } from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
 import {
   IconBuilding,
   IconCheck,
@@ -23,15 +26,40 @@ import {
   IconUsers
 } from '@tabler/icons-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { useGetRolesQuery } from './organization-members-api'
+import { z } from 'zod'
 import {
-  useOrganizationContext,
-  type Organization
-} from './organization-provider'
+  useCreateInvitationMutation,
+  useGetRolesQuery
+} from './organization-members-api'
+import { useCreateOrganizationMutation } from './organization-api'
+import { useOrganizationContext } from './organization-provider'
+import { databaseUuidSchema } from './organization-schemas'
+import type { Organization } from './types'
 import classes from './organization-switcher.module.css'
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'
+export const createOrganizationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'กรุณาระบุชื่อ Organization')
+    .max(120, 'ชื่อ Organization ต้องไม่เกิน 120 ตัวอักษร')
+})
+
+export const inviteMemberFormSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email('กรุณาระบุอีเมลให้ถูกต้อง')
+    .or(z.literal('')),
+  roleId: databaseUuidSchema
+})
+
+type CreateOrganizationFormValues = z.infer<
+  typeof createOrganizationFormSchema
+>
+type InviteMemberFormValues = z.infer<typeof inviteMemberFormSchema>
 
 function getOrganizationInitial(name: string) {
   return name.trim().charAt(0).toUpperCase() || 'O'
@@ -59,6 +87,11 @@ export function OrganizationSwitcher() {
     loadOrganizations,
     switchOrganization
   } = useOrganizationContext()
+  const router = useRouter()
+  const [createOrganizationMutation, { isLoading: organizationCreating }] =
+    useCreateOrganizationMutation()
+  const [createInvitationMutation, { isLoading: invitationCreating }] =
+    useCreateInvitationMutation()
   const { data: rolesResult } = useGetRolesQuery(
     { organizationId: activeOrganization?.id ?? '' },
     { skip: !activeOrganization || !canInviteMembers(activeOrganization) }
@@ -66,12 +99,20 @@ export function OrganizationSwitcher() {
   const [createOpened, setCreateOpened] = useState(false)
   const [inviteOpened, setInviteOpened] = useState(false)
   const [search, setSearch] = useState('')
-  const [name, setName] = useState('')
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRoleId, setInviteRoleId] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [actionPending, setActionPending] = useState(false)
-  const pending = switchPending || actionPending
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const pending = switchPending || organizationCreating || invitationCreating
+  const createForm = useForm<CreateOrganizationFormValues>({
+    initialValues: { name: '' },
+    validate: schemaResolver(createOrganizationFormSchema),
+    validateInputOnBlur: true
+  })
+  const inviteForm = useForm<InviteMemberFormValues>({
+    initialValues: { email: '', roleId: '' },
+    validate: schemaResolver(inviteMemberFormSchema),
+    validateInputOnBlur: true
+  })
   const inviteRoles = useMemo(
     () =>
       (rolesResult?.data ?? []).filter(
@@ -79,61 +120,56 @@ export function OrganizationSwitcher() {
       ),
     [rolesResult?.data]
   )
-  const selectedInviteRoleId = inviteRoleId || inviteRoles[0]?.id || ''
+  const selectedInviteRoleId = inviteForm.values.roleId || inviteRoles[0]?.id || ''
 
-  const createOrganization = async () => {
-    if (!name.trim()) return
-
-    setActionPending(true)
+  const createOrganization = async (values: CreateOrganizationFormValues) => {
+    setCreateError(null)
     try {
-      const response = await fetch(`${apiOrigin}/api/v1/organizations`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name })
-      })
-
-      if (!response.ok) return
-
-      const result = (await response.json()) as {
-        organization: Organization
-      }
-      setName('')
+      const result = await createOrganizationMutation(values).unwrap()
+      createForm.reset()
       setCreateOpened(false)
       await loadOrganizations()
-      await switchOrganization(result.organization.id)
-    } finally {
-      setActionPending(false)
+      router.push(`/${encodeURIComponent(result.organization.slug)}`)
+    } catch (error) {
+      setCreateError(
+        getBrowserApiErrorMessage(error, 'ไม่สามารถสร้าง Organization ได้')
+      )
     }
   }
 
-  const createInvitation = async () => {
-    if (!activeOrganization || !selectedInviteRoleId) return
+  const createInvitation = async (values: InviteMemberFormValues) => {
+    if (!activeOrganization) return
 
-    setActionPending(true)
+    setInviteError(null)
     try {
-      const response = await fetch(
-        `${apiOrigin}/api/v1/organizations/${activeOrganization.id}/invitations`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            email: inviteEmail || null,
-            roleId: selectedInviteRoleId
-          })
-        }
-      )
-
-      if (!response.ok) return
-
-      const result = (await response.json()) as { token: string }
+      const result = await createInvitationMutation({
+        organizationId: activeOrganization.id,
+        email: values.email || null,
+        roleId: values.roleId
+      }).unwrap()
       setInviteLink(
         `${window.location.origin}/admin/invitations/${result.token}`
       )
-    } finally {
-      setActionPending(false)
+      inviteForm.setFieldValue('email', '')
+    } catch (error) {
+      setInviteError(
+        getBrowserApiErrorMessage(error, 'ไม่สามารถสร้างลิงก์เชิญได้')
+      )
     }
+  }
+
+  const openCreateOrganization = () => {
+    setCreateError(null)
+    createForm.reset()
+    setCreateOpened(true)
+  }
+
+  const openInviteMembers = () => {
+    setInviteError(null)
+    if (!inviteForm.values.roleId && inviteRoles[0]?.id) {
+      inviteForm.setFieldValue('roleId', inviteRoles[0].id)
+    }
+    setInviteOpened(true)
   }
 
   const filteredOrganizations = useMemo(() => {
@@ -147,9 +183,9 @@ export function OrganizationSwitcher() {
     )
   }, [organizations, search])
 
-  if (!organizations.length) return null
+  if (!organizations.length || !activeOrganization) return null
 
-  const selectedOrganization = activeOrganization ?? organizations[0]
+  const selectedOrganization = activeOrganization
   const showInviteAction = canInviteMembers(activeOrganization)
 
   return (
@@ -255,7 +291,7 @@ export function OrganizationSwitcher() {
 
           <Menu.Item
             leftSection={<IconPlus size={18} />}
-            onClick={() => setCreateOpened(true)}
+            onClick={openCreateOrganization}
           >
             <Stack gap={0}>
               <Text size='sm' fw={600}>
@@ -270,7 +306,7 @@ export function OrganizationSwitcher() {
           {showInviteAction && (
             <Menu.Item
               leftSection={<IconUsers size={18} />}
-              onClick={() => setInviteOpened(true)}
+              onClick={openInviteMembers}
             >
               <Stack gap={0}>
                 <Text size='sm' fw={600}>
@@ -287,58 +323,70 @@ export function OrganizationSwitcher() {
 
       <Modal
         opened={createOpened}
-        onClose={() => setCreateOpened(false)}
+        onClose={() => {
+          setCreateOpened(false)
+          setCreateError(null)
+        }}
         title='สร้าง Organization'
       >
-        <Stack>
-          <TextInput
-            label='ชื่อ Organization'
-            value={name}
-            onChange={event => setName(event.currentTarget.value)}
-          />
-          <Button
-            onClick={() => void createOrganization()}
-            loading={pending}
-            disabled={!name.trim()}
-          >
-            สร้าง
-          </Button>
-        </Stack>
+        <form onSubmit={createForm.onSubmit(createOrganization)}>
+          <Stack>
+            <TextInput
+              label='ชื่อ Organization'
+              {...createForm.getInputProps('name')}
+            />
+            <Button
+              type='submit'
+              loading={organizationCreating || createForm.submitting}
+            >
+              สร้าง
+            </Button>
+            {createError ? <Alert color='red'>{createError}</Alert> : null}
+          </Stack>
+        </form>
       </Modal>
 
       <Modal
         opened={inviteOpened}
-        onClose={() => setInviteOpened(false)}
+        onClose={() => {
+          setInviteOpened(false)
+          setInviteError(null)
+        }}
         title='เชิญสมาชิกเข้า Organization'
       >
-        <Stack>
-          <TextInput
-            label='อีเมลสำหรับตรวจสอบสิทธิ์ (ไม่บังคับ)'
-            value={inviteEmail}
-            onChange={event => setInviteEmail(event.currentTarget.value)}
-          />
-          <Select
-            label='บทบาท'
-            value={selectedInviteRoleId || null}
-            onChange={value => value && setInviteRoleId(value)}
-            data={inviteRoles.map(role => ({
-              value: role.id as string,
-              label: role.name
-            }))}
-          />
-          <Button
-            onClick={() => void createInvitation()}
-            loading={pending}
-            disabled={!selectedInviteRoleId}
-          >
-            สร้างลิงก์เชิญ
-          </Button>
-          {inviteLink ? (
-            <Text size='sm' style={{ wordBreak: 'break-all' }}>
-              {inviteLink}
-            </Text>
-          ) : null}
-        </Stack>
+        <form onSubmit={inviteForm.onSubmit(createInvitation)}>
+          <Stack>
+            <TextInput
+              label='อีเมลสำหรับตรวจสอบสิทธิ์ (ไม่บังคับ)'
+              {...inviteForm.getInputProps('email')}
+            />
+            <Select
+              label='บทบาท'
+              value={selectedInviteRoleId || null}
+              onChange={value =>
+                inviteForm.setFieldValue('roleId', value ?? '')
+              }
+              error={inviteForm.errors.roleId}
+              data={inviteRoles.map(role => ({
+                value: role.id as string,
+                label: role.name
+              }))}
+            />
+            <Button
+              type='submit'
+              loading={invitationCreating || inviteForm.submitting}
+              disabled={!inviteForm.values.roleId}
+            >
+              สร้างลิงก์เชิญ
+            </Button>
+            {inviteLink ? (
+              <Text size='sm' style={{ wordBreak: 'break-all' }}>
+                {inviteLink}
+              </Text>
+            ) : null}
+            {inviteError ? <Alert color='red'>{inviteError}</Alert> : null}
+          </Stack>
+        </form>
       </Modal>
     </>
   )

@@ -1,38 +1,28 @@
 import { apiServerFetch } from "@/lib/api-server";
-import { auth } from "@/auth";
+import {
+  normalizeUserRole,
+  userDetailResponseSchema,
+  type UserDetailResponse,
+} from "../schemas";
 import type { UserDetail } from "../types";
 
-type ApiUser = {
-  id: string;
-  githubLogin: string;
-  name: string | null;
-  role: "ADMIN" | "USER" | "OWNER" | "MEMBER";
-  accessStatus: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-function toUser(user: ApiUser): UserDetail {
+function toUser(user: UserDetailResponse['user']): UserDetail {
   return {
     id: user.id,
-    name: user.name ?? user.githubLogin,
-    email: user.githubLogin,
-    role: user.role === "ADMIN" || user.role === "OWNER" ? "ADMIN" : "EDITOR",
-    isActive: user.isActive && user.accessStatus !== "SUSPENDED",
+    name: user.name ?? user.githubLogin ?? user.email ?? user.id,
+    email: user.email ?? user.githubLogin ?? '',
+    role: normalizeUserRole(user.role),
+    isActive: user.isActive && user.accessStatus !== 'SUSPENDED',
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
 }
 
-export async function getUserDetail(userId: string) {
+export async function getUserDetail(userId: string, organizationId: string) {
   try {
-    const session = await auth();
-    const organizationId = session?.user.activeOrganizationId ?? session?.organizations?.[0]?.id;
-    const result = await apiServerFetch<{ user: ApiUser }>(
-      organizationId
-        ? `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`
-        : `admin/users/${encodeURIComponent(userId)}`,
+    const result = await apiServerFetch(
+      `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`,
+      userDetailResponseSchema,
     );
     return toUser(result.user);
   } catch {

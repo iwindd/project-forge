@@ -31,7 +31,7 @@ export class ProfileConnectionRepository {
     return this.em.findOne(ProfileOrmEntity, { userId });
   }
 
-  async updateProfile(userId: string, input: { displayName?: string; bio?: string | null; timezone?: string | null }) {
+  async updateProfile(userId: string, input: { displayName?: string | null; bio?: string | null; timezone?: string | null }) {
     const profile = await this.findProfile(userId);
     if (!profile) return null;
     if (input.displayName !== undefined) profile.displayName = input.displayName;

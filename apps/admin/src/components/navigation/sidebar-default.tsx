@@ -19,7 +19,7 @@ export default function SidebarDefault({
   onNavigateAction
 }: {
   user: AdminUser
-  organizationSlug: string
+  organizationSlug?: string
   navigationMode?: SidebarNavigationMode
   onNavigateAction?: () => void
 }) {

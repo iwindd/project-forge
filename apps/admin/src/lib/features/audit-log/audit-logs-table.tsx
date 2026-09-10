@@ -8,6 +8,7 @@ import {
 import TableSearchInput from '@/components/table-search-input'
 import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation'
 import useDatatable from '@/hooks/use-datatable'
+import { getBrowserApiErrorMessage } from '@/lib/api/api'
 import { parseListAuditLogsQuery } from '@/servers/audit-log/queries/get-audit-log-list-schema'
 import type {
   AuditLogListItem,
@@ -31,15 +32,16 @@ import { DataTable, type DataTableColumn } from 'mantine-datatable'
 import { useFormatter } from 'next-intl'
 import { useCallback, useMemo, useState } from 'react'
 import {
-  AUDIT_ACTION_LABELS,
   AUDIT_ACTOR_ROLE_LABELS,
-  AUDIT_RESOURCE_TYPE_LABELS
+  getAuditActionLabel,
+  getAuditResourceTypeLabel
 } from './audit-log-labels'
 import {
-  getAuditLogExportUrl,
+  useExportAuditLogMutation,
   useGetAuditLogsQuery,
   type AuditLogScopeArg
 } from './audit-logs-api'
+import { useOptionalOrganizationContext } from '../organization/organization-provider'
 import {
   AuditLogsFilterDrawer,
   RELATIONSHIP_LABELS
@@ -83,23 +85,27 @@ function UserCell({
 
 function AuditLogExportMenuItem({
   scope,
-  auditLogId
+  auditLogId,
+  organizationId
 }: {
   scope: AuditLogScopeArg
   auditLogId: string
+  organizationId?: string
 }) {
   const { invalidateAdminCaches } = useAdminCacheInvalidation()
+  const [exportAuditLog] = useExportAuditLogMutation()
   const [downloading, setDownloading] = useState(false)
 
   const downloadExport = async () => {
     setDownloading(true)
     try {
-      const response = await fetch(getAuditLogExportUrl(scope, auditLogId), {
-        cache: 'no-store'
-      })
-      if (!response.ok) throw new Error('audit export failed')
-
-      const objectUrl = URL.createObjectURL(await response.blob())
+      const payload = await exportAuditLog({
+        scope,
+        auditLogId,
+        organizationId
+      }).unwrap()
+      const blob = new Blob([payload], { type: 'application/json' })
+      const objectUrl = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = objectUrl
       anchor.download = `audit-log-${auditLogId}.json`
@@ -108,10 +114,13 @@ function AuditLogExportMenuItem({
       anchor.remove()
       URL.revokeObjectURL(objectUrl)
       invalidateAdminCaches()
-    } catch {
+    } catch (error) {
       notifications.show({
         title: 'ดาวน์โหลดไม่สำเร็จ',
-        message: 'ไม่สามารถส่งออกบันทึกกิจกรรมได้ กรุณาลองใหม่อีกครั้ง',
+        message: getBrowserApiErrorMessage(
+          error,
+          'ไม่สามารถส่งออกบันทึกกิจกรรมได้ กรุณาลองใหม่อีกครั้ง'
+        ),
         color: 'red'
       })
     } finally {
@@ -166,6 +175,8 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         : { kind: scope },
     [scope, userId]
   )
+  const organizationContext = useOptionalOrganizationContext()
+  const organizationId = organizationContext?.activeId ?? undefined
   const isPersonalTimeline = scope !== 'all'
 
   const columns = useMemo<DataTableColumn<AuditLogListItem>[]>(
@@ -176,7 +187,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         render: record => (
           <Stack gap={4}>
             <Text size='sm' fw={500}>
-              {AUDIT_ACTION_LABELS[record.action]}
+              {getAuditActionLabel(record.action)}
             </Text>
             <Text size='xs' c='dimmed'>
               {formatDateTime(record.createdAt)}
@@ -189,7 +200,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         title: 'ประเภท',
         render: record => (
           <Text size='sm' c='dimmed'>
-            {AUDIT_RESOURCE_TYPE_LABELS[record.resourceType]}
+            {getAuditResourceTypeLabel(record.resourceType)}
           </Text>
         )
       },
@@ -228,7 +239,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
                 <Menu.Target>
                   <ActionIcon
                     variant='subtle'
-                    aria-label={`เมนูของรายการ ${AUDIT_ACTION_LABELS[record.action]}`}
+                    aria-label={`เมนูของรายการ ${getAuditActionLabel(record.action)}`}
                   >
                     <IconDotsVertical size={18} />
                   </ActionIcon>
@@ -237,6 +248,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
                   <AuditLogExportMenuItem
                     scope={scopeArg}
                     auditLogId={record.id}
+                    organizationId={organizationId}
                   />
                 </Menu.Dropdown>
               </Menu>
@@ -245,7 +257,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         }
       }
     ],
-    [formatDateTime, scopeArg]
+    [formatDateTime, organizationId, scopeArg]
   )
 
   const datatable = useDatatable<AuditLogListItem, AuditLogListQuery>({
@@ -255,9 +267,13 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
     recordsPerPageOptions: [25, 50, 100]
   })
   const { query, setSearchValue, updateQuery } = datatable
-  const { data, isFetching, isError } = useGetAuditLogsQuery(
-    { scope: scopeArg, query },
-    { skip: scope === 'user' && !userId }
+  const { data, isFetching, isError, refetch } = useGetAuditLogsQuery(
+    { scope: scopeArg, query, organizationId },
+    {
+      skip:
+        (scope === 'user' && !userId) ||
+        (scope !== 'own' && !organizationId)
+    }
   )
   const [filtersOpened, { close: closeFilters, open: openFilters }] =
     useDisclosure(false)
@@ -279,8 +295,8 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       label: 'เหตุการณ์',
       filters: selectedActions.map(action => ({
         id: action,
-        label: AUDIT_ACTION_LABELS[action],
-        removeLabel: `ลบเหตุการณ์ ${AUDIT_ACTION_LABELS[action]}`
+        label: getAuditActionLabel(action),
+        removeLabel: `ลบเหตุการณ์ ${getAuditActionLabel(action)}`
       }))
     },
     {
@@ -288,8 +304,8 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       label: 'ประเภทข้อมูล',
       filters: selectedResourceTypes.map(resourceType => ({
         id: resourceType,
-        label: AUDIT_RESOURCE_TYPE_LABELS[resourceType],
-        removeLabel: `ลบประเภทข้อมูล ${AUDIT_RESOURCE_TYPE_LABELS[resourceType]}`
+        label: getAuditResourceTypeLabel(resourceType),
+        removeLabel: `ลบประเภทข้อมูล ${getAuditResourceTypeLabel(resourceType)}`
       }))
     },
     {
@@ -430,7 +446,16 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       />
 
       {isError ? (
-        <Alert color='red'>ไม่สามารถโหลดประวัติการทำรายการได้</Alert>
+        <Alert color='red' title='ไม่สามารถโหลดประวัติการทำรายการได้'>
+          <Button
+            variant='light'
+            size='xs'
+            mt='sm'
+            onClick={() => void refetch()}
+          >
+            ลองใหม่
+          </Button>
+        </Alert>
       ) : null}
 
       <Paper p={0}>

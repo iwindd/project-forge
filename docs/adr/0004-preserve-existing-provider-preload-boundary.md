@@ -1,0 +1,3 @@
+# Preserve the existing provider preload boundary
+
+**Status: accepted.** `AppProvider` remains the admin composition root and `StoreProvider` remains responsible for constructing the Redux store from server-provided `preloadedState`. The refactor will connect the new API root and only the initial route's required query data to this existing path rather than introducing a second provider or hydration mechanism. `OrganizationProvider` remains a UI context derived from the route and API state; it is not an organization authority or a raw-fetch boundary. This preserves the current admin provider and UI flow.

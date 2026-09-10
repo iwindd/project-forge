@@ -1,63 +1,78 @@
 "use client";
 
 import { Alert, Button, Group, Stack, Textarea, TextInput } from "@mantine/core";
+import { schemaResolver, useForm } from "@mantine/form";
 import { useState } from "react";
+import { z } from "zod";
+import { getBrowserApiErrorMessage } from "@/lib/api/api";
+import { useUpdateProfileMutation } from "@/lib/features/profile/profile-api";
 import { ProfileEditCard } from "./profile-edit-card";
 import { useProfile } from "./profile-context";
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
+const profileDetailsFormSchema = z.object({
+  bio: z.string().trim().max(1000, "แนะนำตัวต้องไม่เกิน 1000 ตัวอักษร"),
+  timezone: z.string().trim().max(80, "เขตเวลาต้องไม่เกิน 80 ตัวอักษร"),
+});
+
+type ProfileDetailsFormValues = z.infer<typeof profileDetailsFormSchema>;
 
 export function ProfileDetailsForm() {
   const { profile, updateProfile } = useProfile();
-  const [bio, setBio] = useState(profile.bio ?? "");
-  const [timezone, setTimezone] = useState(profile.timezone ?? "");
-  const [pending, setPending] = useState(false);
+  const [updateProfileRequest, { isLoading: pending }] = useUpdateProfileMutation();
+  const form = useForm<ProfileDetailsFormValues>({
+    initialValues: {
+      bio: profile.bio ?? "",
+      timezone: profile.timezone ?? "",
+    },
+    validate: schemaResolver(profileDetailsFormSchema),
+    validateInputOnBlur: true,
+  });
   const [error, setError] = useState<string | null>(null);
 
-  const save = async () => {
-    setPending(true);
+  const save = async (values: ProfileDetailsFormValues) => {
     setError(null);
     try {
-      const response = await fetch(`${apiOrigin}/api/v1/profile`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          bio: bio.trim() || null,
-          timezone: timezone.trim() || null,
-        }),
-      });
-      if (!response.ok) throw new Error("ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้");
-      const result = (await response.json()) as {
-        profile: { bio: string | null; timezone: string | null; updatedAt: string };
+      const result = await updateProfileRequest({
+        bio: values.bio || null,
+        timezone: values.timezone || null,
+      }).unwrap();
+      const nextValues = {
+        bio: result.profile.bio ?? "",
+        timezone: result.profile.timezone ?? "",
       };
       updateProfile({
         ...profile,
-        bio: result.profile.bio,
-        timezone: result.profile.timezone,
+        bio: nextValues.bio || null,
+        timezone: nextValues.timezone || null,
         updatedAt: result.profile.updatedAt,
       });
+      form.setValues(nextValues);
+      form.setInitialValues(nextValues);
+      form.resetDirty();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้");
-    } finally {
-      setPending(false);
+      setError(
+        getBrowserApiErrorMessage(
+          saveError,
+          "ไม่สามารถบันทึกข้อมูลโปรไฟล์ได้"
+        )
+      );
     }
   };
 
-  const unchanged = bio === (profile.bio ?? "") && timezone === (profile.timezone ?? "");
-
   return (
     <ProfileEditCard title="ข้อมูลโปรไฟล์" description="จัดการข้อมูลเพิ่มเติมที่แสดงในบัญชีของคุณ">
-      <Stack gap="md">
-        <Textarea label="แนะนำตัว" value={bio} onChange={(event) => setBio(event.currentTarget.value)} maxLength={1000} />
-        <TextInput label="เขตเวลา" placeholder="Asia/Bangkok" value={timezone} onChange={(event) => setTimezone(event.currentTarget.value)} maxLength={80} />
-        <Group>
-          <Button onClick={() => void save()} loading={pending} disabled={unchanged}>
-            บันทึก
-          </Button>
-        </Group>
-        {error ? <Alert color="red">{error}</Alert> : null}
-      </Stack>
+      <form onSubmit={form.onSubmit(save)}>
+        <Stack gap="md">
+          <Textarea label="แนะนำตัว" maxLength={1000} {...form.getInputProps("bio")} />
+          <TextInput label="เขตเวลา" placeholder="Asia/Bangkok" maxLength={80} {...form.getInputProps("timezone")} />
+          <Group>
+            <Button type="submit" loading={pending || form.submitting} disabled={!form.isDirty()}>
+              บันทึก
+            </Button>
+          </Group>
+          {error ? <Alert color="red">{error}</Alert> : null}
+        </Stack>
+      </form>
     </ProfileEditCard>
   );
 }

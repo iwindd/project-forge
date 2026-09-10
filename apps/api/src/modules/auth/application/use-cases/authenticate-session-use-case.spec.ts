@@ -19,7 +19,6 @@ const user: UserRecord = {
 const session: SessionRecord = {
   id: 'session-id',
   userId: 'user-id',
-  activeOrganizationId: null,
   tokenHash: 'hashed-token',
   expiresAt: new Date(Date.now() + 60_000),
   revokedAt: null,
@@ -63,5 +62,28 @@ describe('AuthenticateSessionUseCase', () => {
 
     await expect(useCase.principalFromToken('token')).resolves.toMatchObject({ id: 'user-id' });
     expect(sessions.save).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    AccessStatus.PENDING,
+    AccessStatus.REJECTED,
+    AccessStatus.SUSPENDED,
+  ])('rejects a %s user even when the session is active', async (accessStatus) => {
+    const sessions = {
+      findActiveByTokenHash: vi.fn(async () => ({ ...session })),
+      save: vi.fn(async () => undefined),
+    };
+    const users = {
+      findById: vi.fn(async () => ({ ...user, accessStatus })),
+    };
+    const useCase = new AuthenticateSessionUseCase(
+      sessions as never,
+      { hash: vi.fn(() => 'hashed-token') } as never,
+      users as never,
+      unitOfWork() as never,
+    );
+
+    await expect(useCase.principalFromToken('token')).resolves.toBeNull();
+    expect(sessions.save).not.toHaveBeenCalled();
   });
 });

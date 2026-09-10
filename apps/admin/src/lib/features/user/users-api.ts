@@ -1,41 +1,92 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { UserListQuery, UserListResult } from "@/servers/user/types";
-import { addOrganizationHeader, getActiveOrganizationId } from "../organization/organization-context";
+import { api } from '@/lib/api/api'
+import type { BrowserApiMeta } from '@/lib/api/api'
+import {
+  normalizeUserRole,
+  userRoleSchema
+} from '@/servers/user/schemas'
+import type { UserListQuery, UserListResult } from '@/servers/user/types'
+import { z } from 'zod'
 
-type ApiUserListResult = Omit<UserListResult, "data"> & {
-  data: Array<Omit<UserListResult["data"][number], "role"> & { role: "ADMIN" | "EDITOR" | "OWNER" | "MEMBER" }>;
-};
+const apiUserListItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().nullable(),
+  email: z.string().nullable(),
+  role: userRoleSchema,
+  isActive: z.boolean(),
+  accessStatus: z.string().optional(),
+  githubLogin: z.string().optional(),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1).optional()
+})
 
-export const usersApi = createApi({
-  reducerPath: "usersApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050"}/api/v1/`,
-    credentials: "include",
-    cache: "no-store",
-    prepareHeaders: (headers) => addOrganizationHeader(headers),
-  }),
-  tagTypes: ["Users"],
-  refetchOnMountOrArgChange: true,
-  refetchOnFocus: true,
-  refetchOnReconnect: true,
-  endpoints: (builder) => ({
-    getUsers: builder.query<UserListResult, UserListQuery>({
-      query: (params) => ({
-        url: getActiveOrganizationId()
-          ? `organizations/${getActiveOrganizationId()}/members`
-          : "admin/users",
-        params,
+const legacyPaginatedUsersSchema = z.object({
+  data: z.array(apiUserListItemSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  pageSize: z.number().int().positive()
+})
+
+const apiUserListResponseSchema = z.union([
+  z.array(apiUserListItemSchema),
+  legacyPaginatedUsersSchema
+])
+
+const apiPaginationMetaSchema = z
+  .object({ total: z.number().int().nonnegative() })
+  .passthrough()
+
+type GetUsersArg = {
+  organizationId?: string
+  query: UserListQuery
+}
+
+function toUserListItem(
+  user: z.infer<typeof apiUserListItemSchema>
+): UserListResult['data'][number] {
+  return {
+    id: user.id,
+    name: user.name ?? user.email ?? user.id,
+    email: user.email ?? '',
+    role: normalizeUserRole(user.role),
+    isActive: user.isActive,
+    createdAt: user.createdAt
+  }
+}
+
+export function parseUsersResponse(
+  response: unknown,
+  meta: Pick<BrowserApiMeta, 'apiMeta'> | undefined
+): UserListResult {
+  const parsed = apiUserListResponseSchema.parse(response)
+
+  if (Array.isArray(parsed)) {
+    const parsedMeta = apiPaginationMetaSchema.safeParse(meta?.apiMeta)
+    return {
+      data: parsed.map(toUserListItem),
+      total: parsedMeta.success ? parsedMeta.data.total : parsed.length
+    }
+  }
+
+  return {
+    data: parsed.data.map(toUserListItem),
+    total: parsed.total
+  }
+}
+
+export const usersApi = api.injectEndpoints({
+  endpoints: builder => ({
+    getUsers: builder.query<UserListResult, GetUsersArg>({
+      query: ({ organizationId, query }) => ({
+        url: organizationId
+          ? `organizations/${encodeURIComponent(organizationId)}/members`
+          : 'admin/users',
+        params: query
       }),
-      transformResponse: (response: ApiUserListResult) => ({
-        ...response,
-        data: response.data.map((user) => ({
-          ...user,
-          role: user.role === "ADMIN" || user.role === "OWNER" ? "ADMIN" : "EDITOR",
-        })),
-      }),
-      providesTags: ["Users"],
-    }),
+      transformResponse: parseUsersResponse,
+      providesTags: ['Users']
+    })
   }),
-});
+  overrideExisting: false
+})
 
-export const { useGetUsersQuery } = usersApi;
+export const { useGetUsersQuery } = usersApi

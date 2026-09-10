@@ -1,31 +1,55 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer, { type AuthState } from "@/lib/features/auth/auth-slice";
-import { auditLogsApi } from "@/lib/features/audit-log/audit-logs-api";
-import { organizationMembersApi } from "@/lib/features/organization/organization-members-api";
-import { usersApi } from "@/lib/features/user/users-api";
+import { api } from "@/lib/api/api";
+import "@/lib/features/auth/auth-api";
+import "@/lib/features/audit-log/audit-logs-api";
+import { organizationApi } from "@/lib/features/organization/organization-api";
+import "@/lib/features/organization/organization-members-api";
+import "@/lib/features/profile/profile-api";
+import "@/lib/features/security/security-api";
+import "@/lib/features/user/users-api";
+import type { Organization } from "@/lib/features/organization/types";
 
-export type PreloadedState = { auth: AuthState };
+export type PreloadedState = {
+  auth: AuthState;
+  api?: ReturnType<typeof api.reducer>;
+};
 
 export function makeStore(preloadedState: PreloadedState) {
   const store = configureStore({
     reducer: {
       auth: authReducer,
-      [usersApi.reducerPath]: usersApi.reducer,
-      [auditLogsApi.reducerPath]: auditLogsApi.reducer,
-      [organizationMembersApi.reducerPath]: organizationMembersApi.reducer,
+      [api.reducerPath]: api.reducer,
     },
     preloadedState: {
       auth: preloadedState.auth,
+      [api.reducerPath]:
+        preloadedState.api ?? api.reducer(undefined, { type: "@@INIT" }),
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(
-        usersApi.middleware,
-        auditLogsApi.middleware,
-        organizationMembersApi.middleware,
+        api.middleware,
       ),
   });
 
   return store;
+}
+
+export async function createPreloadedState(
+  auth: AuthState,
+  organizations: Organization[],
+): Promise<PreloadedState> {
+  const store = makeStore({ auth });
+
+  await store.dispatch(
+    organizationApi.util.upsertQueryData(
+      "getOrganizations",
+      undefined,
+      organizations,
+    ),
+  );
+
+  return store.getState();
 }
 
 export type AppStore = ReturnType<typeof makeStore>;

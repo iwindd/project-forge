@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto';
 export type SessionRecord = {
   id: string;
   userId: string;
-  activeOrganizationId: string | null;
   tokenHash: string;
   expiresAt: Date;
   revokedAt: Date | null;
@@ -16,7 +15,6 @@ export function createSession(input: { userId: string; tokenHash: string; expire
   return {
     id: randomUUID(),
     userId: input.userId,
-    activeOrganizationId: null,
     tokenHash: input.tokenHash,
     expiresAt: input.expiresAt,
     revokedAt: null,
