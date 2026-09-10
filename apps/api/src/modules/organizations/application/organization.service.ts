@@ -547,6 +547,13 @@ export class OrganizationService {
       organizationId: organization.id,
       userId,
     });
+    if (membership?.status === OrganizationMemberStatus.ACTIVE) {
+      const currentRole = await this.resolveMembershipRole(membership);
+      if (currentRole.isOwner) {
+        throw new ForbiddenError('The organization owner cannot accept a replacement invitation');
+      }
+      throw new ConflictError('The user is already an active member of this organization');
+    }
     if (!membership) {
       membership = this.em.create(OrganizationMemberOrmEntity, createOrganizationMember({
         organizationId: organization.id,
