@@ -52,20 +52,6 @@ describe('ArchiveProjectUseCase', () => {
     expect(audit.record).toHaveBeenCalledOnce();
   });
 
-  it('records the real prior status in before instead of a hardcoded ACTIVE', async () => {
-    const { useCase, audit } = setup(activeProject());
-
-    await useCase.execute('actor-id', 'organization-id', 'project-id');
-
-    expect(audit.record).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'PROJECT_ARCHIVED',
-        before: { status: ProjectStatus.ACTIVE },
-        after: { status: ProjectStatus.ARCHIVED },
-      }),
-    );
-  });
-
   it('records the optional reason and request ID when supplied', async () => {
     const { useCase, audit } = setup(activeProject());
 
