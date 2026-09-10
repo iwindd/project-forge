@@ -32,6 +32,10 @@ import {
 } from './organization-members-api'
 import { useOrganizationContext } from './organization-provider'
 import { databaseUuidSchema } from './organization-schemas'
+import {
+  getDefaultInvitationRoleId,
+  getInvitationRoleOptions
+} from './invitation-role-options'
 import type { Organization } from './types'
 import classes from './organization-switcher.module.css'
 
@@ -84,18 +88,10 @@ export function OrganizationSwitcher() {
     validateInputOnBlur: true
   })
   const inviteRoles = useMemo(
-    () =>
-      (rolesResult?.data ?? []).filter(
-        role =>
-          Boolean(role.id) &&
-          (role.legacyRole === 'ADMIN' || role.legacyRole === 'MEMBER')
-      ),
+    () => getInvitationRoleOptions(rolesResult?.data ?? []),
     [rolesResult?.data]
   )
-  const defaultInviteRoleId =
-    inviteRoles.find(role => role.legacyRole === 'MEMBER')?.id ??
-    inviteRoles[0]?.id ??
-    ''
+  const defaultInviteRoleId = getDefaultInvitationRoleId(inviteRoles)
   const selectedInviteRoleId = inviteForm.values.roleId || defaultInviteRoleId
 
   const createInvitation = async (values: InviteMemberFormValues) => {

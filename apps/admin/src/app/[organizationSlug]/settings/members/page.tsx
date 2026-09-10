@@ -16,6 +16,10 @@ import {
 } from '@/lib/features/organization/organization-members-api'
 import { useOrganizationContext } from '@/lib/features/organization/organization-provider'
 import {
+  getDefaultInvitationRoleId,
+  getInvitationRoleOptions
+} from '@/lib/features/organization/invitation-role-options'
+import {
   ActionIcon,
   Alert,
   Avatar,
@@ -183,17 +187,12 @@ export default function OrganizationMembersPage() {
     [roles]
   )
   const invitationRoleOptions = useMemo(
-    () =>
-      memberRoleOptions.filter(
-        role =>
-          role.legacyRole === 'ADMIN' || role.legacyRole === 'MEMBER'
-      ),
+    () => getInvitationRoleOptions(memberRoleOptions),
     [memberRoleOptions]
   )
-  const defaultInviteRoleId =
-    invitationRoleOptions.find(role => role.legacyRole === 'MEMBER')?.id ??
-    invitationRoleOptions[0]?.id ??
-    ''
+  const defaultInviteRoleId = getDefaultInvitationRoleId(
+    invitationRoleOptions
+  )
 
   useEffect(() => {
     if (!defaultInviteRoleId) return
