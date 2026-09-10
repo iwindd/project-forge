@@ -50,27 +50,8 @@ import {
   toProjectRequestBody,
   type ProjectFormValues
 } from './project-form-schema'
+import { failureMessageFor, getProjectsViewState } from './projects-view-state'
 import classes from './projects-page.module.css'
-
-type ProjectsViewState = 'loading' | 'error' | 'empty' | 'list'
-
-function getProjectsViewState({
-  organizationLoading,
-  projectsError,
-  projectsFetching,
-  projectCount
-}: {
-  organizationLoading: boolean
-  projectsError: boolean
-  projectsFetching: boolean
-  projectCount: number
-}): ProjectsViewState {
-  if (organizationLoading) return 'loading'
-  if (projectsError) return 'error'
-  if (projectsFetching && projectCount === 0) return 'loading'
-
-  return projectCount > 0 ? 'list' : 'empty'
-}
 
 export default function ProjectsPage() {
   const t = useTranslations('Projects')
@@ -87,24 +68,6 @@ export default function ProjectsPage() {
     const date = new Date(value)
 
     return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'date')
-  }
-
-  const failureMessageFor = (error: unknown, fallback: string) => {
-    const status =
-      typeof error === 'object' && error !== null && 'status' in error
-        ? (error as { status?: unknown }).status
-        : undefined
-
-    switch (status) {
-      case 409:
-        return t('conflictFailed')
-      case 403:
-        return t('forbiddenFailed')
-      case 404:
-        return t('notFoundFailed')
-      default:
-        return fallback
-    }
   }
 
   const projectFormSchema = useMemo(
@@ -176,7 +139,11 @@ export default function ProjectsPage() {
       return true
     } catch (error) {
       notifications.show({
-        message: failureMessageFor(error, feedback.failure),
+        message: failureMessageFor(error, feedback.failure, {
+          conflict: t('conflictFailed'),
+          forbidden: t('forbiddenFailed'),
+          notFound: t('notFoundFailed')
+        }),
         color: 'red'
       })
       return false

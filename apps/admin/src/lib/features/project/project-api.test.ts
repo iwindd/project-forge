@@ -27,15 +27,29 @@ function createStore() {
   return makeStore({ auth: { user: null } })
 }
 
-function stubJsonResponse(body: unknown) {
+function stubJsonResponse(body: unknown, status = 200) {
   const fetchMock = vi.fn().mockResolvedValue(
     new Response(JSON.stringify(body), {
-      status: 200,
+      status,
       headers: { 'content-type': 'application/json' }
     })
   )
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
+}
+
+function stubErrorResponse(status: number, code: string) {
+  return stubJsonResponse(
+    {
+      error: {
+        code,
+        message: `${code} error message`,
+        details: {},
+        requestId: `request-${status}`
+      }
+    },
+    status
+  )
 }
 
 function readRequest(fetchMock: ReturnType<typeof vi.fn>) {
@@ -172,4 +186,61 @@ describe('project transport contracts', () => {
     expect(() => parseProjectListResponse({ data: [project] })).toThrow()
     expect(() => parseProjectResponse({ data: { project } })).toThrow()
   })
+
+  it.each([
+    [403, 'FORBIDDEN'],
+    [404, 'NOT_FOUND'],
+    [409, 'CONFLICT']
+  ] as const)(
+    'surfaces the API %s error envelope for the project list request',
+    async (status, code) => {
+      stubErrorResponse(status, code)
+
+      const result = await createStore().dispatch(
+        projectApi.endpoints.getProjects.initiate({ organizationId })
+      )
+
+      expect(result.data).toBeUndefined()
+      expect(result.error).toMatchObject({
+        status,
+        data: {
+          error: {
+            code,
+            message: `${code} error message`,
+            details: {},
+            requestId: `request-${status}`
+          }
+        }
+      })
+    }
+  )
+
+  it.each([
+    [403, 'FORBIDDEN'],
+    [404, 'NOT_FOUND'],
+    [409, 'CONFLICT']
+  ] as const)(
+    'surfaces the API %s error envelope for a project mutation',
+    async (status, code) => {
+      stubErrorResponse(status, code)
+
+      const result = await createStore().dispatch(
+        projectApi.endpoints.archiveProject.initiate({
+          organizationId,
+          projectId
+        })
+      )
+
+      expect(result.data).toBeUndefined()
+      expect(result.error).toMatchObject({
+        status,
+        data: {
+          error: {
+            code,
+            requestId: `request-${status}`
+          }
+        }
+      })
+    }
+  )
 })

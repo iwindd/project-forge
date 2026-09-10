@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NotFoundError } from '../../../../common/errors/application-error.js';
+import {
+  ForbiddenError,
+  NotFoundError,
+} from '../../../../common/errors/application-error.js';
 import { ProjectStatus } from '../../domain/project.js';
 import { RestoreProjectUseCase } from './restore-project-use-case.js';
 
@@ -102,12 +105,18 @@ describe('RestoreProjectUseCase', () => {
   it('enforces project management before touching the repository', async () => {
     const { useCase, projects, organizations } = setup(archivedProject());
     organizations.requireProjectManager.mockRejectedValueOnce(
-      new Error('Project management access is required'),
+      new ForbiddenError('Project management access is required'),
     );
 
-    await expect(
-      useCase.execute('actor-id', 'organization-id', 'project-id'),
-    ).rejects.toThrow('Project management access is required');
+    const error = await useCase
+      .execute('actor-id', 'organization-id', 'project-id')
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+
+    expect(error).toBeInstanceOf(ForbiddenError);
+    expect(error).toMatchObject({ code: 'FORBIDDEN', status: 403 });
     expect(projects.findByOrganizationAndId).not.toHaveBeenCalled();
   });
 });
