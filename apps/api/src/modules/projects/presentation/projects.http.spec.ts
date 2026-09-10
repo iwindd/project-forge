@@ -16,7 +16,10 @@ import { GetProjectUseCase } from '../application/use-cases/get-project-use-case
 import { ListProjectsUseCase } from '../application/use-cases/list-projects-use-case.js';
 import { RestoreProjectUseCase } from '../application/use-cases/restore-project-use-case.js';
 import { UpdateProjectUseCase } from '../application/use-cases/update-project-use-case.js';
-import { PROJECT_REPOSITORY } from '../application/ports/project.repository.js';
+import {
+  DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
+  PROJECT_REPOSITORY,
+} from '../application/ports/project.repository.js';
 import type { ProjectRepository } from '../application/ports/project.repository.js';
 import { ProjectStatus } from '../domain/project.js';
 import type { ProjectRecord } from '../domain/project.js';
@@ -276,7 +279,7 @@ describe('projects HTTP contracts', () => {
     expect(duplicateBody).toEqual({
       error: {
         code: 'CONFLICT',
-        message: 'A project with this repository already exists in the organization',
+        message: DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
         details: {},
         requestId: 'projects-409-duplicate',
       },

@@ -16,9 +16,8 @@ import {
 import type { CreateProjectDto } from '../../presentation/dto/project.schemas.js';
 import {
   DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
-  throwDuplicateRepositoryConflict,
-} from '../duplicate-repository-conflict.js';
-import { PROJECT_REPOSITORY } from '../ports/project.repository.js';
+  PROJECT_REPOSITORY,
+} from '../ports/project.repository.js';
 import type { ProjectRepository } from '../ports/project.repository.js';
 
 @Injectable()
@@ -63,11 +62,10 @@ export class CreateProjectUseCase {
           : null,
       });
 
-      try {
-        await this.projects.save(project);
-      } catch (error) {
-        throwDuplicateRepositoryConflict(error);
-      }
+      // `save` flushes, and the adapter translates the (organization_id, github_url) unique
+      // constraint into ConflictError. The lookup above is only the sequential fast path: it cannot
+      // see a row that a concurrent request is inserting right now.
+      await this.projects.save(project);
       await this.audit.record({
         actorId,
         organizationId,

@@ -1,16 +1,8 @@
-import { UniqueConstraintViolationException } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { ConflictError } from '../../../../common/errors/application-error.js';
+import { DUPLICATE_REPOSITORY_CONFLICT_MESSAGE } from '../../application/ports/project.repository.js';
 import { ProjectStatus } from '../../domain/project.js';
 import { UpdateProjectUseCase } from './update-project-use-case.js';
-
-function uniqueConstraintViolation() {
-  return new UniqueConstraintViolationException(
-    new Error(
-      'duplicate key value violates unique constraint "projects_organization_id_github_url_unique"',
-    ),
-  );
-}
 
 function project(overrides: Record<string, unknown> = {}) {
   return {
@@ -148,11 +140,21 @@ describe('UpdateProjectUseCase', () => {
     async (status) => {
       const { useCase, projects, audit } = setup(project(), { id: 'other-project-id', status });
 
-      await expect(
-        useCase.execute('actor-id', 'organization-id', 'project-id', {
+      const error = await useCase
+        .execute('actor-id', 'organization-id', 'project-id', {
           githubUrl: 'https://github.com/acme/taken',
-        }),
-      ).rejects.toBeInstanceOf(ConflictError);
+        })
+        .then(
+          () => null,
+          (caught: unknown) => caught,
+        );
+
+      expect(error).toBeInstanceOf(ConflictError);
+      expect(error).toMatchObject({
+        code: 'CONFLICT',
+        status: 409,
+        message: DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
+      });
       expect(projects.save).not.toHaveBeenCalled();
       expect(audit.record).not.toHaveBeenCalled();
     },
@@ -181,27 +183,5 @@ describe('UpdateProjectUseCase', () => {
 
     expect(projects.findByOrganizationAndGithubUrl).not.toHaveBeenCalled();
     expect(projects.save).toHaveBeenCalledOnce();
-  });
-
-  it('maps a concurrent duplicate repository violation on save to a typed 409 conflict', async () => {
-    const { useCase, projects, audit } = setup(project(), null);
-    projects.save.mockRejectedValueOnce(uniqueConstraintViolation());
-
-    const error = await useCase
-      .execute('actor-id', 'organization-id', 'project-id', {
-        githubUrl: 'https://github.com/acme/available',
-      })
-      .then(
-        () => null,
-        (caught: unknown) => caught,
-      );
-
-    expect(error).toBeInstanceOf(ConflictError);
-    expect(error).toMatchObject({
-      code: 'CONFLICT',
-      status: 409,
-      message: 'A project with this repository already exists in the organization',
-    });
-    expect(audit.record).not.toHaveBeenCalled();
   });
 });
