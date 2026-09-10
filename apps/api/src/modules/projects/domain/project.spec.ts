@@ -30,6 +30,28 @@ describe('parseGithubRepositoryUrl', () => {
     expect(parseGithubRepositoryUrl('https://GitHub.com/AcMe/DeMo')).toEqual(canonical);
   });
 
+  it('strips a trailing .git suffix regardless of casing, so every variant collapses to one identity', () => {
+    const canonical = {
+      owner: 'acme',
+      name: 'demo',
+      url: 'https://github.com/acme/demo',
+    };
+
+    for (const variant of [
+      'https://github.com/ACME/DEMO.GIT',
+      'https://github.com/acme/demo.git',
+      'https://github.com/Acme/Demo',
+      'https://github.com/acme/demo',
+    ]) {
+      const parsed = parseGithubRepositoryUrl(variant);
+      const name = parsed?.name ?? '';
+
+      expect(parsed).toEqual(canonical);
+      expect(name).toBe('demo');
+      expect(name).not.toContain('.git');
+    }
+  });
+
   it('rejects credential-bearing URLs', () => {
     expect(parseGithubRepositoryUrl('https://user:secret@github.com/acme/demo')).toBeNull();
     expect(parseGithubRepositoryUrl('https://user@github.com/acme/demo')).toBeNull();

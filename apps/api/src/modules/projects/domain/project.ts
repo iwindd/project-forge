@@ -63,9 +63,10 @@ export function parseGithubRepositoryUrl(value: string): {
     }
     const parts = url.pathname.split('/').filter(Boolean);
     if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
-    // GitHub repository identity is case-insensitive, so canonicalize owner and name.
+    // GitHub repository identity is case-insensitive, so canonicalize owner and name. Lowercase
+    // first so a `.git` suffix is stripped regardless of its casing (DEMO.GIT -> demo).
     const owner = parts[0].toLowerCase();
-    const name = parts[1].replace(/\.git$/, '').toLowerCase();
+    const name = parts[1].toLowerCase().replace(/\.git$/, '');
     if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(name)) return null;
     return { owner, name, url: `https://github.com/${owner}/${name}` };
   } catch {
