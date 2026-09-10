@@ -10,7 +10,7 @@ import { PROJECT_REPOSITORY } from '../ports/project.repository.js';
 import type { ProjectRepository } from '../ports/project.repository.js';
 
 @Injectable()
-export class ArchiveProjectUseCase {
+export class RestoreProjectUseCase {
   constructor(
     @Inject(PROJECT_REPOSITORY) private readonly projects: ProjectRepository,
     private readonly organizations: OrganizationService,
@@ -28,17 +28,17 @@ export class ArchiveProjectUseCase {
       await this.organizations.requireProjectManager(actorId, organizationId);
       const project = await this.projects.findByOrganizationAndId(organizationId, id);
       if (!project) throw new NotFoundError('Project was not found');
-      if (project.status === ProjectStatus.ARCHIVED) return project;
+      if (project.status === ProjectStatus.ACTIVE) return project;
 
       const before = { status: project.status };
-      project.status = ProjectStatus.ARCHIVED;
-      project.archivedAt = new Date();
+      project.status = ProjectStatus.ACTIVE;
+      project.archivedAt = null;
       project.updatedAt = new Date();
       await this.projects.save(project);
       await this.audit.record({
         actorId,
         organizationId,
-        action: 'PROJECT_ARCHIVED',
+        action: 'PROJECT_RESTORED',
         resourceType: 'PROJECT',
         resourceId: project.id,
         before,

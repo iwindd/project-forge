@@ -20,5 +20,17 @@ export const organizationProjectIdParamSchema = organizationIdParamSchema.extend
   id: databaseUuidSchema,
 });
 
+export const optionalProjectReasonSchema = z
+  .object({
+    reason: z
+      .string()
+      .trim()
+      .max(500)
+      .nullish()
+      .transform((value) => value ?? ''),
+  })
+  .nullish()
+  .transform((value) => ({ reason: value?.reason ?? '' }));
+
 export type CreateProjectDto = z.infer<typeof createProjectSchema>;
 export type UpdateProjectDto = z.infer<typeof updateProjectSchema>;

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ConflictError } from '../../../../common/errors/application-error.js';
 import { ProjectStatus } from '../../domain/project.js';
 import { CreateProjectUseCase } from './create-project-use-case.js';
 
@@ -15,17 +16,25 @@ function unitOfWork() {
   return { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
 }
 
+function setup(existing: { id: string; status: ProjectStatus } | null = null) {
+  const projects = {
+    findByOrganizationAndGithubUrl: vi.fn(async () => existing),
+    save: vi.fn(async () => undefined),
+  };
+  const organizations = { requireProjectManager: vi.fn(async () => undefined) };
+  const audit = { record: vi.fn(async () => undefined) };
+  const useCase = new CreateProjectUseCase(
+    projects as never,
+    organizations as never,
+    audit as never,
+    unitOfWork() as never,
+  );
+  return { useCase, projects, organizations, audit };
+}
+
 describe('CreateProjectUseCase', () => {
   it('normalizes a GitHub URL and masks environment values', async () => {
-    const projects = { save: vi.fn(async () => undefined) };
-    const organizations = { requireProjectManager: vi.fn(async () => undefined) };
-    const audit = { record: vi.fn(async () => undefined) };
-    const useCase = new CreateProjectUseCase(
-      projects as never,
-      organizations as never,
-      audit as never,
-      unitOfWork() as never,
-    );
+    const { useCase, projects, organizations, audit } = setup();
 
     const project = await useCase.execute('actor-id', 'organization-id', input);
 
@@ -34,6 +43,10 @@ describe('CreateProjectUseCase', () => {
     expect(project.organizationId).toBe('organization-id');
     expect(project.environmentMetadata).toEqual({ DATABASE_URL: 'configured' });
     expect(project.status).toBe(ProjectStatus.ACTIVE);
+    expect(projects.findByOrganizationAndGithubUrl).toHaveBeenCalledWith(
+      'organization-id',
+      'https://github.com/acme/demo',
+    );
     expect(organizations.requireProjectManager).toHaveBeenCalledWith(
       'actor-id',
       'organization-id',
@@ -41,14 +54,18 @@ describe('CreateProjectUseCase', () => {
     expect(audit.record).toHaveBeenCalledOnce();
   });
 
-  it('rejects unsupported and credential-bearing repository URLs', async () => {
-    const projects = { save: vi.fn() };
-    const useCase = new CreateProjectUseCase(
-      projects as never,
-      { requireProjectManager: vi.fn() } as never,
-      { record: vi.fn() } as never,
-      unitOfWork() as never,
+  it('records the request ID on the audit event when supplied', async () => {
+    const { useCase, audit } = setup();
+
+    await useCase.execute('actor-id', 'organization-id', input, { requestId: 'request-id' });
+
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ requestId: 'request-id' }),
     );
+  });
+
+  it('rejects unsupported and credential-bearing repository URLs', async () => {
+    const { useCase, projects } = setup();
 
     await expect(
       useCase.execute('owner-id', 'organization-id', { ...input, githubUrl: 'https://git.example.com/acme/demo' }),
@@ -58,4 +75,21 @@ describe('CreateProjectUseCase', () => {
     ).rejects.toThrow('Only GitHub HTTPS repository URLs are supported');
     expect(projects.save).not.toHaveBeenCalled();
   });
+
+  it.each([ProjectStatus.ACTIVE, ProjectStatus.ARCHIVED])(
+    'rejects a duplicate normalized repository when the existing record is %s',
+    async (status) => {
+      const { useCase, projects, audit } = setup({ id: 'existing-project-id', status });
+
+      await expect(
+        useCase.execute('actor-id', 'organization-id', input),
+      ).rejects.toBeInstanceOf(ConflictError);
+      expect(projects.findByOrganizationAndGithubUrl).toHaveBeenCalledWith(
+        'organization-id',
+        'https://github.com/acme/demo',
+      );
+      expect(projects.save).not.toHaveBeenCalled();
+      expect(audit.record).not.toHaveBeenCalled();
+    },
+  );
 });
