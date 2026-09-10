@@ -15,6 +15,7 @@ function createUseCase(overrides: Record<string, unknown> = {}) {
           name: 'GitHub User',
           email: 'user@example.com',
           emailVerified: true,
+          verifiedEmails: ['user@example.com'],
         },
         accessToken: 'access-token',
         scope: 'read:user user:email',
@@ -66,7 +67,10 @@ describe('CompleteGithubLoginUseCase', () => {
     expect(issueSession.issueWithinTransaction).toHaveBeenCalledOnce();
     expect(organizations.listForUser).toHaveBeenCalledOnce();
     expect(profilesAndConnections.upsertConnection).toHaveBeenCalledWith(
-      expect.objectContaining({ providerEmailVerified: true }),
+      expect.objectContaining({
+        providerEmailVerified: true,
+        providerVerifiedEmails: ['user@example.com'],
+      }),
     );
   });
 

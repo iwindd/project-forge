@@ -69,6 +69,7 @@ export class CompleteGithubLoginUseCase {
         providerUsername: result.profile.login,
         providerEmail: result.profile.email,
         providerEmailVerified: result.profile.emailVerified ?? false,
+        providerVerifiedEmails: result.profile.verifiedEmails,
         accessTokenCiphertext: this.cipher.encrypt(result.accessToken),
         scopes: result.scope,
       });

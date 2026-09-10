@@ -388,6 +388,45 @@ describe('OrganizationService', () => {
     expect(invitation.status).toBe(OrganizationInvitationStatus.PENDING);
   });
 
+  it('accepts an invitation when a verified secondary GitHub email matches', async () => {
+    const org = organization();
+    const token = 'secondary-email-token';
+    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), {
+      id: 'invitation-id',
+      organizationId: 'organization-id',
+      invitedBy: 'owner-id',
+      email: 'secondary@example.com',
+      tokenHash: createHash('sha256').update(token).digest('hex'),
+      role: OrganizationMemberRole.MEMBER,
+      roleId: 'member-role-id',
+      status: OrganizationInvitationStatus.PENDING,
+      expiresAt: new Date(Date.now() + 60_000),
+      acceptedBy: null,
+      acceptedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+    const records = [
+      [OrganizationOrmEntity, org],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationInvitationOrmEntity, invitation],
+      [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
+        userId: 'member-id',
+        provider: 'GITHUB',
+        providerEmail: 'primary@example.com',
+        providerEmailVerified: true,
+        providerVerifiedEmails: ['primary@example.com', 'secondary@example.com'],
+      })],
+      [UserOrmEntity, user({ accessStatus: AccessStatus.PENDING })],
+    ] as Array<[EntityConstructor<unknown>, unknown]>;
+    const em = new FakeEntityManager(records);
+    const service = createService(em);
+
+    await expect(service.acceptInvitation('member-id', token)).resolves.toBe(org);
+    expect(invitation.status).toBe(OrganizationInvitationStatus.ACCEPTED);
+    expect(em.all(OrganizationMemberOrmEntity)).toHaveLength(2);
+  });
+
   it('does not let an active Owner accept an invitation that would replace the Owner role', async () => {
     const org = organization();
     const token = 'owner-invite-token';
