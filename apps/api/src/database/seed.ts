@@ -77,7 +77,7 @@ if (!ownerRole) {
     OrganizationRoleOrmEntity,
     createOrganizationRole({
       organizationId: personal.id,
-      name: 'Owner',
+      name: 'เจ้าของ',
       permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
       isOwner: true,
       legacyRole: OrganizationMemberRole.OWNER

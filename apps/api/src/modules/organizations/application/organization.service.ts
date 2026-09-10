@@ -47,9 +47,9 @@ type RoleInput = {
 };
 
 const DEFAULT_ROLE_NAMES = {
-  owner: 'Owner',
-  admin: 'Admin',
-  member: 'Member',
+  owner: 'เจ้าของ',
+  admin: 'แอดมิน',
+  member: 'สมาชิก',
 } as const;
 
 @Injectable()
@@ -268,7 +268,9 @@ export class OrganizationService {
   ) {
     await this.requireManager(actorId, organizationId);
     const role = await this.requireRoleEntity(organizationId, roleId);
-    if (role.isOwner) throw new ForbiddenError('The organization owner role cannot be changed');
+    if (role.isOwner || role.legacyRole) {
+      throw new ForbiddenError('Built-in organization roles cannot be changed');
+    }
     const nextName = input.name === undefined ? role.name : this.normalizeRoleName(input.name);
     if (nextName !== role.name) await this.ensureUniqueRoleName(organizationId, nextName, role.id);
     const before = { name: role.name, permissions: role.permissions };
@@ -368,9 +370,7 @@ export class OrganizationService {
     });
     if (!membership) throw new NotFoundError('Organization member was not found');
     const targetRole = await this.resolveMembershipRole(membership);
-    if (targetRole.isOwner && !active && await this.countActiveOwners(organizationId) <= 1) {
-      throw new ForbiddenError('At least one active organization owner must remain');
-    }
+    if (targetRole.isOwner) throw new ForbiddenError('The organization owner status cannot be changed');
     const before = { status: membership.status };
     membership.status = active ? OrganizationMemberStatus.ACTIVE : OrganizationMemberStatus.SUSPENDED;
     membership.updatedAt = new Date();
@@ -390,7 +390,7 @@ export class OrganizationService {
   }
 
   async updateMemberRole(actorId: string, organizationId: string, targetUserId: string, input: RoleInput) {
-    const { role: actorRole } = await this.requireManager(actorId, organizationId);
+    await this.requireManager(actorId, organizationId);
     const nextRole = await this.resolveRequestedRole(organizationId, input);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
@@ -399,15 +399,8 @@ export class OrganizationService {
     });
     if (!target) throw new NotFoundError('Organization member was not found');
     const currentRole = await this.resolveMembershipRole(target);
-    if (nextRole.isOwner && !actorRole.isOwner) {
-      throw new ForbiddenError('Only the organization owner can transfer ownership');
-    }
-    if (currentRole.isOwner && !nextRole.isOwner) {
-      if (!actorRole.isOwner) throw new ForbiddenError('Only the organization owner can change an owner role');
-      if (await this.countActiveOwners(organizationId) <= 1) {
-        throw new ForbiddenError('At least one organization owner must remain');
-      }
-    }
+    if (currentRole.isOwner) throw new ForbiddenError('The organization owner role cannot be changed');
+    if (nextRole.isOwner) throw new ForbiddenError('Ownership transfer is not supported');
     target.roleId = nextRole.id;
     target.role = this.legacyRoleForRole(nextRole);
     target.updatedAt = new Date();
@@ -427,7 +420,7 @@ export class OrganizationService {
   }
 
   async removeMember(actorId: string, organizationId: string, targetUserId: string) {
-    const { role: actorRole } = await this.requireManager(actorId, organizationId);
+    await this.requireManager(actorId, organizationId);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
       userId: targetUserId,
@@ -435,12 +428,7 @@ export class OrganizationService {
     });
     if (!target) throw new NotFoundError('Organization member was not found');
     const targetRole = await this.resolveMembershipRole(target);
-    if (targetRole.isOwner) {
-      if (!actorRole.isOwner) throw new ForbiddenError('Only the organization owner can remove an owner');
-      if (await this.countActiveOwners(organizationId) <= 1) {
-        throw new ForbiddenError('Transfer ownership before removing the last owner');
-      }
-    }
+    if (targetRole.isOwner) throw new ForbiddenError('The organization owner cannot be removed');
     target.status = OrganizationMemberStatus.REMOVED;
     target.updatedAt = new Date();
     this.em.persist(target);
@@ -459,26 +447,65 @@ export class OrganizationService {
 
   async createInvitation(actorId: string, organizationId: string, email: string | null, input: RoleInput) {
     await this.requireManager(actorId, organizationId);
-    const role = await this.resolveRequestedRole(organizationId, input);
-    if (role.isOwner) throw new InvalidInputError('Invitations cannot assign owner role');
+    const role = await this.resolveRequestedRole(
+      organizationId,
+      input,
+      OrganizationMemberRole.MEMBER,
+    );
+    if (
+      role.legacyRole !== OrganizationMemberRole.ADMIN &&
+      role.legacyRole !== OrganizationMemberRole.MEMBER
+    ) {
+      throw new InvalidInputError('Invitations can only assign Admin or Member roles');
+    }
+
+    const normalizedEmail = email?.trim().toLowerCase() || null;
     const token = randomBytes(32).toString('base64url');
-    const invitation = createOrganizationInvitation({
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const existingInvitation = normalizedEmail
+      ? await this.em.findOne(OrganizationInvitationOrmEntity, {
+          organizationId,
+          email: normalizedEmail,
+          status: OrganizationInvitationStatus.PENDING,
+        })
+      : null;
+    const invitation = existingInvitation ?? createOrganizationInvitation({
       organizationId,
       invitedBy: actorId,
-      email: email?.trim().toLowerCase() || null,
+      email: normalizedEmail,
       tokenHash: this.hashToken(token),
       role: this.legacyRoleForRole(role),
       roleId: role.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiresAt,
     });
-    this.em.persist(this.em.create(OrganizationInvitationOrmEntity, invitation));
+    if (existingInvitation) {
+      invitation.invitedBy = actorId;
+      invitation.email = normalizedEmail;
+      invitation.tokenHash = this.hashToken(token);
+      invitation.role = this.legacyRoleForRole(role);
+      invitation.roleId = role.id;
+      invitation.status = OrganizationInvitationStatus.PENDING;
+      invitation.expiresAt = expiresAt;
+      invitation.acceptedBy = null;
+      invitation.acceptedAt = null;
+      invitation.createdAt = new Date();
+    }
+    const invitationEntity = existingInvitation ?? this.em.create(OrganizationInvitationOrmEntity, invitation);
+    this.em.persist(invitationEntity);
     await this.audit.record({
       organizationId,
       actorId,
-      action: 'ORGANIZATION_INVITATION_CREATED',
+      action: existingInvitation
+        ? 'ORGANIZATION_INVITATION_RESENT'
+        : 'ORGANIZATION_INVITATION_CREATED',
       resourceType: 'ORGANIZATION_INVITATION',
       resourceId: invitation.id,
-      after: { email: invitation.email, role: role.name, roleId: role.id },
+      after: {
+        email: invitation.email,
+        role: role.name,
+        roleId: role.id,
+        expiresAt: invitation.expiresAt.toISOString(),
+      },
     });
     await this.em.flush();
     return { invitation, token, role };
@@ -515,6 +542,7 @@ export class OrganizationService {
     if (invitation.expiresAt.getTime() <= Date.now()) {
       invitation.status = OrganizationInvitationStatus.EXPIRED;
       this.em.persist(invitation);
+      await this.em.flush();
       throw new ConflictError('Invitation has expired');
     }
     const organization = await this.requireOrganization(invitation.organizationId);
@@ -568,51 +596,74 @@ export class OrganizationService {
 
   private async ensureDefaultRoles(organization: OrganizationOrmEntity) {
     const roles = await this.em.find(OrganizationRoleOrmEntity, { organizationId: organization.id });
-    if (organization.type === OrganizationType.PERSONAL) {
-      const owner = roles.find((role) => role.isOwner);
-      if (owner) return roles;
-      const ownerRole = this.em.create(OrganizationRoleOrmEntity, createOrganizationRole({
-        organizationId: organization.id,
-        name: DEFAULT_ROLE_NAMES.owner,
-        permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
-        isOwner: true,
+    const requiredRoles = [
+      {
         legacyRole: OrganizationMemberRole.OWNER,
-      }));
-      this.em.persist(ownerRole);
-      await this.em.flush();
-      return [...roles, ownerRole];
-    }
-    if (roles.some((role) => role.isOwner) && roles.some((role) => role.name.toLowerCase() === DEFAULT_ROLE_NAMES.admin.toLowerCase()) && roles.some((role) => role.name.toLowerCase() === DEFAULT_ROLE_NAMES.member.toLowerCase())) {
-      return roles;
-    }
-    const created: OrganizationRoleOrmEntity[] = [];
-    if (!roles.some((role) => role.isOwner || role.legacyRole === OrganizationMemberRole.OWNER)) {
-      created.push(this.em.create(OrganizationRoleOrmEntity, createOrganizationRole({
-        organizationId: organization.id,
         name: DEFAULT_ROLE_NAMES.owner,
-        permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
+        permissions: [ORGANIZATION_PERMISSIONS.MANAGE] as OrganizationPermission[],
         isOwner: true,
-      })));
+      },
+      ...(organization.type === OrganizationType.SHARED
+        ? [
+            {
+              legacyRole: OrganizationMemberRole.ADMIN,
+              name: DEFAULT_ROLE_NAMES.admin,
+              permissions: [ORGANIZATION_PERMISSIONS.MANAGE] as OrganizationPermission[],
+              isOwner: false,
+            },
+            {
+              legacyRole: OrganizationMemberRole.MEMBER,
+              name: DEFAULT_ROLE_NAMES.member,
+              permissions: [] as OrganizationPermission[],
+              isOwner: false,
+            },
+          ]
+        : []),
+    ];
+    const ensured = [...roles];
+    let changed = false;
+
+    for (const requiredRole of requiredRoles) {
+      const role =
+        roles.find((candidate) => candidate.legacyRole === requiredRole.legacyRole) ??
+        roles.find((candidate) => candidate.isOwner === requiredRole.isOwner && candidate.name.toLowerCase() === requiredRole.name.toLowerCase());
+      if (!role) {
+        const created = this.em.create(
+          OrganizationRoleOrmEntity,
+          createOrganizationRole({
+            organizationId: organization.id,
+            name: requiredRole.name,
+            permissions: requiredRole.permissions,
+            isOwner: requiredRole.isOwner,
+            legacyRole: requiredRole.legacyRole,
+          }),
+        );
+        this.em.persist(created);
+        ensured.push(created);
+        changed = true;
+        continue;
+      }
+
+      const permissionsChanged =
+        JSON.stringify(role.permissions) !== JSON.stringify(requiredRole.permissions);
+      if (
+        role.name !== requiredRole.name ||
+        role.legacyRole !== requiredRole.legacyRole ||
+        role.isOwner !== requiredRole.isOwner ||
+        permissionsChanged
+      ) {
+        role.name = requiredRole.name;
+        role.legacyRole = requiredRole.legacyRole;
+        role.isOwner = requiredRole.isOwner;
+        role.permissions = requiredRole.permissions;
+        role.updatedAt = new Date();
+        this.em.persist(role);
+        changed = true;
+      }
     }
-    if (!roles.some((role) => role.legacyRole === OrganizationMemberRole.ADMIN || role.name.toLowerCase() === DEFAULT_ROLE_NAMES.admin.toLowerCase())) {
-      created.push(this.em.create(OrganizationRoleOrmEntity, createOrganizationRole({
-        organizationId: organization.id,
-        name: DEFAULT_ROLE_NAMES.admin,
-        permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
-        legacyRole: OrganizationMemberRole.ADMIN,
-      })));
-    }
-    if (!roles.some((role) => role.legacyRole === OrganizationMemberRole.MEMBER || role.name.toLowerCase() === DEFAULT_ROLE_NAMES.member.toLowerCase())) {
-      created.push(this.em.create(OrganizationRoleOrmEntity, createOrganizationRole({
-        organizationId: organization.id,
-        name: DEFAULT_ROLE_NAMES.member,
-        permissions: [],
-        legacyRole: OrganizationMemberRole.MEMBER,
-      })));
-    }
-    for (const role of created) this.em.persist(role);
-    if (created.length) await this.em.flush();
-    return [...roles, ...created];
+
+    if (changed) await this.em.flush();
+    return ensured;
   }
 
   private createDefaultRoleRecords(organizationId: string, shared: boolean) {
@@ -668,15 +719,20 @@ export class OrganizationService {
     return this.roleView(role, invitation.role);
   }
 
-  private async resolveRequestedRole(organizationId: string, input: RoleInput) {
+  private async resolveRequestedRole(
+    organizationId: string,
+    input: RoleInput,
+    fallbackRole?: OrganizationMemberRole,
+  ) {
     if (input.roleId) return this.requireRole(organizationId, input.roleId);
-    if (!input.role) throw new InvalidInputError('A role is required');
+    const requestedRole = input.role ?? fallbackRole;
+    if (!requestedRole) throw new InvalidInputError('A role is required');
     const organization = await this.requireOrganization(organizationId);
     const roles = await this.ensureDefaultRoles(organization);
-    const role = roles.find((candidate) => candidate.legacyRole === input.role)
+    const role = roles.find((candidate) => candidate.legacyRole === requestedRole)
       ?? roles.find((candidate) => {
-        if (input.role === OrganizationMemberRole.OWNER) return candidate.isOwner;
-        if (input.role === OrganizationMemberRole.ADMIN) return candidate.name.toLowerCase() === DEFAULT_ROLE_NAMES.admin.toLowerCase();
+        if (requestedRole === OrganizationMemberRole.OWNER) return candidate.isOwner;
+        if (requestedRole === OrganizationMemberRole.ADMIN) return candidate.name.toLowerCase() === DEFAULT_ROLE_NAMES.admin.toLowerCase();
         return candidate.name.toLowerCase() === DEFAULT_ROLE_NAMES.member.toLowerCase();
       });
     if (!role) throw new NotFoundError('The requested organization role was not found');
@@ -742,16 +798,6 @@ export class OrganizationService {
     if (roles.some((role) => role.id !== excludingId && role.name.toLowerCase() === name.toLowerCase())) {
       throw new ConflictError('An organization role with this name already exists');
     }
-  }
-
-  private async countActiveOwners(organizationId: string) {
-    const members = await this.em.find(OrganizationMemberOrmEntity, {
-      organizationId,
-      status: OrganizationMemberStatus.ACTIVE,
-    });
-    const roles = await this.em.find(OrganizationRoleOrmEntity, { organizationId });
-    const roleMap = new Map(roles.map((role) => [role.id, role]));
-    return members.filter((member) => this.roleView(roleMap.get(member.roleId ?? ''), member.role).isOwner).length;
   }
 
   private async uniqueSlug(baseSlug: string) {

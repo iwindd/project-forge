@@ -13,6 +13,7 @@ function createController() {
   return new OrganizationsController(
     {
       listForUser: vi.fn(),
+      createInvitation: vi.fn(),
     } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
@@ -177,5 +178,67 @@ describe('OrganizationsController', () => {
         permissions: ['organization.manage'],
       }),
     ).rejects.toThrow();
+  });
+
+  it('defaults an invitation to Member and returns the one-time token in the envelope', async () => {
+    const controller = createController();
+    const createInvitation = vi.mocked(
+      (controller as unknown as { organizations: { createInvitation: ReturnType<typeof vi.fn> } })
+        .organizations.createInvitation,
+    );
+    createInvitation.mockResolvedValue({
+      invitation: {
+        id: organizationId,
+        organizationId,
+        email: 'person@example.com',
+        role: {
+          id: organizationId,
+          name: 'สมาชิก',
+          permissions: [],
+          isOwner: false,
+          legacyRole: 'MEMBER',
+        },
+        status: 'PENDING',
+        expiresAt: new Date('2026-01-08T00:00:00.000Z'),
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      role: {
+        id: organizationId,
+        name: 'สมาชิก',
+        permissions: [],
+        isOwner: false,
+        legacyRole: 'MEMBER',
+      },
+      token: 'one-time-token',
+    });
+
+    await expect(
+      controller.invite(principal, { id: organizationId }, { email: 'person@example.com' }),
+    ).resolves.toEqual({
+      data: {
+        invitation: {
+          id: organizationId,
+          organizationId,
+          email: 'person@example.com',
+          role: {
+            id: organizationId,
+            name: 'สมาชิก',
+            permissions: [],
+            isOwner: false,
+            legacyRole: 'MEMBER',
+          },
+          status: 'PENDING',
+          expiresAt: '2026-01-08T00:00:00.000Z',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        token: 'one-time-token',
+      },
+    });
+    expect(createInvitation).toHaveBeenCalledWith(
+      userId,
+      organizationId,
+      'person@example.com',
+      { roleId: undefined, role: 'MEMBER' },
+    );
   });
 });
