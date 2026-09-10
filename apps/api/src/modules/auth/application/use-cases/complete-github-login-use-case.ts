@@ -35,7 +35,7 @@ export class CompleteGithubLoginUseCase {
 
   async execute(code: string): Promise<{
     principal: AuthenticatedPrincipal
-    sessionToken: string
+    sessionToken: string | null
     organizationSlug: string
   }> {
     if (!code.trim()) throw new InvalidInputError('OAuth code is required');
@@ -82,7 +82,10 @@ export class CompleteGithubLoginUseCase {
         await this.accessRequests.save(createAccessRequest(user.id, null));
       }
 
-      const sessionToken = await this.issueSession.issueWithinTransaction(user.id);
+      const sessionToken =
+        user.accessStatus === AccessStatus.APPROVED
+          ? await this.issueSession.issueWithinTransaction(user.id)
+          : null;
       await this.security.record({
         organizationId: personalWorkspace.id,
         userId: user.id,

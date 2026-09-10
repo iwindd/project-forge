@@ -5,6 +5,7 @@ import type { UnitOfWork } from '../../../../common/database/unit-of-work.port.j
 import { USER_REPOSITORY } from '../../../users/application/ports/user.repository.js';
 import type { UserRepository } from '../../../users/application/ports/user.repository.js';
 import { toPrincipal } from '../auth.mappers.js';
+import { AccessStatus } from '../../../users/domain/user.js';
 import { TOKEN_HASHER } from '../ports/auth.ports.js';
 import type { TokenHasherPort } from '../ports/auth.ports.js';
 import { SESSION_REPOSITORY } from '../ports/session.repository.js';
@@ -25,7 +26,7 @@ export class AuthenticateSessionUseCase implements SessionAuthenticator {
       const session = await this.sessions.findActiveByTokenHash(this.hasher.hash(token));
       if (!session || session.expiresAt.getTime() <= Date.now()) return null;
       const user = await this.users.findById(session.userId);
-      if (!user?.isActive) return null;
+      if (!user?.isActive || user.accessStatus !== AccessStatus.APPROVED) return null;
       session.lastSeenAt = new Date();
       await this.sessions.save(session);
       return toPrincipal(user);

@@ -88,13 +88,17 @@ export class AuthController {
     try {
       const result = await this.completeGithubLogin.execute(parsedQuery.data.code)
       response.clearCookie('pf_oauth_state', { path: '/' })
-      response.cookie('pf_session', result.sessionToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: this.config.cookieSecure,
-        maxAge: this.config.sessionTtlSeconds * 1000,
-        path: '/'
-      })
+      if (result.sessionToken) {
+        response.cookie('pf_session', result.sessionToken, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: this.config.cookieSecure,
+          maxAge: this.config.sessionTtlSeconds * 1000,
+          path: '/'
+        })
+      } else {
+        response.clearCookie('pf_session', { path: '/' })
+      }
       const destination =
         result.principal.accessStatus === 'APPROVED'
           ? `/${encodeURIComponent(result.organizationSlug)}`
