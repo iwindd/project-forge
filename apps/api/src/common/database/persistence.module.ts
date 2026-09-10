@@ -1,8 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import { AccessRequestOrmEntity } from '../../modules/access-requests/infrastructure/persistence/access-request.orm-entity.js';
-import { MikroOrmAccessRequestRepository } from '../../modules/access-requests/infrastructure/persistence/mikro-orm-access-request.repository.js';
-import { ACCESS_REQUEST_REPOSITORY } from '../../modules/access-requests/application/ports/access-request.repository.js';
 import { MikroOrmOAuthAccountRepository } from '../../modules/auth/infrastructure/persistence/mikro-orm-oauth-account.repository.js';
 import { OAuthAccountOrmEntity } from '../../modules/auth/infrastructure/persistence/oauth-account.orm-entity.js';
 import { MikroOrmSessionRepository } from '../../modules/auth/infrastructure/persistence/mikro-orm-session.repository.js';
@@ -32,7 +29,6 @@ import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repo
       OrganizationInvitationOrmEntity,
       OAuthAccountOrmEntity,
       SessionOrmEntity,
-      AccessRequestOrmEntity,
       ProjectOrmEntity,
     ]),
   ],
@@ -40,14 +36,12 @@ import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repo
     { provide: USER_REPOSITORY, useClass: MikroOrmUserRepository },
     { provide: OAUTH_ACCOUNT_REPOSITORY, useClass: MikroOrmOAuthAccountRepository },
     { provide: SESSION_REPOSITORY, useClass: MikroOrmSessionRepository },
-    { provide: ACCESS_REQUEST_REPOSITORY, useClass: MikroOrmAccessRequestRepository },
     { provide: PROJECT_REPOSITORY, useClass: MikroOrmProjectRepository },
   ],
   exports: [
     USER_REPOSITORY,
     OAUTH_ACCOUNT_REPOSITORY,
     SESSION_REPOSITORY,
-    ACCESS_REQUEST_REPOSITORY,
     PROJECT_REPOSITORY,
   ],
 })

@@ -61,7 +61,7 @@ describe('CompleteGithubLoginUseCase', () => {
 
     const result = await useCase.execute('oauth-code');
 
-    expect(result.principal.accessStatus).toBe(AccessStatus.PENDING);
+    expect(result.principal.accessStatus).toBe(AccessStatus.APPROVED);
     expect(result.sessionToken).toBe('session-token');
     expect(result.organizationSlug).toBeNull();
     expect(issueSession.issueWithinTransaction).toHaveBeenCalledOnce();

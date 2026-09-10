@@ -377,7 +377,7 @@ describe('OrganizationService', () => {
         providerEmail: 'person@example.com',
         providerEmailVerified: false,
       })],
-      [UserOrmEntity, user({ accessStatus: AccessStatus.PENDING })],
+      [UserOrmEntity, user({ accessStatus: AccessStatus.APPROVED })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);
@@ -417,7 +417,7 @@ describe('OrganizationService', () => {
         providerEmailVerified: true,
         providerVerifiedEmails: ['primary@example.com', 'secondary@example.com'],
       })],
-      [UserOrmEntity, user({ accessStatus: AccessStatus.PENDING })],
+      [UserOrmEntity, user({ accessStatus: AccessStatus.APPROVED })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);

@@ -86,24 +86,4 @@ describe('AuthenticateSessionUseCase', () => {
     },
   );
 
-  it('allows a pending user to keep a session for invitation acceptance', async () => {
-    const sessions = {
-      findActiveByTokenHash: vi.fn(async () => ({ ...session })),
-      save: vi.fn(async () => undefined),
-    };
-    const users = {
-      findById: vi.fn(async () => ({ ...user, accessStatus: AccessStatus.PENDING })),
-    };
-    const useCase = new AuthenticateSessionUseCase(
-      sessions as never,
-      { hash: vi.fn(() => 'hashed-token') } as never,
-      users as never,
-      unitOfWork() as never,
-    );
-
-    await expect(useCase.principalFromToken('token')).resolves.toMatchObject({
-      id: 'user-id',
-      accessStatus: AccessStatus.PENDING,
-    });
-  });
 });

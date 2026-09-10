@@ -25,7 +25,7 @@ export class UserOrmEntity {
   role: UserRole = UserRole.USER;
 
   @Enum(() => AccessStatus)
-  accessStatus: AccessStatus = AccessStatus.PENDING;
+  accessStatus: AccessStatus = AccessStatus.APPROVED;
 
   @Property({ type: 'boolean' })
   isActive = true;

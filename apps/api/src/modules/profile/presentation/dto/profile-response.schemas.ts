@@ -16,7 +16,7 @@ const profileDataSchema = z.object({
   bio: z.string().nullable(),
   timezone: z.string().nullable(),
   platformRole: z.enum(['ADMIN', 'USER']),
-  accountStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']),
+  accountStatus: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1)
 })

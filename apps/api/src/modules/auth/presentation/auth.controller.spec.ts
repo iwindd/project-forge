@@ -86,10 +86,10 @@ describe('AuthController', () => {
     )
   })
 
-  it('keeps a session cookie for a pending OAuth login without organization access', async () => {
+  it('keeps a session cookie for an OAuth login without organization access', async () => {
     const completeGithubLogin = {
       execute: vi.fn().mockResolvedValue({
-        principal: { accessStatus: AccessStatus.PENDING },
+        principal: { accessStatus: AccessStatus.APPROVED },
         sessionToken: 'pending-session-token',
         organizationSlug: null
       })

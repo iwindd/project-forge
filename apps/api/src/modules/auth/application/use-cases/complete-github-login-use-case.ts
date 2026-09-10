@@ -46,12 +46,7 @@ export class CompleteGithubLoginUseCase {
       user.githubLogin = result.profile.login;
       user.name = result.profile.name ?? null;
       user.avatarUrl = result.profile.avatar_url ?? null;
-      user.accessStatus =
-        user.accessStatus === AccessStatus.APPROVED
-          ? AccessStatus.APPROVED
-          : isConfiguredAdmin
-            ? AccessStatus.APPROVED
-            : user.accessStatus || AccessStatus.PENDING;
+      if (isConfiguredAdmin) user.accessStatus = AccessStatus.APPROVED;
       user.role = isConfiguredAdmin ? UserRole.ADMIN : user.role || UserRole.USER;
       user.isActive = true;
       user.updatedAt = new Date();
