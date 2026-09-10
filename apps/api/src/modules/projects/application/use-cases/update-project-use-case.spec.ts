@@ -85,12 +85,18 @@ describe('UpdateProjectUseCase', () => {
       expect.objectContaining({
         before: {
           name: 'Old name',
+          githubUrl: 'https://github.com/acme/demo',
+          githubOwner: 'acme',
+          githubRepo: 'demo',
           sourceBranch: 'main',
           targetBranch: 'main',
           nodeVersion: null,
         },
         after: {
           name: 'Old name',
+          githubUrl: 'https://github.com/acme/demo',
+          githubOwner: 'acme',
+          githubRepo: 'demo',
           sourceBranch: 'release',
           targetBranch: 'production',
           nodeVersion: '20.11.0',

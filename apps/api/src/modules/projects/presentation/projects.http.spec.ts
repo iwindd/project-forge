@@ -80,6 +80,9 @@ const archivedProject = projectRecord({
 /** The audit projection of a project record that a PATCH must leave untouched. */
 const unchangedAuditSummary = {
   name: 'My Application',
+  githubUrl: 'https://github.com/acme/demo',
+  githubOwner: 'acme',
+  githubRepo: 'demo',
   sourceBranch: 'release',
   targetBranch: 'production',
   nodeVersion: '20.11.0',
@@ -423,5 +426,36 @@ describe('projects HTTP contracts', () => {
     expect(persisted?.targetBranch).toBe('production');
     expect(persisted?.nodeVersion).toBe('20.11.0');
     expect(persisted?.environmentMetadata).toEqual({ DATABASE_URL: 'configured' });
+  });
+
+  it('records a differing before/after for a repository-only PATCH', async () => {
+    const response = await fetch(
+      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders('projects-patch-repository-only'),
+        body: JSON.stringify({ githubUrl: 'https://github.com/acme/renamed-demo' }),
+      },
+    );
+    const body = (await response.json()) as { data: { project: Record<string, unknown> } };
+
+    expect(response.status).toBe(200);
+    expect(body.data.project).toMatchObject({
+      name: 'My Application',
+      githubUrl: 'https://github.com/acme/renamed-demo',
+      githubOwner: 'acme',
+      githubRepo: 'renamed-demo',
+    });
+
+    const recorded = audit.record.mock.calls as unknown as Array<
+      [{ before: Record<string, unknown>; after: Record<string, unknown> }]
+    >;
+    const auditInput = recorded[0][0];
+
+    expect(auditInput.before.githubUrl).toBe('https://github.com/acme/demo');
+    expect(auditInput.after.githubUrl).toBe('https://github.com/acme/renamed-demo');
+    // Regression: before and after used to be byte-identical for this PATCH because the audit
+    // projections omitted the repository fields entirely.
+    expect(auditInput.before).not.toEqual(auditInput.after);
   });
 });
