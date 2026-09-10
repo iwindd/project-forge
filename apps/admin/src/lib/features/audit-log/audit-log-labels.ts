@@ -20,6 +20,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PROJECT_CREATED: "สร้าง Project",
   PROJECT_UPDATED: "แก้ไข Project",
   PROJECT_ARCHIVED: "เก็บ Project",
+  PROJECT_RESTORED: "กู้คืน Project",
   ACCESS_APPROVED: "อนุมัติคำขอเข้าถึง",
   ACCESS_REJECTED: "ปฏิเสธคำขอเข้าถึง"
 };
