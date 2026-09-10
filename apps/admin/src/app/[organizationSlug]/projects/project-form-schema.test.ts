@@ -107,6 +107,34 @@ describe('project form submission', () => {
     })
   })
 
+  it('stores only the variable name when a whole .env line is pasted', () => {
+    const parsed = parseEnvironmentMetadata('API_KEY=sk-live-abcdef123456')
+
+    expect(parsed).toEqual({ API_KEY: 'configured' })
+    expect(JSON.stringify(parsed)).not.toContain('sk-live')
+    expect(JSON.stringify(parsed)).not.toContain('abcdef123456')
+  })
+
+  it('reduces KEY=value, KEY = value and a bare KEY to the same key', () => {
+    expect(parseEnvironmentMetadata('KEY=value')).toEqual({ KEY: 'configured' })
+    expect(parseEnvironmentMetadata('KEY = value')).toEqual({ KEY: 'configured' })
+    expect(parseEnvironmentMetadata('KEY')).toEqual({ KEY: 'configured' })
+  })
+
+  it('drops entries whose name is not a valid environment variable name', () => {
+    expect(
+      parseEnvironmentMetadata(
+        'API KEY\nAPI-KEY\nAPI$KEY\n1API_KEY\nAPI.KEY\n=value'
+      )
+    ).toEqual({})
+  })
+
+  it('keeps only the valid lines when valid and invalid lines are mixed', () => {
+    expect(
+      parseEnvironmentMetadata('DATABASE_URL=postgres://secret\nAPI-KEY=secret')
+    ).toEqual({ DATABASE_URL: 'configured' })
+  })
+
   it('trims every request body field', () => {
     expect(
       toProjectRequestBody({

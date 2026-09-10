@@ -6,6 +6,9 @@ export const MASKED_ENVIRONMENT_METADATA_VALUE = 'configured'
 
 const GITHUB_REPOSITORY_SEGMENT_PATTERN = /^[A-Za-z0-9_.-]+$/
 
+/** A stored environment attribute may only ever be a variable name. */
+const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
+
 export type ProjectFormMessages = {
   nameMax: string
   githubUrlRequired: string
@@ -102,19 +105,30 @@ export function toProjectFormValues(project: Project): ProjectFormValues {
   }
 }
 
-/** Environment variable names only; the API masks every supplied value. */
+/**
+ * Environment variable names only; the API masks every supplied value.
+ * A pasted `KEY=value` line contributes only its variable name, and any line
+ * whose name is not a valid variable name is dropped, so a value can never be
+ * smuggled into a stored key.
+ */
 export function parseEnvironmentMetadata(value: string) {
-  const keys = value
+  const names = value
     .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean)
+    .map(variableNameOf)
+    .filter(name => ENVIRONMENT_VARIABLE_NAME_PATTERN.test(name))
 
   return Object.fromEntries(
-    Array.from(new Set(keys)).map(key => [
-      key,
+    Array.from(new Set(names)).map(name => [
+      name,
       MASKED_ENVIRONMENT_METADATA_VALUE
     ])
   )
+}
+
+function variableNameOf(line: string) {
+  const separatorIndex = line.indexOf('=')
+
+  return (separatorIndex === -1 ? line : line.slice(0, separatorIndex)).trim()
 }
 
 export function toProjectRequestBody(values: ProjectFormValues) {
