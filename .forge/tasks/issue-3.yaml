@@ -1,0 +1,147 @@
+schemaVersion: 1
+taskId: issue-3
+issue:
+  repository: iwindd/project-forge
+  number: 3
+  title: "03: Organization-scoped project lifecycle"
+  url: https://github.com/iwindd/project-forge/issues/3
+assignedProfile: programmer
+status: ready-for-review
+reviewState:
+  rounds: 2
+  openFindings: 0
+  deferredFindings: [STD-005, STD-008, STD-009]
+  ledger: .forge/tasks/issue-3-review-ledger.md
+  followUps: .forge/tasks/issue-3-follow-ups.md
+  headAtLastReview: e9a9128
+  pushed: false
+  pullRequest: none
+branch:
+  name: issue/3-organization-scoped-project-lifecycle
+  base: main
+  worktree: E:\Projects\project-forge
+  isolation: dedicated git branch in the primary working tree
+
+objective: >-
+  Deliver the complete metadata-only Project lifecycle inside an Organization. Active members
+  can read/list Projects in their Organization; members with manageProject can create, update,
+  archive, and restore them. Project access is organization-wide with no project owner, project
+  role, or project member list.
+
+currentState:
+  alreadyImplemented:
+    - "Organization-scoped route base /organizations/:organizationId/projects with SessionGuard."
+    - "Use cases: list, get, create, update, archive (one file each, beside specs)."
+    - "domain/project.ts with ProjectStatus, createProject, parseGithubRepositoryUrl, maskEnvironmentMetadata."
+    - "MikroOrmProjectRepository with findByOrganizationId (updatedAt DESC) and findByOrganizationAndId."
+    - "ProjectOrmEntity with @Unique([organizationId, githubUrl]) and (organizationId, status) index."
+    - "Zod request schemas and standard response schemas validated at the controller boundary."
+    - "OrganizationService.requireProjectAccess (membership) and requireProjectManager (project.manage)."
+    - "No project owner, project role, or project_members table remains (migration 20260910140000)."
+  missing:
+    - "Restore use case, controller route, module provider, audit action, regression tests."
+    - "Archive is not an idempotent no-op: it always rewrites archivedAt/updatedAt and always writes an audit event."
+    - "PATCH on an ARCHIVED project is not rejected with a typed conflict."
+    - "No duplicate-repository conflict check in the application layer (the DB unique constraint would surface as a 500)."
+    - "Project mutations do not pass a request ID (or optional reason) into the audit record."
+    - "No domain unit tests for parseGithubRepositoryUrl and maskEnvironmentMetadata."
+    - "The admin application has no Project screens, API client, schemas, route, navigation entry, or messages."
+
+scope:
+  in:
+    - "apps/api/src/modules/projects/** (application, domain, infrastructure, presentation)."
+    - "apps/api/src/modules/projects/projects.module.ts provider registration."
+    - "apps/admin/src/lib/features/project/** (new feature module: schemas, API client, types, tests)."
+    - "apps/admin/src/app/[organizationSlug]/projects/** (new Project screens)."
+    - "apps/admin/src/routes.ts, apps/admin/src/lib/navigation.ts, apps/admin/messages/th.json."
+    - "apps/admin/src/lib/api/api.ts tag registration only when required for the Project feature."
+    - "apps/admin/src/lib/features/audit-log/audit-log-labels.ts for the PROJECT_RESTORED label."
+  out:
+    - "GitHub App repository access, repository picker, clone/sandbox/worker execution."
+    - "Dependency installation, builds/tests, Hermes/AI agents, chat, Issues, Pull Requests."
+    - "Project sharing, project owner/role/member authority, public hard delete."
+    - "Schema migrations unless a required uniqueness guarantee is provably missing (it is not)."
+    - "Unrelated refactors, renames, or formatting churn across other modules."
+
+acceptanceCriteria:
+  - "Cross-organization Project reads and mutations are denied consistently without querying another Organization's Project data."
+  - "manageProject is enforced in the application use case, not only by UI visibility."
+  - "No project role, project owner, project_members, or projects.ownerId authority source exists."
+  - "Archive and restore have separate use cases, controller routes, module providers, audit actions, and regression tests."
+  - "URL normalization/rejection, duplicate repository conflict, branch/runtime metadata, and environment masking are covered by tests."
+  - "Active/archived read, update conflict, archive, restore, repeated-action, permission, 401, 403, 404, and 409 behavior is covered."
+  - "Project screens cover list, empty, loading, error, retry, create/update feedback, archive confirmation, archived state, and restore feedback."
+  - "Successful mutations write transactional audit events with actor, Organization, target, action, before/after, reason where supplied, request ID, and timestamp; token/secret values are excluded."
+  - "Standard response schemas validate every Project response at the API boundary and the Admin client validates its own response schema."
+  - "GET /organizations/:organizationId/projects lists ACTIVE and ARCHIVED records ordered by updatedAt descending."
+
+requiredWork:
+  api:
+    restore:
+      - "Add apps/api/src/modules/projects/application/use-cases/restore-project-use-case.ts (one use case per file, kebab-case)."
+      - "ARCHIVED -> ACTIVE clears archivedAt, sets updatedAt, saves, and records PROJECT_RESTORED with actor, organization, target, before/after."
+      - "Restoring an already ACTIVE project is a safe no-op returning the current record with no save and no audit event."
+      - "Register RestoreProjectUseCase in projects.module.ts and add POST :id/restore to projects.controller.ts."
+    archiveIdempotency:
+      - "Archiving an already ARCHIVED project returns the current record with no save and no duplicate audit event."
+      - "Audit before/after must reflect the real prior status instead of a hardcoded ACTIVE."
+    archivedReadOnly:
+      - "UpdateProjectUseCase rejects an ARCHIVED project with ConflictError (409, code CONFLICT) and a stable message."
+    duplicateRepository:
+      - "Extend the ProjectRepository port with a lookup by organization plus normalized GitHub URL."
+      - "Create rejects an existing record (ACTIVE or ARCHIVED) in the same Organization with ConflictError (409)."
+      - "Update rejects a repository change that collides with another Project in the same Organization, excluding itself."
+    requestIdAndReason:
+      - "Controllers pass the request ID from getRequestId(request) into the mutation use cases so audit events carry it."
+      - "Archive and restore accept an optional reason in the request body and record it when supplied."
+    responseBoundary:
+      - "Every Project response continues to be parsed by the standard Zod response schemas at the controller boundary."
+  apiTests:
+    - "New spec for RestoreProjectUseCase: success, repeated-restore no-op, permission, not found."
+    - "Archive spec extended for repeated-archive no-op with no duplicate audit event and real before status."
+    - "Update spec extended for archived conflict and duplicate repository conflict."
+    - "Create spec extended for duplicate repository conflict."
+    - "New domain spec for parseGithubRepositoryUrl (normalization, .git, credentials, query, fragment, host, path, empty, invalid characters) and maskEnvironmentMetadata."
+    - "Controller spec extended for the restore route and the request ID / reason pass-through."
+  admin:
+    - "apps/admin/src/lib/features/project/types.ts, project-schemas.ts (mirror API field names/optionality), project-api.ts with RTK Query endpoints for list/get/create/update/archive/restore and its own response-schema validation."
+    - "Add the Project tags to apps/admin/src/lib/api/api.ts tagTypes."
+    - "Project screens under apps/admin/src/app/[organizationSlug]/projects/ covering list, empty, loading, error with retry, create/update feedback, archive confirmation, archived state, and restore feedback."
+    - "Use useForm + local Zod schema + schemaResolver for create/update per apps/admin/AGENTS.md."
+    - "Register the route in apps/admin/src/routes.ts, the navigation entry in apps/admin/src/lib/navigation.ts, and the Thai messages in apps/admin/messages/th.json."
+    - "Mutations gated on organization.manage? no: gate Project mutations on the project.manage permission (or owner) returned by the organization role."
+    - "Add PROJECT_RESTORED to apps/admin/src/lib/features/audit-log/audit-log-labels.ts."
+    - "Admin tests for the new schemas and API transport parsing."
+
+constraints:
+  - "Follow apps/api/AGENTS.md: kebab-case files, one use case per file, tests beside use cases."
+  - "Follow apps/admin/AGENTS.md: RTK Query client only, no Server Actions or direct database access, Mantine useForm with schemaResolver, Thai-only locale."
+  - "Do not read .env, .env.local, or .env.production."
+  - "Do not call GitHub, clone, verify, install, build, test, start a worker, or create a sandbox from Project use cases."
+  - "Preserve the standard success/error envelope and stable error codes with request IDs."
+  - "Do not touch unrelated modules, migrations, or formatting."
+
+requiredChecks:
+  - "pnpm --filter @project-forge/api test"
+  - "pnpm --filter @project-forge/api check-types"
+  - "pnpm --filter @project-forge/api lint"
+  - "pnpm --filter @project-forge/api build"
+  - "pnpm --filter @project-forge/admin test"
+  - "pnpm --filter @project-forge/admin typecheck"
+  - "pnpm --filter @project-forge/admin lint"
+  - "pnpm --filter @project-forge/admin check:admin-client-boundary"
+  - "pnpm --filter @project-forge/admin check:ui-i18n"
+  - "pnpm --filter @project-forge/admin build"
+
+baseline:
+  evidence: "pnpm --filter @project-forge/api test -> 37 files, 88 tests passed before changes."
+
+reviewGate:
+  initial: [review-spec, review-standard]
+  followUp: review-follow-up
+  ledgerMarker: "<!-- forge-review-ledger -->"
+  rule: "one finding = one commit; resolved findings are preserved and skipped unless regressed."
+
+notes:
+  - "The branch is created from main at the start of this task; Forge runs checks in the same working tree."
+  - "Forge owns the readiness decision; the Pull Request is never merged automatically."
