@@ -150,18 +150,25 @@ export default function OrganizationMembersPage() {
 
   const members = membersResult?.data ?? []
   const roles = useMemo(() => rolesResult?.data ?? [], [rolesResult?.data])
-  const assignableRoles = useMemo(
+  const memberRoleOptions = useMemo(
     () =>
       roles.filter(
         (candidate): candidate is OrganizationRoleSummary & { id: string } =>
-          Boolean(candidate.id) &&
-          (candidate.legacyRole === 'ADMIN' || candidate.legacyRole === 'MEMBER')
+          Boolean(candidate.id) && !candidate.isOwner
       ),
     [roles]
   )
+  const invitationRoleOptions = useMemo(
+    () =>
+      memberRoleOptions.filter(
+        role =>
+          role.legacyRole === 'ADMIN' || role.legacyRole === 'MEMBER'
+      ),
+    [memberRoleOptions]
+  )
   const defaultInviteRoleId =
-    assignableRoles.find(role => role.legacyRole === 'MEMBER')?.id ??
-    assignableRoles[0]?.id ??
+    invitationRoleOptions.find(role => role.legacyRole === 'MEMBER')?.id ??
+    invitationRoleOptions[0]?.id ??
     ''
   const invitations = invitationsResult ?? []
   const allVisibleSelected =
@@ -188,7 +195,7 @@ export default function OrganizationMembersPage() {
 
   const submitInvitations = async () => {
     if (!organizationId || !canManage) return
-    if (!assignableRoles.length) return
+    if (!invitationRoleOptions.length) return
 
     const rows = inviteRows.filter(row => row.email.trim())
     if (!rows.length) {
@@ -365,7 +372,7 @@ export default function OrganizationMembersPage() {
                     <Select
                       label={t('role')}
                       value={row.roleId || defaultInviteRoleId || null}
-                      data={assignableRoles.map(role => ({
+                      data={invitationRoleOptions.map(role => ({
                         value: role.id,
                         label: role.name
                       }))}
@@ -609,7 +616,7 @@ export default function OrganizationMembersPage() {
                                     </Menu.Target>
                                     <Menu.Dropdown>
                                       {!member.role.isOwner
-                                        ? assignableRoles.map(roleOption => (
+                                        ? memberRoleOptions.map(roleOption => (
                                             <Menu.Item
                                               key={roleOption.id}
                                               disabled={
