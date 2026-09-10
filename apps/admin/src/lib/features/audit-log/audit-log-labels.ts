@@ -4,12 +4,41 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   USER_PASSWORD_RESET: "รีเซ็ตรหัสผ่านผู้ใช้งาน", USER_ROLE_CHANGED: "เปลี่ยนบทบาทผู้ใช้งาน",
   USER_SESSIONS_REVOKED: "ยกเลิก session ผู้ใช้งาน", PROFILE_NAME_CHANGED: "แก้ชื่อบัญชีของตัวเอง",
   PROFILE_EMAIL_CHANGED: "แก้อีเมลบัญชีของตัวเอง", PROFILE_PASSWORD_CHANGED: "เปลี่ยนรหัสผ่านของตัวเอง",
+  PROFILE_UPDATED: "อัปเดตโปรไฟล์",
   LOGIN_SUCCEEDED: "เข้าสู่ระบบสำเร็จ", LOGIN_FAILED: "เข้าสู่ระบบไม่สำเร็จ",
+  ORGANIZATION_CREATED: "สร้าง Organization",
+  ORGANIZATION_UPDATED: "แก้ไข Organization",
+  ORGANIZATION_ROLE_CREATED: "สร้างบทบาท Organization",
+  ORGANIZATION_ROLE_UPDATED: "แก้ไขบทบาท Organization",
+  ORGANIZATION_ROLE_DELETED: "ลบบทบาท Organization",
+  ORGANIZATION_MEMBER_NAME_CHANGED: "เปลี่ยนชื่อสมาชิก",
+  ORGANIZATION_MEMBER_STATUS_CHANGED: "เปลี่ยนสถานะสมาชิก",
+  ORGANIZATION_MEMBER_ROLE_CHANGED: "เปลี่ยนบทบาทสมาชิก",
+  ORGANIZATION_MEMBER_REMOVED: "นำสมาชิกออก",
+  ORGANIZATION_INVITATION_CREATED: "สร้างคำเชิญสมาชิก",
+  ORGANIZATION_INVITATION_ACCEPTED: "ตอบรับคำเชิญสมาชิก",
+  PROJECT_CREATED: "สร้าง Project",
+  PROJECT_UPDATED: "แก้ไข Project",
+  PROJECT_ARCHIVED: "เก็บ Project",
+  ACCESS_APPROVED: "อนุมัติคำขอเข้าถึง",
+  ACCESS_REJECTED: "ปฏิเสธคำขอเข้าถึง"
 };
 
 export const AUDIT_RESOURCE_TYPE_LABELS: Record<string, string> = {
   USER: "ผู้ใช้งาน", PROFILE: "บัญชีของตัวเอง", AUDIT_LOG: "ประวัติการทำรายการ",
+  ORGANIZATION: "Organization", ORGANIZATION_ROLE: "บทบาท Organization",
+  ORGANIZATION_MEMBER: "สมาชิก Organization",
+  ORGANIZATION_INVITATION: "คำเชิญสมาชิก",
+  PROJECT: "Project", ACCESS_REQUEST: "คำขอเข้าถึง"
 };
+
+export function getAuditActionLabel(action: string) {
+  return AUDIT_ACTION_LABELS[action] ?? action;
+}
+
+export function getAuditResourceTypeLabel(resourceType: string) {
+  return AUDIT_RESOURCE_TYPE_LABELS[resourceType] ?? resourceType;
+}
 
 const ACCOUNT_GROUP = "บัญชีและการเข้าระบบ";
 

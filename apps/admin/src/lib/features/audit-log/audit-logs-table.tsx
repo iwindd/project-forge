@@ -32,9 +32,9 @@ import { DataTable, type DataTableColumn } from 'mantine-datatable'
 import { useFormatter } from 'next-intl'
 import { useCallback, useMemo, useState } from 'react'
 import {
-  AUDIT_ACTION_LABELS,
   AUDIT_ACTOR_ROLE_LABELS,
-  AUDIT_RESOURCE_TYPE_LABELS
+  getAuditActionLabel,
+  getAuditResourceTypeLabel
 } from './audit-log-labels'
 import {
   useExportAuditLogMutation,
@@ -187,7 +187,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         render: record => (
           <Stack gap={4}>
             <Text size='sm' fw={500}>
-              {AUDIT_ACTION_LABELS[record.action]}
+              {getAuditActionLabel(record.action)}
             </Text>
             <Text size='xs' c='dimmed'>
               {formatDateTime(record.createdAt)}
@@ -200,7 +200,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         title: 'ประเภท',
         render: record => (
           <Text size='sm' c='dimmed'>
-            {AUDIT_RESOURCE_TYPE_LABELS[record.resourceType]}
+            {getAuditResourceTypeLabel(record.resourceType)}
           </Text>
         )
       },
@@ -239,7 +239,7 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
                 <Menu.Target>
                   <ActionIcon
                     variant='subtle'
-                    aria-label={`เมนูของรายการ ${AUDIT_ACTION_LABELS[record.action]}`}
+                    aria-label={`เมนูของรายการ ${getAuditActionLabel(record.action)}`}
                   >
                     <IconDotsVertical size={18} />
                   </ActionIcon>
@@ -295,8 +295,8 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       label: 'เหตุการณ์',
       filters: selectedActions.map(action => ({
         id: action,
-        label: AUDIT_ACTION_LABELS[action],
-        removeLabel: `ลบเหตุการณ์ ${AUDIT_ACTION_LABELS[action]}`
+        label: getAuditActionLabel(action),
+        removeLabel: `ลบเหตุการณ์ ${getAuditActionLabel(action)}`
       }))
     },
     {
@@ -304,8 +304,8 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       label: 'ประเภทข้อมูล',
       filters: selectedResourceTypes.map(resourceType => ({
         id: resourceType,
-        label: AUDIT_RESOURCE_TYPE_LABELS[resourceType],
-        removeLabel: `ลบประเภทข้อมูล ${AUDIT_RESOURCE_TYPE_LABELS[resourceType]}`
+        label: getAuditResourceTypeLabel(resourceType),
+        removeLabel: `ลบประเภทข้อมูล ${getAuditResourceTypeLabel(resourceType)}`
       }))
     },
     {
