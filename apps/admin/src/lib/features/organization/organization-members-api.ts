@@ -12,6 +12,7 @@ import {
   organizationRoleResponseSchema,
   organizationRolesMetaSchema,
   organizationRoleSummarySchema,
+  nullResponseSchema,
   okResponseSchema
 } from './organization-schemas'
 import type { OrganizationMemberRole } from './types'
@@ -149,6 +150,10 @@ export function parseDeleteRoleResponse(response: unknown) {
   return okResponseSchema.parse(response)
 }
 
+export function parseCancelInvitationResponse(response: unknown) {
+  return nullResponseSchema.parse(response)
+}
+
 export function parseMemberUserResponse(response: unknown): {
   user: OrganizationMemberUser
 } {
@@ -245,12 +250,12 @@ export const organizationMembersApi = api.injectEndpoints({
         { type: 'OrganizationRoles', id: organizationId }
       ]
     }),
-    cancelInvitation: builder.mutation<{ ok: true }, CancelInvitationInput>({
+    cancelInvitation: builder.mutation<null, CancelInvitationInput>({
       query: ({ organizationId, invitationId }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/invitations/${encodeURIComponent(invitationId)}`,
         method: 'DELETE'
       }),
-      transformResponse: parseDeleteRoleResponse,
+      transformResponse: parseCancelInvitationResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationInvitations', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }

@@ -265,7 +265,7 @@ describe('OrganizationsController', () => {
         principal,
         { id: organizationId, invitationId: userId },
       ),
-    ).resolves.toEqual({ data: { ok: true } });
+    ).resolves.toEqual({ data: null });
     expect(cancelInvitation).toHaveBeenCalledWith(userId, organizationId, userId);
   });
 });
