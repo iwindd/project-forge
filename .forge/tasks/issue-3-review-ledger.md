@@ -15,6 +15,10 @@ Rows are never deleted, only appended and re-statused.
 > existing convention of tracking other `.forge/` metadata (`scan.json`, `project.md`,
 > `features.md`). They were working-tree-only during the review rounds, which is why they are
 > absent from the per-finding commits.
+>
+> Branch `issue/3-organization-scoped-project-lifecycle` was pushed and opened as draft Pull
+> Request **#13** (https://github.com/iwindd/project-forge/pull/13). This file is mirrored verbatim
+> as the `forge-review-ledger` comment on that Pull Request.
 
 ---
 
