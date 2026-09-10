@@ -1,8 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { OrganizationMemberRole } from '../../domain/organization.js';
-import { OrganizationService } from '../organization.service.js';
+import {
+  ORGANIZATION_MEMBER_QUERY,
+} from '../ports/organization-member.query.js';
+import type {
+  OrganizationMemberQuery,
+  OrganizationMemberQueryRecord,
+} from '../ports/organization-member.query.js';
 
-type OrganizationMember = Awaited<ReturnType<OrganizationService['listMembers']>>[number];
+type OrganizationMember = OrganizationMemberQueryRecord;
 
 export type ListOrganizationMembersQuery = {
   search?: string;
@@ -25,14 +32,17 @@ export type ListOrganizationMembersResult = {
 
 @Injectable()
 export class ListOrganizationMembersUseCase {
-  constructor(private readonly organizations: OrganizationService) {}
+  constructor(
+    @Inject(ORGANIZATION_MEMBER_QUERY)
+    private readonly members: OrganizationMemberQuery,
+  ) {}
 
   async execute(
     userId: string,
     organizationId: string,
     query: ListOrganizationMembersQuery,
   ): Promise<ListOrganizationMembersResult> {
-    let data = await this.organizations.listMembers(userId, organizationId);
+    let data = await this.members.list(userId, organizationId);
     const search = query.search?.trim().toLowerCase();
 
     if (search) {

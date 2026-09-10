@@ -314,40 +314,6 @@ export class OrganizationService {
     return { ok: true as const };
   }
 
-  async listMembers(userId: string, organizationId: string) {
-    const { organization } = await this.requireMembership(userId, organizationId);
-    const members = await this.em.find(OrganizationMemberOrmEntity, {
-      organizationId,
-      status: { $ne: OrganizationMemberStatus.REMOVED },
-    }, { orderBy: { joinedAt: 'ASC' } });
-    const userIds = members.map((member) => member.userId);
-    const users = userIds.length
-      ? await this.em.find(UserOrmEntity, { id: { $in: userIds } })
-      : [];
-    const githubConnections = userIds.length
-      ? await this.em.find(ConnectionOrmEntity, { userId: { $in: userIds }, provider: 'GITHUB' })
-      : [];
-    const roles = await this.ensureDefaultRoles(organization);
-    const roleMap = new Map(roles.map((role) => [role.id, role]));
-    const legacyRoleMap = new Map(roles.filter((role) => role.legacyRole).map((role) => [role.legacyRole, role]));
-    const userMap = new Map(users.map((user) => [user.id, user]));
-    const emailMap = new Map(githubConnections.map((connection) => [connection.userId, connection.providerEmail]));
-    return members.map((member) => {
-      const user = userMap.get(member.userId);
-      return {
-        id: member.userId,
-        membershipId: member.id,
-        name: user?.name ?? user?.githubLogin ?? 'Unknown user',
-        email: emailMap.get(member.userId) ?? user?.githubLogin ?? null,
-        role: this.roleView(roleMap.get(member.roleId ?? '') ?? legacyRoleMap.get(member.role), member.role),
-        status: member.status,
-        isActive: member.status === OrganizationMemberStatus.ACTIVE && Boolean(user?.isActive && user.accessStatus !== AccessStatus.SUSPENDED),
-        createdAt: user?.createdAt.toISOString() ?? member.joinedAt.toISOString(),
-        updatedAt: user?.updatedAt.toISOString() ?? member.updatedAt.toISOString(),
-      };
-    });
-  }
-
   async getMember(userId: string, organizationId: string, targetUserId: string) {
     await this.requireMembership(userId, organizationId);
     const membership = await this.em.findOne(OrganizationMemberOrmEntity, {

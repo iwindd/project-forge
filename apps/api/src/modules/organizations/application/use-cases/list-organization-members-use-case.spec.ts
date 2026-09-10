@@ -40,8 +40,8 @@ const members = [
 
 describe('ListOrganizationMembersUseCase', () => {
   it('filters, sorts, and paginates organization members', async () => {
-    const organizations = { listMembers: vi.fn().mockResolvedValue(members) };
-    const useCase = new ListOrganizationMembersUseCase(organizations as never);
+    const memberQuery = { list: vi.fn().mockResolvedValue(members) };
+    const useCase = new ListOrganizationMembersUseCase(memberQuery as never);
 
     await expect(
       useCase.execute('user-id', 'organization-id', {
@@ -62,8 +62,8 @@ describe('ListOrganizationMembersUseCase', () => {
   });
 
   it('gives an explicit role id precedence over the legacy role filter', async () => {
-    const organizations = { listMembers: vi.fn().mockResolvedValue(members) };
-    const useCase = new ListOrganizationMembersUseCase(organizations as never);
+    const memberQuery = { list: vi.fn().mockResolvedValue(members) };
+    const useCase = new ListOrganizationMembersUseCase(memberQuery as never);
 
     await expect(
       useCase.execute('user-id', 'organization-id', {

@@ -9,11 +9,13 @@ import { OrganizationMemberOrmEntity } from './infrastructure/persistence/organi
 import { OrganizationOrmEntity } from './infrastructure/persistence/organization.orm-entity.js';
 import { OrganizationRoleOrmEntity } from './infrastructure/persistence/organization-role.orm-entity.js';
 import { OrganizationService } from './application/organization.service.js';
+import { ORGANIZATION_MEMBER_QUERY } from './application/ports/organization-member.query.js';
 import { CreateOrganizationRoleUseCase } from './application/use-cases/create-organization-role-use-case.js';
 import { DeleteOrganizationRoleUseCase } from './application/use-cases/delete-organization-role-use-case.js';
 import { ListOrganizationMembersUseCase } from './application/use-cases/list-organization-members-use-case.js';
 import { ListOrganizationRolesUseCase } from './application/use-cases/list-organization-roles-use-case.js';
 import { UpdateOrganizationRoleUseCase } from './application/use-cases/update-organization-role-use-case.js';
+import { MikroOrmOrganizationMemberQuery } from './infrastructure/persistence/mikro-orm-organization-member.query.js';
 import { OrganizationsController } from './presentation/organizations.controller.js';
 
 @Module({
@@ -21,6 +23,8 @@ import { OrganizationsController } from './presentation/organizations.controller
   controllers: [OrganizationsController],
   providers: [
     OrganizationService,
+    MikroOrmOrganizationMemberQuery,
+    { provide: ORGANIZATION_MEMBER_QUERY, useExisting: MikroOrmOrganizationMemberQuery },
     ListOrganizationMembersUseCase,
     ListOrganizationRolesUseCase,
     CreateOrganizationRoleUseCase,
