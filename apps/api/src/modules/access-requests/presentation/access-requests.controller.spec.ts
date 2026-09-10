@@ -50,15 +50,13 @@ describe('AccessRequestsController', () => {
     getMine.mockResolvedValue([request]);
 
     await expect(controller.getMyRequests(principal)).resolves.toEqual({
-      data: {
-        requests: [
-          expect.objectContaining({
-            id: requestId,
-            createdAt: now.toISOString(),
-            updatedAt: now.toISOString(),
-          }),
-        ],
-      },
+      data: [
+        expect.objectContaining({
+          id: requestId,
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        }),
+      ],
     });
   });
 

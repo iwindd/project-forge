@@ -33,9 +33,7 @@ const accessRequestWithUserResponseSchema = accessRequestResponseSchema.extend({
 });
 
 export const accessRequestListResponseSchema = z.object({
-  data: z.object({
-    requests: z.array(accessRequestResponseSchema),
-  }),
+  data: z.array(accessRequestResponseSchema),
 });
 
 export const accessRequestResponseEnvelopeSchema = z.object({
@@ -45,9 +43,7 @@ export const accessRequestResponseEnvelopeSchema = z.object({
 });
 
 export const accessRequestAdminListResponseSchema = z.object({
-  data: z.object({
-    requests: z.array(accessRequestWithUserResponseSchema),
-  }),
+  data: z.array(accessRequestWithUserResponseSchema),
 });
 
 export const accessRequestReviewResponseSchema = z.object({

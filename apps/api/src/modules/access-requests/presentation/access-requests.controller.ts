@@ -34,7 +34,7 @@ export class AccessRequestsController {
   async getMyRequests(@Principal() principal: AuthenticatedPrincipal) {
     const requests = await this.getMine.execute(principal.id);
     return accessRequestListResponseSchema.parse(
-      apiSuccess({ requests: requests.map(serializeAccessRequest) }),
+      apiSuccess(requests.map(serializeAccessRequest)),
     );
   }
 
@@ -54,12 +54,12 @@ export class AccessRequestsController {
   async list() {
     const rows = await this.listAccessRequests.execute();
     return accessRequestAdminListResponseSchema.parse(
-      apiSuccess({
-        requests: rows.map(({ request, user }) => ({
+      apiSuccess(
+        rows.map(({ request, user }) => ({
           ...serializeAccessRequest(request),
           user: user ? serializeUser(user) : null,
         })),
-      }),
+      ),
     );
   }
 

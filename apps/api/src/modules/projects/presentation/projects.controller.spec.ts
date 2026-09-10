@@ -63,7 +63,7 @@ describe('ProjectsController', () => {
     archive.mockResolvedValue(project);
 
     await expect(controller.list(principal)).resolves.toEqual({
-      data: { projects: [expect.objectContaining({ id: projectId })] },
+      data: [expect.objectContaining({ id: projectId })],
     });
     await expect(controller.create(principal, {
       githubUrl: project.githubUrl,

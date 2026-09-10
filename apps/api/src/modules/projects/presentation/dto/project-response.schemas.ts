@@ -19,9 +19,7 @@ const projectResponseSchema = z.object({
 });
 
 export const projectListResponseSchema = z.object({
-  data: z.object({
-    projects: z.array(projectResponseSchema),
-  }),
+  data: z.array(projectResponseSchema),
 });
 
 export const projectResponseEnvelopeSchema = z.object({

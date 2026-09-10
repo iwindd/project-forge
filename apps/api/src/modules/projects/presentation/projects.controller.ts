@@ -34,7 +34,7 @@ export class ProjectsController {
   async list(@Principal() principal: AuthenticatedPrincipal) {
     const projects = await this.listProjects.execute(principal.id);
     return projectListResponseSchema.parse(
-      apiSuccess({ projects: projects.map(serializeProject) }),
+      apiSuccess(projects.map(serializeProject)),
     );
   }
 
