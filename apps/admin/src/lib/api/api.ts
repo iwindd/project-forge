@@ -91,7 +91,11 @@ export const baseQuery: BaseQueryFn<
         typeof window !== 'undefined' &&
         !window.location.pathname.startsWith('/admin/login')
       ) {
-        window.location.replace('/admin/login')
+        const returnTo =
+          window.location.pathname + window.location.search
+        window.location.replace(
+          '/admin/login?returnTo=' + encodeURIComponent(returnTo)
+        )
       }
     }
 

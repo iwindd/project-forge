@@ -44,7 +44,13 @@ export async function auth(): Promise<AdminSession | null> {
     })
 
     const { user } = data
-    if (!user.isActive || user.accessStatus !== 'APPROVED') return null
+    if (
+      !user.isActive ||
+      user.accessStatus === 'REJECTED' ||
+      user.accessStatus === 'SUSPENDED'
+    ) {
+      return null
+    }
 
     return {
       user: {

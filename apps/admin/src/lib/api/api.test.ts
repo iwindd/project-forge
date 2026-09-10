@@ -39,6 +39,14 @@ describe('browser API root', () => {
   })
 
   it('clears session and the whole API cache on 401', async () => {
+    const replace = vi.fn()
+    vi.stubGlobal('window', {
+      location: {
+        pathname: '/admin/invitations/invite-token',
+        search: '',
+        replace
+      }
+    })
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -59,6 +67,9 @@ describe('browser API root', () => {
     expect(result).toMatchObject({ error: { status: 401 } })
     expect(dispatch).toHaveBeenCalledWith(setUser(null))
     expect(dispatch).toHaveBeenCalledWith(api.util.resetApiState())
+    expect(replace).toHaveBeenCalledWith(
+      '/admin/login?returnTo=%2Fadmin%2Finvitations%2Finvite-token'
+    )
   })
 
   it('leaves 403 as a typed query error for the UI', async () => {

@@ -5,12 +5,16 @@ import { IconBrandGithub } from "@tabler/icons-react";
 
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
 
-export function LoginForm() {
+export function LoginForm({ returnTo }: { returnTo?: string }) {
+  const query = returnTo
+    ? '?returnTo=' + encodeURIComponent(returnTo)
+    : '';
+
   return (
     <Stack gap="md">
       <Button
         component="a"
-        href={`${apiOrigin}/api/v1/auth/github/start`}
+        href={apiOrigin + '/api/v1/auth/github/start' + query}
         fullWidth
         size="md"
         mt="sm"

@@ -38,6 +38,8 @@ import {
   authMeResponseSchema,
   authUpdateMeResponseSchema,
   githubCallbackQuerySchema,
+  githubReturnToSchema,
+  githubStartQuerySchema,
   updateProfileSchema,
 } from './dto/auth.schemas.js'
 
@@ -60,7 +62,8 @@ export class AuthController {
   }
 
   @Get('github/start')
-  start(@Res() response: Response) {
+  start(@Query() query: unknown, @Res() response: Response) {
+    const { returnTo } = githubStartQuerySchema.parse(query)
     const result = this.startGithubLogin.execute()
     response.cookie('pf_oauth_state', result.state, {
       httpOnly: true,
@@ -69,6 +72,17 @@ export class AuthController {
       maxAge: 10 * 60 * 1000,
       path: '/'
     })
+    if (returnTo) {
+      response.cookie('pf_oauth_return_to', returnTo, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: this.config.cookieSecure,
+        maxAge: 10 * 60 * 1000,
+        path: '/'
+      })
+    } else {
+      response.clearCookie('pf_oauth_return_to', { path: '/' })
+    }
     return response.redirect(result.url)
   }
 
@@ -85,9 +99,14 @@ export class AuthController {
         this.adminRedirect('/admin/login?error=invalid_oauth_state')
       )
     }
+    const returnToResult = githubReturnToSchema.safeParse(
+      getCookie(request, 'pf_oauth_return_to'),
+    )
+    const returnTo = returnToResult.success ? returnToResult.data : null
     try {
       const result = await this.completeGithubLogin.execute(parsedQuery.data.code)
       response.clearCookie('pf_oauth_state', { path: '/' })
+      response.clearCookie('pf_oauth_return_to', { path: '/' })
       if (result.sessionToken) {
         response.cookie('pf_session', result.sessionToken, {
           httpOnly: true,
@@ -99,9 +118,9 @@ export class AuthController {
       } else {
         response.clearCookie('pf_session', { path: '/' })
       }
-      const destination = result.organizationSlug
+      const destination = returnTo ?? (result.organizationSlug
         ? `/${encodeURIComponent(result.organizationSlug)}`
-        : '/account'
+        : '/account')
       return response.redirect(this.adminRedirect(destination))
     } catch (error) {
       const message =

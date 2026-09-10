@@ -4,6 +4,42 @@ import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
 import { AuthController } from './auth.controller.js'
 
 describe('AuthController', () => {
+  it('stores a validated OAuth continuation path', () => {
+    const startGithubLogin = {
+      execute: vi.fn().mockReturnValue({
+        state: 'oauth-state',
+        url: 'https://github.com/login/oauth/authorize?state=oauth-state'
+      })
+    }
+    const response = {
+      cookie: vi.fn(),
+      clearCookie: vi.fn(),
+      redirect: vi.fn()
+    }
+    const controller = new AuthController(
+      startGithubLogin as never,
+      {} as never,
+      {} as never,
+      { adminOrigin: 'http://localhost:5051', cookieSecure: false } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never
+    )
+
+    controller.start(
+      { returnTo: '/admin/invitations/invite-token' },
+      response as never
+    )
+
+    expect(response.cookie).toHaveBeenCalledWith(
+      'pf_oauth_return_to',
+      '/admin/invitations/invite-token',
+      expect.objectContaining({ httpOnly: true })
+    )
+  })
+
   it('redirects an approved OAuth login to the resolved organization route', async () => {
     const completeGithubLogin = {
       execute: vi.fn().mockResolvedValue({
@@ -31,12 +67,17 @@ describe('AuthController', () => {
 
     await controller.callback(
       { code: 'oauth-code', state: 'expected-state' },
-      { headers: { cookie: 'pf_oauth_state=expected-state' } } as never,
+      {
+        headers: {
+          cookie:
+            'pf_oauth_state=expected-state; pf_oauth_return_to=%2Fadmin%2Finvitations%2Finvite-token'
+        }
+      } as never,
       response as never
     )
 
     expect(response.redirect).toHaveBeenCalledWith(
-      'http://localhost:5051/personal-user'
+      'http://localhost:5051/admin/invitations/invite-token'
     )
     expect(response.cookie).toHaveBeenCalledWith(
       'pf_session',
