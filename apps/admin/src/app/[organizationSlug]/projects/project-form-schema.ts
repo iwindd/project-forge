@@ -10,15 +10,60 @@ const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 /**
  * A bare credential pasted without `=` (a GitHub token, an API key, a cloud access key id) is
  * identifier-shaped, so the variable-name filter alone would accept it and store the secret itself
- * as the key name. Any known credential prefix followed by 16 or more token characters is dropped.
+ * as the key name.
+ *
+ * Mirrors the API's `environmentVariableNameSchema` without importing validation code across
+ * applications; keep the prefix list and the suffix rule in step with it.
  */
-const CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN =
-  /^(ghp_|gho_|ghu_|ghs_|ghr_|github_pat_|glpat-|sk_live_|sk_test_|sk-|xoxb-|xoxp-|npm_|AKIA|ASIA)[A-Za-z0-9_-]{16,}$/
+const CREDENTIAL_PREFIXES = [
+  'ghp_',
+  'gho_',
+  'ghu_',
+  'ghs_',
+  'ghr_',
+  'github_pat_',
+  'glpat-',
+  'sk_live_',
+  'sk_test_',
+  'sk-',
+  'xoxb-',
+  'xoxp-',
+  'npm_',
+  'AKIA',
+  'ASIA'
+]
+
+const DIGIT_PATTERN = /[0-9]/
+const UPPERCASE_LETTER_PATTERN = /[A-Z]/
+const TOKEN_SHAPED_SUFFIX_MIN_LENGTH = 16
+
+/**
+ * A credential prefix alone does not make a secret: length by itself would silently discard
+ * legitimate names such as `npm_package_lock_version`. The suffix is treated as token material
+ * only when it contains a digit AND either an uppercase letter or at least 16 characters.
+ */
+function isTokenShapedSuffix(suffix: string) {
+  return (
+    DIGIT_PATTERN.test(suffix) &&
+    (UPPERCASE_LETTER_PATTERN.test(suffix) ||
+      suffix.length >= TOKEN_SHAPED_SUFFIX_MIN_LENGTH)
+  )
+}
+
+function isCredentialShapedEnvironmentName(name: string) {
+  const prefix = CREDENTIAL_PREFIXES.find(candidate =>
+    name.startsWith(candidate)
+  )
+
+  return (
+    prefix !== undefined && isTokenShapedSuffix(name.slice(prefix.length))
+  )
+}
 
 function isStorableEnvironmentVariableName(name: string) {
   return (
     ENVIRONMENT_VARIABLE_NAME_PATTERN.test(name) &&
-    !CREDENTIAL_SHAPED_ENVIRONMENT_NAME_PATTERN.test(name)
+    !isCredentialShapedEnvironmentName(name)
   )
 }
 
