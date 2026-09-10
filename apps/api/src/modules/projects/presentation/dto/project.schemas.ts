@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
 
 export const createProjectSchema = z.object({
   name: z.string().trim().max(120).optional().default(''),
@@ -10,6 +11,10 @@ export const createProjectSchema = z.object({
 });
 
 export const updateProjectSchema = createProjectSchema.partial();
+
+export const projectIdParamSchema = z.object({
+  id: databaseUuidSchema,
+});
 
 export type CreateProjectDto = z.infer<typeof createProjectSchema>;
 export type UpdateProjectDto = z.infer<typeof updateProjectSchema>;
