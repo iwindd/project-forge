@@ -40,8 +40,8 @@ export function AppBreadcrumbs({
         const label =
           isCurrent && currentLabel !== undefined
             ? currentLabel
-            : route.name === 'profile' || route.name.endsWith('.profile')
-              ? nav(route.name.endsWith('.profile') ? 'userDetail' : 'profile')
+            : route.name === 'profile'
+              ? nav('profile')
               : route.name.endsWith('.logging') ||
                   route.name === 'system.auditLogs'
                 ? nav('auditLogs')

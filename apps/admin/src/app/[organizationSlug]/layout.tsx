@@ -39,10 +39,6 @@ export default async function OrganizationLayout({
 
   const organizations = await getOrganizations()
 
-  if (!organizations) {
-    redirect('/admin/login?error=organization_unavailable')
-  }
-
   const organization = organizations.find(
     candidate => candidate.slug === organizationSlug
   )

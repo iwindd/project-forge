@@ -9,7 +9,7 @@ import {
 import { FilterTrigger } from "@/components/filter-trigger";
 import TableSearchInput from "@/components/table-search-input";
 import { useGetUsersQuery } from "@/lib/features/user/users-api";
-import { useOptionalOrganizationContext } from "@/lib/features/organization/organization-provider";
+import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
 import useDatatable from "@/hooks/use-datatable";
 import { parseListUsersQuery } from "@/servers/user/queries/get-user-list-schema";
 import type { UserListItem, UserListQuery } from "@/servers/user/types";
@@ -26,7 +26,6 @@ import {
 import { IconCheck } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useFormatter } from "next-intl";
-import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import classes from "./users-table.style.module.css";
@@ -43,11 +42,7 @@ export function UsersTable() {
   const t = useTranslations("Users");
   const common = useTranslations("Common");
   const format = useFormatter();
-  const { organizationSlug: routeOrganizationSlug } = useParams<{
-    organizationSlug?: string;
-  }>();
-  const organizationContext = useOptionalOrganizationContext();
-  const activeOrganization = organizationContext?.activeOrganization;
+  const { activeId: organizationId } = useOrganizationContext();
   const columns = useMemo(
     () => [
       {
@@ -106,12 +101,10 @@ export function UsersTable() {
   const { query, setSearchValue, updateQuery } = datatable;
   const { data, isFetching, isError } = useGetUsersQuery(
     {
-      organizationId: routeOrganizationSlug
-        ? activeOrganization?.id
-        : undefined,
+      organizationId: organizationId ?? "",
       query,
     },
-    { skip: Boolean(routeOrganizationSlug && !activeOrganization) },
+    { skip: !organizationId },
   );
   const roleCombobox = useCombobox();
   const statusCombobox = useCombobox();

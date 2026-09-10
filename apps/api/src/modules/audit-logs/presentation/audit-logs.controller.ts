@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   Res,
+  NotFoundException,
   UseGuards
 } from '@nestjs/common'
 import type { Response } from 'express'
@@ -124,8 +125,7 @@ export class AuditLogsController {
   async export(@Param() rawParams: unknown, @Res() response: Response) {
     const { id } = auditLogIdParamSchema.parse(rawParams)
     const log = await this.em.findOne(AuditLogOrmEntity, { id })
-    if (!log)
-      return response.status(404).json({ message: 'Audit log was not found' })
+    if (!log) throw newAuditLogNotFound()
     return response.json(log)
   }
 
@@ -141,7 +141,7 @@ export class AuditLogsController {
       !log ||
       (log.actorId !== principal.id && log.targetUserId !== principal.id)
     ) {
-      return response.status(404).json({ message: 'Audit log was not found' })
+      throw newAuditLogNotFound()
     }
     return response.json(log)
   }
@@ -156,8 +156,7 @@ export class AuditLogsController {
       auditLogOrganizationParamSchema.extend(auditLogIdParamSchema.shape).parse(rawParams)
     await this.requireOrganizationViewer(principal, organizationId)
     const log = await this.em.findOne(AuditLogOrmEntity, { id, organizationId })
-    if (!log)
-      return response.status(404).json({ message: 'Audit log was not found' })
+    if (!log) throw newAuditLogNotFound()
     return response.json(log)
   }
 
@@ -331,4 +330,11 @@ export class AuditLogsController {
     }
     return role
   }
+}
+
+function newAuditLogNotFound() {
+  return new NotFoundException({
+    code: 'AUDIT_LOG_NOT_FOUND',
+    message: 'Audit log was not found'
+  })
 }

@@ -1,20 +1,28 @@
-import { z } from 'zod'
 import { api } from '@/lib/api/api'
-import { organizationListSchema } from './organization-schemas'
+import { z } from 'zod'
+import {
+  organizationCreatedResponseSchema,
+  organizationListSchema,
+  organizationResponseSchema
+} from './organization-schemas'
 import type { Organization } from './types'
-
-const createOrganizationResponseSchema = z.object({
-  organization: z.object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    slug: z.string().min(1),
-    type: z.enum(['PERSONAL', 'SHARED'])
-  })
-})
 
 export type CreateOrganizationInput = {
   name: string
   slug?: string
+}
+
+export type UpdateOrganizationInput = {
+  organizationId: string
+  name: string
+}
+
+export function parseCreateOrganizationResponse(response: unknown) {
+  return organizationCreatedResponseSchema.parse(response)
+}
+
+export function parseUpdateOrganizationResponse(response: unknown) {
+  return organizationResponseSchema.parse(response)
 }
 
 export const organizationApi = api.injectEndpoints({
@@ -26,7 +34,7 @@ export const organizationApi = api.injectEndpoints({
       providesTags: ['Organizations']
     }),
     createOrganization: builder.mutation<
-      z.infer<typeof createOrganizationResponseSchema>,
+      z.infer<typeof organizationCreatedResponseSchema>,
       CreateOrganizationInput
     >({
       query: body => ({
@@ -34,8 +42,19 @@ export const organizationApi = api.injectEndpoints({
         method: 'POST',
         body
       }),
-      transformResponse: (response: unknown) =>
-        createOrganizationResponseSchema.parse(response),
+      transformResponse: parseCreateOrganizationResponse,
+      invalidatesTags: ['Organizations']
+    }),
+    updateOrganization: builder.mutation<
+      ReturnType<typeof parseUpdateOrganizationResponse>,
+      UpdateOrganizationInput
+    >({
+      query: ({ organizationId, name }) => ({
+        url: `organizations/${encodeURIComponent(organizationId)}`,
+        method: 'PATCH',
+        body: { name }
+      }),
+      transformResponse: parseUpdateOrganizationResponse,
       invalidatesTags: ['Organizations']
     })
   }),
@@ -44,5 +63,6 @@ export const organizationApi = api.injectEndpoints({
 
 export const {
   useCreateOrganizationMutation,
-  useGetOrganizationsQuery
+  useGetOrganizationsQuery,
+  useUpdateOrganizationMutation
 } = organizationApi

@@ -1,49 +1,59 @@
 import { z } from 'zod'
 import type { Organization } from './types'
 
+const postgresUuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** PostgreSQL accepts any canonical UUID-shaped value, not only RFC UUID versions. */
+export const databaseUuidSchema = z.string().regex(postgresUuidPattern)
+
 export const organizationRoleSchema = z.object({
-  id: z.string().nullable(),
+  id: databaseUuidSchema.nullable(),
   name: z.string().min(1),
   permissions: z.array(z.string()),
   isOwner: z.boolean(),
   legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable()
 })
 
-export const organizationSchema = z.object({
-  id: z.string().min(1),
+export const organizationResourceSchema = z.object({
+  id: databaseUuidSchema,
   name: z.string().min(1),
   slug: z.string().min(1),
   type: z.enum(['PERSONAL', 'SHARED']),
-  role: organizationRoleSchema,
   status: z.enum(['ACTIVE', 'ARCHIVED', 'SUSPENDED']),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1)
+})
+
+export const organizationSchema = organizationResourceSchema.extend({
+  role: organizationRoleSchema
 }) satisfies z.ZodType<Organization>
 
 export const organizationListSchema = z.array(organizationSchema)
 
-const acceptedOrganizationSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  slug: z.string().min(1),
-  type: z.enum(['PERSONAL', 'SHARED']),
-  status: z.enum(['ACTIVE', 'ARCHIVED', 'SUSPENDED']),
-  createdAt: z.string().min(1),
-  updatedAt: z.string().min(1)
+export const organizationCreatedResponseSchema = z.object({
+  organization: organizationResourceSchema.pick({
+    id: true,
+    name: true,
+    slug: true,
+    type: true
+  })
 })
 
-export const acceptInvitationResponseSchema = z.object({
-  organization: acceptedOrganizationSchema
+export const organizationResponseSchema = z.object({
+  organization: organizationResourceSchema
 })
+
+export const acceptInvitationResponseSchema = organizationResponseSchema
 
 export const organizationRoleSummarySchema = organizationRoleSchema.extend({
-  memberCount: z.number().optional(),
-  invitationCount: z.number().optional()
+  memberCount: z.number().int().nonnegative(),
+  invitationCount: z.number().int().nonnegative()
 })
 
 export const organizationMemberSchema = z.object({
-  id: z.string().min(1),
-  membershipId: z.string().min(1),
+  id: databaseUuidSchema,
+  membershipId: databaseUuidSchema,
   name: z.string().min(1),
   email: z.string().nullable(),
   role: organizationRoleSchema,
@@ -54,8 +64,8 @@ export const organizationMemberSchema = z.object({
 })
 
 export const organizationMemberUserSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1).nullable(),
+  id: databaseUuidSchema,
+  name: z.string().min(1),
   email: z.string().nullable(),
   role: organizationRoleSchema,
   isActive: z.boolean(),
@@ -72,13 +82,26 @@ export const organizationMemberRoleResponseSchema = z.object({
 })
 
 export const organizationInvitationSchema = z.object({
-  id: z.string().min(1),
-  organizationId: z.string().min(1),
+  id: databaseUuidSchema,
+  organizationId: databaseUuidSchema,
   email: z.string().nullable(),
   role: organizationRoleSchema,
   status: z.enum(['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED']),
   expiresAt: z.string().min(1),
   createdAt: z.string().min(1)
+})
+
+export const organizationRoleResponseSchema = z.object({
+  role: organizationRoleSchema
+})
+
+export const organizationInvitationResponseSchema = z.object({
+  invitation: organizationInvitationSchema,
+  token: z.string().min(1)
+})
+
+export const okResponseSchema = z.object({
+  ok: z.literal(true)
 })
 
 export const organizationRolesMetaSchema = z.object({
@@ -88,8 +111,8 @@ export const organizationRolesMetaSchema = z.object({
 })
 
 export const organizationMembersMetaSchema = z.object({
-  page: z.number(),
-  pageSize: z.number(),
-  total: z.number(),
-  totalPages: z.number()
+  page: z.number().int().nonnegative(),
+  pageSize: z.number().int().positive(),
+  total: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative()
 })

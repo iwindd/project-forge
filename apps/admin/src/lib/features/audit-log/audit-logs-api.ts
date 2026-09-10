@@ -65,7 +65,7 @@ function getAuditLogListUrl(
   return scope.kind === 'own' ? 'audit-logs/me' : 'audit-logs'
 }
 
-export function getAuditLogExportUrl(
+export function getAuditLogExportPath(
   scope: AuditLogScopeArg,
   id: string,
   organizationId?: string
@@ -76,7 +76,31 @@ export function getAuditLogExportUrl(
       ? `audit-logs/organization/${encodeURIComponent(organizationId)}`
       : 'audit-logs'
 
-  return `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050'}/api/v1/${base}/${encodeURIComponent(id)}/export`
+  return `${base}/${encodeURIComponent(id)}/export`
+}
+
+export async function parseAuditLogExportResponse(
+  response: Response
+): Promise<string | unknown> {
+  // Keep the successful payload serializable while RTK Query stores the
+  // mutation result. The component turns this JSON string into a Blob only
+  // at the point where the browser download is started.
+  if (response.ok) return response.text()
+
+  const body = await response.text()
+  if (!body) return {}
+
+  try {
+    return JSON.parse(body) as unknown
+  } catch {
+    return body
+  }
+}
+
+export type AuditLogExportArgs = {
+  scope: AuditLogScopeArg
+  auditLogId: string
+  organizationId?: string
 }
 
 /** Multi-value filters travel as comma-separated lists. */
@@ -109,9 +133,17 @@ export const auditLogsApi = api.injectEndpoints({
       }),
       transformResponse: parseAuditLogsResponse,
       providesTags: ['AuditLogs']
+    }),
+    exportAuditLog: builder.mutation<string, AuditLogExportArgs>({
+      query: ({ scope, auditLogId, organizationId }) => ({
+        url: getAuditLogExportPath(scope, auditLogId, organizationId),
+        method: 'GET',
+        cache: 'no-store',
+        responseHandler: parseAuditLogExportResponse
+      })
     })
   }),
   overrideExisting: false
 })
 
-export const { useGetAuditLogsQuery } = auditLogsApi
+export const { useExportAuditLogMutation, useGetAuditLogsQuery } = auditLogsApi

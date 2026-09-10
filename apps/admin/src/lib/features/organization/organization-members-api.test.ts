@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   parseAcceptInvitationResponse,
+  parseCreateInvitationResponse,
+  parseDeleteRoleResponse,
   parseMemberRoleResponse,
   parseMemberUserResponse,
   parseMembersResponse,
+  parseRoleMutationResponse,
   parseRoleResponse
 } from './organization-members-api'
 
@@ -13,7 +16,7 @@ describe('organization member transport contracts', () => {
       parseRoleResponse(
         [
           {
-            id: 'role-id',
+            id: '550e8400-e29b-41d4-a716-446655440002',
             name: 'แอดมิน',
             permissions: ['organization.manage'],
             isOwner: false,
@@ -31,7 +34,7 @@ describe('organization member transport contracts', () => {
     ).toEqual({
       data: [
         {
-          id: 'role-id',
+            id: '550e8400-e29b-41d4-a716-446655440002',
           name: 'แอดมิน',
           permissions: ['organization.manage'],
           isOwner: false,
@@ -46,12 +49,12 @@ describe('organization member transport contracts', () => {
 
   it('maps member collection data and pagination metadata from the API envelope', () => {
     const member = {
-      id: 'user-id',
-      membershipId: 'membership-id',
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      membershipId: '550e8400-e29b-41d4-a716-446655440003',
       name: 'User',
       email: 'user@example.com',
       role: {
-        id: 'role-id',
+          id: '550e8400-e29b-41d4-a716-446655440002',
         name: 'สมาชิก',
         permissions: [],
         isOwner: false,
@@ -78,7 +81,7 @@ describe('organization member transport contracts', () => {
 
   it('parses the accepted organization payload after the API envelope is unwrapped', () => {
     const organization = {
-      id: 'organization-id',
+      id: '550e8400-e29b-41d4-a716-446655440000',
       name: 'Organization A',
       slug: 'organization-a',
       type: 'SHARED' as const,
@@ -94,11 +97,11 @@ describe('organization member transport contracts', () => {
 
   it('parses member mutation payloads with their endpoint-specific keys', () => {
     const member = {
-      id: 'user-id',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'User',
       email: 'user@example.com',
       role: {
-        id: 'role-id',
+        id: '550e8400-e29b-41d4-a716-446655440002',
         name: 'สมาชิก',
         permissions: [],
         isOwner: false,
@@ -113,5 +116,31 @@ describe('organization member transport contracts', () => {
     expect(parseMemberRoleResponse({ membership: member })).toEqual({
       membership: member
     })
+  })
+
+  it('parses role, invitation, and delete mutation payloads at runtime', () => {
+    const role = {
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      name: 'แอดมิน',
+      permissions: ['organization.manage'],
+      isOwner: false,
+      legacyRole: 'ADMIN' as const
+    }
+    const invitation = {
+      id: '550e8400-e29b-41d4-a716-446655440003',
+      organizationId: '550e8400-e29b-41d4-a716-446655440000',
+      email: 'invite@example.com',
+      role,
+      status: 'PENDING' as const,
+      expiresAt: '2026-01-08T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z'
+    }
+
+    expect(parseRoleMutationResponse({ role })).toEqual({ role })
+    expect(
+      parseCreateInvitationResponse({ invitation, token: 'invite-token' })
+    ).toEqual({ invitation, token: 'invite-token' })
+    expect(parseDeleteRoleResponse({ ok: true })).toEqual({ ok: true })
+    expect(() => parseDeleteRoleResponse({ ok: 'yes' })).toThrow()
   })
 })

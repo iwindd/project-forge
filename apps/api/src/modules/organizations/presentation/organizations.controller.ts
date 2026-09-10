@@ -25,11 +25,38 @@ import {
   organizationRoleParamSchema,
 } from './dto/organization.schemas.js';
 import {
+  organizationCreatedResponseSchema,
   organizationInvitationListSchema,
+  organizationInvitationResponseSchema,
   organizationListSchema,
   organizationMemberListSchema,
+  organizationMemberRoleResponseSchema,
+  organizationMemberUserResponseSchema,
+  organizationResponseSchema,
+  organizationRoleResponseSchema,
   organizationRoleListSchema,
+  okResponseSchema,
 } from './dto/organization-response.schemas.js';
+
+function serializeOrganization(organization: {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return {
+    id: organization.id,
+    name: organization.name,
+    slug: organization.slug,
+    type: organization.type,
+    status: organization.status,
+    createdAt: organization.createdAt.toISOString(),
+    updatedAt: organization.updatedAt.toISOString(),
+  };
+}
 
 @Controller('organizations')
 @UseGuards(SessionGuard)
@@ -66,14 +93,14 @@ export class OrganizationsController {
       input.name,
       input.slug,
     );
-    return apiSuccess({
+    return apiSuccess(organizationCreatedResponseSchema.parse({
       organization: {
         id: organization.id,
         name: organization.name,
         slug: organization.slug,
         type: organization.type,
       },
-    });
+    }));
   }
 
   @Get(':id/roles')
@@ -98,9 +125,12 @@ export class OrganizationsController {
   ) {
     const { id: organizationId } = organizationIdParamSchema.parse(rawParams);
     const input = createOrganizationRoleSchema.parse(body);
-    return apiSuccess({
-      role: await this.createOrganizationRole.execute(principal.id, organizationId, input),
-    });
+    const role = await this.createOrganizationRole.execute(
+      principal.id,
+      organizationId,
+      input,
+    );
+    return apiSuccess(organizationRoleResponseSchema.parse({ role }));
   }
 
   @Patch(':id/roles/:roleId')
@@ -111,9 +141,13 @@ export class OrganizationsController {
   ) {
     const { id: organizationId, roleId } = organizationRoleParamSchema.parse(rawParams);
     const input = updateOrganizationRoleSchema.parse(body);
-    return apiSuccess({
-      role: await this.updateOrganizationRole.execute(principal.id, organizationId, roleId, input),
-    });
+    const role = await this.updateOrganizationRole.execute(
+      principal.id,
+      organizationId,
+      roleId,
+      input,
+    );
+    return apiSuccess(organizationRoleResponseSchema.parse({ role }));
   }
 
   @Delete(':id/roles/:roleId')
@@ -122,9 +156,12 @@ export class OrganizationsController {
     @Param() rawParams: unknown,
   ) {
     const { id: organizationId, roleId } = organizationRoleParamSchema.parse(rawParams);
-    return apiSuccess(
-      await this.deleteOrganizationRole.execute(principal.id, organizationId, roleId),
+    const result = await this.deleteOrganizationRole.execute(
+      principal.id,
+      organizationId,
+      roleId,
     );
+    return apiSuccess(okResponseSchema.parse(result));
   }
 
   @Get(':id/members')
@@ -178,9 +215,18 @@ export class OrganizationsController {
     const input = updateOrganizationSchema.parse(body);
     if (input.name === undefined) {
       const { organization } = await this.organizations.requireManager(principal.id, organizationId);
-      return apiSuccess({ organization });
+      return apiSuccess(organizationResponseSchema.parse({
+        organization: serializeOrganization(organization),
+      }));
     }
-    return apiSuccess({ organization: await this.organizations.updateOrganization(principal.id, organizationId, input.name) });
+    const organization = await this.organizations.updateOrganization(
+      principal.id,
+      organizationId,
+      input.name,
+    );
+    return apiSuccess(organizationResponseSchema.parse({
+      organization: serializeOrganization(organization),
+    }));
   }
 
   @Patch(':id/members/:userId')
@@ -197,7 +243,7 @@ export class OrganizationsController {
       userId,
       input,
     );
-    return apiSuccess({ membership });
+    return apiSuccess(organizationMemberRoleResponseSchema.parse({ membership }));
   }
 
   @Get(':id/members/:userId')
@@ -206,9 +252,12 @@ export class OrganizationsController {
     @Param() rawParams: unknown,
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
-    return apiSuccess({
-      user: await this.organizations.getMember(principal.id, organizationId, userId),
-    });
+    const user = await this.organizations.getMember(
+      principal.id,
+      organizationId,
+      userId,
+    );
+    return apiSuccess(organizationMemberUserResponseSchema.parse({ user }));
   }
 
   @Patch(':id/members/:userId/name')
@@ -219,7 +268,13 @@ export class OrganizationsController {
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
     const input = updateMemberNameSchema.parse(body);
-    return apiSuccess({ user: await this.organizations.updateMemberName(principal.id, organizationId, userId, input.name) });
+    const user = await this.organizations.updateMemberName(
+      principal.id,
+      organizationId,
+      userId,
+      input.name,
+    );
+    return apiSuccess(organizationMemberUserResponseSchema.parse({ user }));
   }
 
   @Patch(':id/members/:userId/status')
@@ -230,7 +285,13 @@ export class OrganizationsController {
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
     const input = updateMemberStatusSchema.parse(body);
-    return apiSuccess({ user: await this.organizations.updateMemberStatus(principal.id, organizationId, userId, input.active) });
+    const user = await this.organizations.updateMemberStatus(
+      principal.id,
+      organizationId,
+      userId,
+      input.active,
+    );
+    return apiSuccess(organizationMemberUserResponseSchema.parse({ user }));
   }
 
   @Delete(':id/members/:userId')
@@ -240,7 +301,7 @@ export class OrganizationsController {
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
     await this.organizations.removeMember(principal.id, organizationId, userId);
-    return apiSuccess({ ok: true });
+    return apiSuccess(okResponseSchema.parse({ ok: true }));
   }
 
   @Post(':id/invitations')
@@ -253,7 +314,7 @@ export class OrganizationsController {
       input.email ?? null,
       { roleId: input.roleId, role: input.role },
     );
-    return apiSuccess({
+    return apiSuccess(organizationInvitationResponseSchema.parse({
       invitation: {
         id: result.invitation.id,
         organizationId: result.invitation.organizationId,
@@ -264,7 +325,7 @@ export class OrganizationsController {
         createdAt: result.invitation.createdAt.toISOString(),
       },
       token: result.token,
-    });
+    }));
   }
 
   @Get(':id/invitations')
@@ -284,6 +345,8 @@ export class OrganizationsController {
   async accept(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
     const { token } = invitationTokenParamSchema.parse(rawParams);
     const organization = await this.organizations.acceptInvitation(principal.id, token);
-    return apiSuccess({ organization });
+    return apiSuccess(organizationResponseSchema.parse({
+      organization: serializeOrganization(organization),
+    }));
   }
 }

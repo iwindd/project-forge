@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { parseAuditLogsResponse } from './audit-logs-api'
+import {
+  getAuditLogExportPath,
+  parseAuditLogExportResponse,
+  parseAuditLogsResponse
+} from './audit-logs-api'
 
 describe('audit log API response contract', () => {
   it('parses records and total metadata after envelope unwrapping', () => {
@@ -26,5 +30,56 @@ describe('audit log API response contract', () => {
       data: [expect.objectContaining({ id: 'audit-1' })],
       total: 1
     })
+  })
+})
+
+describe('audit log export transport', () => {
+  it('keeps successful export responses serializable for RTK Query', async () => {
+    const response = new Response('{"auditLog":"export"}', {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    })
+
+    const result = await parseAuditLogExportResponse(response)
+
+    expect(result).toBe('{"auditLog":"export"}')
+  })
+
+  it('preserves the standard JSON error envelope for failed exports', async () => {
+    const response = new Response(
+      JSON.stringify({
+        error: {
+          code: 'AUDIT_LOG_NOT_FOUND',
+          message: 'Audit log was not found',
+          details: {},
+          requestId: 'audit-request'
+        }
+      }),
+      {
+        status: 404,
+        headers: { 'content-type': 'application/json' }
+      }
+    )
+
+    await expect(parseAuditLogExportResponse(response)).resolves.toEqual({
+      error: {
+        code: 'AUDIT_LOG_NOT_FOUND',
+        message: 'Audit log was not found',
+        details: {},
+        requestId: 'audit-request'
+      }
+    })
+  })
+
+  it('builds an API-root-relative export path for the active organization', () => {
+    expect(
+      getAuditLogExportPath(
+        { kind: 'all' },
+        'audit/log',
+        'organization/one'
+      )
+    ).toBe(
+      'audit-logs/organization/organization%2Fone/audit%2Flog/export'
+    )
   })
 })

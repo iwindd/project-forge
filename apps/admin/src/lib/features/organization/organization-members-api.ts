@@ -3,13 +3,16 @@ import { z } from 'zod'
 import {
   acceptInvitationResponseSchema,
   organizationInvitationSchema,
+  organizationInvitationResponseSchema,
   organizationMemberSchema,
   organizationMemberRoleResponseSchema,
   organizationMemberUserResponseSchema,
   organizationMembersMetaSchema,
   organizationRoleSchema,
+  organizationRoleResponseSchema,
   organizationRolesMetaSchema,
-  organizationRoleSummarySchema
+  organizationRoleSummarySchema,
+  okResponseSchema
 } from './organization-schemas'
 import type { OrganizationMemberRole } from './types'
 export type { OrganizationRole } from './types'
@@ -51,10 +54,9 @@ type OrganizationRolesResponse = {
   availablePermissions: Array<{ key: OrganizationPermission }>
 }
 
-type CreateInvitationResponse = {
-  invitation: OrganizationInvitation
-  token: string
-}
+type CreateInvitationResponse = z.infer<
+  typeof organizationInvitationResponseSchema
+>
 
 type AcceptInvitationInput = {
   token: string
@@ -130,6 +132,18 @@ export function parseAcceptInvitationResponse(
   return acceptInvitationResponseSchema.parse(response)
 }
 
+export function parseRoleMutationResponse(response: unknown) {
+  return organizationRoleResponseSchema.parse(response)
+}
+
+export function parseCreateInvitationResponse(response: unknown) {
+  return organizationInvitationResponseSchema.parse(response)
+}
+
+export function parseDeleteRoleResponse(response: unknown) {
+  return okResponseSchema.parse(response)
+}
+
 export function parseMemberUserResponse(response: unknown): {
   user: OrganizationMemberUser
 } {
@@ -161,6 +175,7 @@ export const organizationMembersApi = api.injectEndpoints({
         method: 'POST',
         body: { name, permissions }
       }),
+      transformResponse: parseRoleMutationResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationRoles', id: organizationId }
       ]
@@ -174,6 +189,7 @@ export const organizationMembersApi = api.injectEndpoints({
         method: 'PATCH',
         body: { name, permissions }
       }),
+      transformResponse: parseRoleMutationResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationRoles', id: organizationId },
         { type: 'OrganizationMembers', id: organizationId },
@@ -185,6 +201,7 @@ export const organizationMembersApi = api.injectEndpoints({
         url: `organizations/${encodeURIComponent(organizationId)}/roles/${encodeURIComponent(roleId)}`,
         method: 'DELETE'
       }),
+      transformResponse: parseDeleteRoleResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationRoles', id: organizationId }
       ]
@@ -217,6 +234,7 @@ export const organizationMembersApi = api.injectEndpoints({
         method: 'POST',
         body: { email: email || null, roleId }
       }),
+      transformResponse: parseCreateInvitationResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationInvitations', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }
@@ -256,6 +274,7 @@ export const organizationMembersApi = api.injectEndpoints({
         url: `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`,
         method: 'DELETE'
       }),
+      transformResponse: parseDeleteRoleResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationMembers', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }

@@ -147,4 +147,20 @@ describe('OrganizationsController', () => {
       controller.roles(principal, { id: 'not-an-organization-id' }),
     ).rejects.toThrow();
   });
+
+  it('rejects a role mutation result that violates the response contract', async () => {
+    const controller = createController();
+    const execute = vi.mocked(
+      (controller as unknown as { createOrganizationRole: { execute: ReturnType<typeof vi.fn> } })
+        .createOrganizationRole.execute,
+    );
+    execute.mockResolvedValue({ id: 'not-an-id' });
+
+    await expect(
+      controller.createRole(principal, { id: organizationId }, {
+        name: 'แอดมิน',
+        permissions: ['organization.manage'],
+      }),
+    ).rejects.toThrow();
+  });
 });

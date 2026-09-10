@@ -8,6 +8,7 @@ import {
 import TableSearchInput from '@/components/table-search-input'
 import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation'
 import useDatatable from '@/hooks/use-datatable'
+import { getBrowserApiErrorMessage } from '@/lib/api/api'
 import { parseListAuditLogsQuery } from '@/servers/audit-log/queries/get-audit-log-list-schema'
 import type {
   AuditLogListItem,
@@ -36,7 +37,7 @@ import {
   AUDIT_RESOURCE_TYPE_LABELS
 } from './audit-log-labels'
 import {
-  getAuditLogExportUrl,
+  useExportAuditLogMutation,
   useGetAuditLogsQuery,
   type AuditLogScopeArg
 } from './audit-logs-api'
@@ -92,20 +93,19 @@ function AuditLogExportMenuItem({
   organizationId?: string
 }) {
   const { invalidateAdminCaches } = useAdminCacheInvalidation()
+  const [exportAuditLog] = useExportAuditLogMutation()
   const [downloading, setDownloading] = useState(false)
 
   const downloadExport = async () => {
     setDownloading(true)
     try {
-      const response = await fetch(
-        getAuditLogExportUrl(scope, auditLogId, organizationId),
-        {
-        cache: 'no-store'
-        }
-      )
-      if (!response.ok) throw new Error('audit export failed')
-
-      const objectUrl = URL.createObjectURL(await response.blob())
+      const payload = await exportAuditLog({
+        scope,
+        auditLogId,
+        organizationId
+      }).unwrap()
+      const blob = new Blob([payload], { type: 'application/json' })
+      const objectUrl = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = objectUrl
       anchor.download = `audit-log-${auditLogId}.json`
@@ -114,10 +114,13 @@ function AuditLogExportMenuItem({
       anchor.remove()
       URL.revokeObjectURL(objectUrl)
       invalidateAdminCaches()
-    } catch {
+    } catch (error) {
       notifications.show({
         title: 'ดาวน์โหลดไม่สำเร็จ',
-        message: 'ไม่สามารถส่งออกบันทึกกิจกรรมได้ กรุณาลองใหม่อีกครั้ง',
+        message: getBrowserApiErrorMessage(
+          error,
+          'ไม่สามารถส่งออกบันทึกกิจกรรมได้ กรุณาลองใหม่อีกครั้ง'
+        ),
         color: 'red'
       })
     } finally {

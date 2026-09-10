@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
 
-const organizationRoleSchema = z.object({
+const organizationDateSchema = z.string().min(1);
+
+export const organizationRoleSchema = z.object({
   id: databaseUuidSchema.nullable(),
   name: z.string().min(1),
   permissions: z.array(z.string()),
@@ -9,9 +11,36 @@ const organizationRoleSchema = z.object({
   legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable(),
 });
 
+export const organizationResourceSchema = z.object({
+  id: databaseUuidSchema,
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  type: z.enum(['PERSONAL', 'SHARED']),
+  status: z.enum(['ACTIVE', 'ARCHIVED', 'SUSPENDED']),
+  createdAt: organizationDateSchema,
+  updatedAt: organizationDateSchema,
+});
+
+export const organizationCreatedResponseSchema = z.object({
+  organization: organizationResourceSchema.pick({
+    id: true,
+    name: true,
+    slug: true,
+    type: true,
+  }),
+});
+
+export const organizationResponseSchema = z.object({
+  organization: organizationResourceSchema,
+});
+
+export const organizationRoleResponseSchema = z.object({
+  role: organizationRoleSchema,
+});
+
 export const organizationRoleSummarySchema = organizationRoleSchema.extend({
-  memberCount: z.number(),
-  invitationCount: z.number(),
+  memberCount: z.number().int().nonnegative(),
+  invitationCount: z.number().int().nonnegative(),
 });
 
 export const organizationMemberSchema = z.object({
@@ -22,8 +51,26 @@ export const organizationMemberSchema = z.object({
   role: organizationRoleSchema,
   status: z.enum(['ACTIVE', 'INVITED', 'SUSPENDED', 'REMOVED']),
   isActive: z.boolean(),
-  createdAt: z.string().min(1),
-  updatedAt: z.string().min(1),
+  createdAt: organizationDateSchema,
+  updatedAt: organizationDateSchema,
+});
+
+export const organizationMemberUserSchema = z.object({
+  id: databaseUuidSchema,
+  name: z.string().min(1),
+  email: z.string().nullable(),
+  role: organizationRoleSchema,
+  isActive: z.boolean(),
+  createdAt: organizationDateSchema,
+  updatedAt: organizationDateSchema,
+});
+
+export const organizationMemberUserResponseSchema = z.object({
+  user: organizationMemberUserSchema,
+});
+
+export const organizationMemberRoleResponseSchema = z.object({
+  membership: organizationMemberUserSchema,
 });
 
 export const organizationInvitationSchema = z.object({
@@ -32,8 +79,17 @@ export const organizationInvitationSchema = z.object({
   email: z.string().nullable(),
   role: organizationRoleSchema,
   status: z.enum(['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED']),
-  expiresAt: z.string().min(1),
-  createdAt: z.string().min(1),
+  expiresAt: organizationDateSchema,
+  createdAt: organizationDateSchema,
+});
+
+export const organizationInvitationResponseSchema = z.object({
+  invitation: organizationInvitationSchema,
+  token: z.string().min(1),
+});
+
+export const okResponseSchema = z.object({
+  ok: z.literal(true),
 });
 
 export const organizationRoleListSchema = z.array(organizationRoleSummarySchema);
@@ -41,14 +97,7 @@ export const organizationMemberListSchema = z.array(organizationMemberSchema);
 export const organizationInvitationListSchema = z.array(organizationInvitationSchema);
 
 export const organizationListSchema = z.array(
-  z.object({
-    id: databaseUuidSchema,
-    name: z.string().min(1),
-    slug: z.string().min(1),
-    type: z.enum(['PERSONAL', 'SHARED']),
+  organizationResourceSchema.extend({
     role: organizationRoleSchema,
-    status: z.enum(['ACTIVE', 'ARCHIVED', 'SUSPENDED']),
-    createdAt: z.string().min(1),
-    updatedAt: z.string().min(1),
   }),
 );

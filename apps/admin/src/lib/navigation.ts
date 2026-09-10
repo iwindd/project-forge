@@ -104,28 +104,6 @@ export const adminNavigation: AdminNavigationGroup[] = [
   }
 ]
 
-export const adminRootNavigation: AdminNavigationGroup[] = [
-  {
-    id: 'system',
-    label: 'ระบบ',
-    labelKey: 'system',
-    permissionKey: ['manageUsers', 'viewAuditLogs'],
-    permissionMode: 'any',
-    items: [
-      routeItem('admin.users', {
-        icon: IconUsers,
-        labelKey: 'users',
-        permissionKey: 'manageUsers'
-      }),
-      routeItem('admin.activities', {
-        icon: IconHistory,
-        labelKey: 'auditLogs',
-        permissionKey: 'viewAuditLogs'
-      })
-    ]
-  }
-]
-
 export const accountNavigation: AdminNavigationGroup[] = [
   {
     id: 'profile',

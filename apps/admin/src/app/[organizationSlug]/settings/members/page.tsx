@@ -10,7 +10,7 @@ import {
   useUpdateMemberRoleMutation,
   useUpdateMemberStatusMutation,
   type OrganizationMember,
-  type OrganizationRole
+  type OrganizationRoleSummary
 } from '@/lib/features/organization/organization-members-api'
 import { useOrganizationContext } from '@/lib/features/organization/organization-provider'
 import {
@@ -149,7 +149,7 @@ export default function OrganizationMembersPage() {
   const assignableRoles = useMemo(
     () =>
       roles.filter(
-        (candidate): candidate is OrganizationRole & { id: string } =>
+        (candidate): candidate is OrganizationRoleSummary & { id: string } =>
           Boolean(candidate.id) && !candidate.isOwner
       ),
     [roles]
