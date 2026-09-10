@@ -18,6 +18,14 @@ export class MikroOrmProjectRepository implements ProjectRepository {
     return project ? toRecord(project) : null;
   }
 
+  async findByOrganizationAndGithubUrl(
+    organizationId: string,
+    githubUrl: string,
+  ): Promise<ProjectRecord | null> {
+    const project = await this.em.findOne(ProjectOrmEntity, { organizationId, githubUrl });
+    return project ? toRecord(project) : null;
+  }
+
   async save(project: ProjectRecord): Promise<void> {
     const entity = await this.em.findOne(ProjectOrmEntity, { id: project.id });
     if (!entity) {

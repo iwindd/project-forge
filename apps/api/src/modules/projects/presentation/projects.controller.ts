@@ -1,15 +1,19 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import { apiSuccess } from '../../../common/http/api-response.js';
+import { getRequestId } from '../../../common/http/request-context.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
 import { ArchiveProjectUseCase } from '../application/use-cases/archive-project-use-case.js';
 import { CreateProjectUseCase } from '../application/use-cases/create-project-use-case.js';
 import { GetProjectUseCase } from '../application/use-cases/get-project-use-case.js';
 import { ListProjectsUseCase } from '../application/use-cases/list-projects-use-case.js';
+import { RestoreProjectUseCase } from '../application/use-cases/restore-project-use-case.js';
 import { UpdateProjectUseCase } from '../application/use-cases/update-project-use-case.js';
 import {
   createProjectSchema,
+  optionalProjectReasonSchema,
   organizationIdParamSchema,
   organizationProjectIdParamSchema,
   updateProjectSchema,
@@ -28,6 +32,7 @@ export class ProjectsController {
     private readonly getProject: GetProjectUseCase,
     private readonly updateProject: UpdateProjectUseCase,
     private readonly archiveProject: ArchiveProjectUseCase,
+    private readonly restoreProject: RestoreProjectUseCase,
   ) {}
 
   @Get()
@@ -47,12 +52,14 @@ export class ProjectsController {
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
     @Body() body: unknown,
+    @Req() request: Request,
   ) {
     const { organizationId } = organizationIdParamSchema.parse(rawParams);
     const project = await this.createProject.execute(
       principal.id,
       organizationId,
       createProjectSchema.parse(body),
+      { requestId: getRequestId(request) },
     );
     return projectResponseEnvelopeSchema.parse(
       apiSuccess({ project: serializeProject(project) }),
@@ -69,13 +76,19 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  async update(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() body: unknown) {
+  async update(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
     const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
     const project = await this.updateProject.execute(
       principal.id,
       organizationId,
       id,
       updateProjectSchema.parse(body),
+      { requestId: getRequestId(request) },
     );
     return projectResponseEnvelopeSchema.parse(
       apiSuccess({ project: serializeProject(project) }),
@@ -83,9 +96,36 @@ export class ProjectsController {
   }
 
   @Post(':id/archive')
-  async archive(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
+  async archive(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
     const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
-    const project = await this.archiveProject.execute(principal.id, organizationId, id);
+    const { reason } = optionalProjectReasonSchema.parse(body);
+    const project = await this.archiveProject.execute(principal.id, organizationId, id, {
+      requestId: getRequestId(request),
+      reason,
+    });
+    return projectResponseEnvelopeSchema.parse(
+      apiSuccess({ project: serializeProject(project) }),
+    );
+  }
+
+  @Post(':id/restore')
+  async restore(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
+    const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
+    const { reason } = optionalProjectReasonSchema.parse(body);
+    const project = await this.restoreProject.execute(principal.id, organizationId, id, {
+      requestId: getRequestId(request),
+      reason,
+    });
     return projectResponseEnvelopeSchema.parse(
       apiSuccess({ project: serializeProject(project) }),
     );

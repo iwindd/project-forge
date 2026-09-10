@@ -1,5 +1,7 @@
+import type { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
+import { ConflictError } from '../../../common/errors/application-error.js';
 import { ProjectsController } from './projects.controller.js';
 
 const ownerId = '550e8400-e29b-41d4-a716-446655440000';
@@ -24,8 +26,15 @@ const project = {
   archivedAt: null,
 };
 
+function request(requestId?: string) {
+  return {
+    header: vi.fn((name: string) => (name === 'x-request-id' ? requestId : undefined)),
+  } as unknown as Request;
+}
+
 function createController() {
   return new ProjectsController(
+    { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
@@ -34,68 +43,128 @@ function createController() {
   );
 }
 
+function useCaseMock(controller: ProjectsController, name: string) {
+  return vi.mocked(
+    (controller as unknown as Record<string, { execute: ReturnType<typeof vi.fn> }>)[name].execute,
+  );
+}
+
 describe('ProjectsController', () => {
   it('wraps list and mutation results in the standard envelope', async () => {
     const controller = createController();
-    const list = vi.mocked(
-      (controller as unknown as { listProjects: { execute: ReturnType<typeof vi.fn> } })
-        .listProjects.execute,
-    );
-    const create = vi.mocked(
-      (controller as unknown as { createProject: { execute: ReturnType<typeof vi.fn> } })
-        .createProject.execute,
-    );
-    const get = vi.mocked(
-      (controller as unknown as { getProject: { execute: ReturnType<typeof vi.fn> } })
-        .getProject.execute,
-    );
-    const update = vi.mocked(
-      (controller as unknown as { updateProject: { execute: ReturnType<typeof vi.fn> } })
-        .updateProject.execute,
-    );
-    const archive = vi.mocked(
-      (controller as unknown as { archiveProject: { execute: ReturnType<typeof vi.fn> } })
-        .archiveProject.execute,
-    );
+    const list = useCaseMock(controller, 'listProjects');
+    const create = useCaseMock(controller, 'createProject');
+    const get = useCaseMock(controller, 'getProject');
+    const update = useCaseMock(controller, 'updateProject');
+    const archive = useCaseMock(controller, 'archiveProject');
+    const restore = useCaseMock(controller, 'restoreProject');
     list.mockResolvedValue([project]);
     create.mockResolvedValue(project);
     get.mockResolvedValue(project);
     update.mockResolvedValue(project);
     archive.mockResolvedValue(project);
+    restore.mockResolvedValue(project);
 
     await expect(controller.list(principal, { organizationId })).resolves.toEqual({
       data: [expect.objectContaining({ id: projectId })],
     });
     await expect(controller.create(principal, { organizationId }, {
       githubUrl: project.githubUrl,
-    })).resolves.toEqual({
+    }, request())).resolves.toEqual({
       data: { project: expect.objectContaining({ createdAt: now.toISOString() }) },
     });
     await expect(controller.get(principal, { organizationId, id: projectId })).resolves.toEqual({
       data: { project: expect.objectContaining({ id: projectId }) },
     });
-    await expect(controller.update(principal, { organizationId, id: projectId }, {})).resolves.toEqual({
+    await expect(controller.update(principal, { organizationId, id: projectId }, {}, request())).resolves.toEqual({
       data: { project: expect.objectContaining({ id: projectId }) },
     });
-    await expect(controller.archive(principal, { organizationId, id: projectId })).resolves.toEqual({
+    await expect(controller.archive(principal, { organizationId, id: projectId }, {}, request())).resolves.toEqual({
       data: { project: expect.objectContaining({ id: projectId }) },
+    });
+    await expect(controller.restore(principal, { organizationId, id: projectId }, {}, request())).resolves.toEqual({
+      data: { project: expect.objectContaining({ id: projectId }) },
+    });
+  });
+
+  it('passes the request ID and the optional reason into archive and restore', async () => {
+    const controller = createController();
+    const archive = useCaseMock(controller, 'archiveProject');
+    const restore = useCaseMock(controller, 'restoreProject');
+    archive.mockResolvedValue(project);
+    restore.mockResolvedValue(project);
+    const httpRequest = request('request-id');
+
+    await controller.archive(principal, { organizationId, id: projectId }, { reason: '  cleanup  ' }, httpRequest);
+    await controller.restore(principal, { organizationId, id: projectId }, { reason: 'restore' }, httpRequest);
+
+    expect(archive).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+      requestId: 'request-id',
+      reason: 'cleanup',
+    });
+    expect(restore).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+      requestId: 'request-id',
+      reason: 'restore',
+    });
+  });
+
+  it('tolerates an absent, empty, or explicitly null archive/restore body', async () => {
+    const controller = createController();
+    const archive = useCaseMock(controller, 'archiveProject');
+    const restore = useCaseMock(controller, 'restoreProject');
+    archive.mockResolvedValue(project);
+    restore.mockResolvedValue(project);
+
+    await controller.archive(principal, { organizationId, id: projectId }, undefined, request('request-id'));
+    await controller.restore(principal, { organizationId, id: projectId }, { reason: null }, request('request-id'));
+
+    expect(archive).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+      requestId: 'request-id',
+      reason: '',
+    });
+    expect(restore).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+      requestId: 'request-id',
+      reason: '',
+    });
+  });
+
+  it('propagates a typed conflict with its 409 status from a mutation use case', async () => {
+    const controller = createController();
+    const restore = useCaseMock(controller, 'restoreProject');
+    restore.mockRejectedValue(new ConflictError('Archived projects cannot be updated'));
+
+    await expect(
+      controller.restore(principal, { organizationId, id: projectId }, {}, request()),
+    ).rejects.toMatchObject({ code: 'CONFLICT', status: 409 });
+  });
+
+  it('passes the request ID into create and update', async () => {
+    const controller = createController();
+    const create = useCaseMock(controller, 'createProject');
+    const update = useCaseMock(controller, 'updateProject');
+    create.mockResolvedValue(project);
+    update.mockResolvedValue(project);
+    const httpRequest = request('request-id');
+
+    await controller.create(principal, { organizationId }, { githubUrl: project.githubUrl }, httpRequest);
+    await controller.update(principal, { organizationId, id: projectId }, {}, httpRequest);
+
+    expect(create).toHaveBeenCalledWith(ownerId, organizationId, expect.anything(), {
+      requestId: 'request-id',
+    });
+    expect(update).toHaveBeenCalledWith(ownerId, organizationId, projectId, expect.anything(), {
+      requestId: 'request-id',
     });
   });
 
   it('rejects invalid route parameters and invalid use-case output', async () => {
     const controller = createController();
-    const get = vi.mocked(
-      (controller as unknown as { getProject: { execute: ReturnType<typeof vi.fn> } })
-        .getProject.execute,
-    );
+    const get = useCaseMock(controller, 'getProject');
     get.mockResolvedValue(project);
 
     await expect(controller.get(principal, { organizationId, id: 'not-a-uuid' })).rejects.toThrow();
 
-    const list = vi.mocked(
-      (controller as unknown as { listProjects: { execute: ReturnType<typeof vi.fn> } })
-        .listProjects.execute,
-    );
+    const list = useCaseMock(controller, 'listProjects');
     list.mockResolvedValue([{ ...project, id: 'not-a-uuid' }]);
     await expect(controller.list(principal, { organizationId })).rejects.toThrow();
   });

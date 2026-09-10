@@ -8,5 +8,9 @@ export interface ProjectRepository {
     organizationId: string,
     id: string,
   ): Promise<ProjectRecord | null>;
+  findByOrganizationAndGithubUrl(
+    organizationId: string,
+    githubUrl: string,
+  ): Promise<ProjectRecord | null>;
   save(project: ProjectRecord): Promise<void>;
 }

@@ -3,7 +3,10 @@ import { AUDIT_LOGGER } from '../../../../common/audit/audit.port.js';
 import type { AuditLogPort } from '../../../../common/audit/audit.port.js';
 import { UNIT_OF_WORK } from '../../../../common/database/unit-of-work.port.js';
 import type { UnitOfWork } from '../../../../common/database/unit-of-work.port.js';
-import { InvalidInputError } from '../../../../common/errors/application-error.js';
+import {
+  ConflictError,
+  InvalidInputError,
+} from '../../../../common/errors/application-error.js';
 import { OrganizationService } from '../../../organizations/application/organization.service.js';
 import {
   createProject,
@@ -23,25 +26,39 @@ export class CreateProjectUseCase {
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
-  async execute(actorId: string, organizationId: string, input: CreateProjectDto) {
-    await this.organizations.requireProjectManager(actorId, organizationId);
-    const repository = parseGithubRepositoryUrl(input.githubUrl);
-    if (!repository) throw new InvalidInputError('Only GitHub HTTPS repository URLs are supported');
-    const project = createProject({
-      organizationId,
-      name: input.name || repository.name,
-      githubUrl: repository.url,
-      githubOwner: repository.owner,
-      githubRepo: repository.name,
-      sourceBranch: input.sourceBranch,
-      targetBranch: input.targetBranch,
-      nodeVersion: input.nodeVersion || null,
-      environmentMetadata: Object.keys(input.environmentMetadata).length
-        ? maskEnvironmentMetadata(input.environmentMetadata)
-        : null,
-    });
+  async execute(
+    actorId: string,
+    organizationId: string,
+    input: CreateProjectDto,
+    options: { requestId?: string } = {},
+  ) {
+    return this.unitOfWork.run(async () => {
+      await this.organizations.requireProjectManager(actorId, organizationId);
+      const repository = parseGithubRepositoryUrl(input.githubUrl);
+      if (!repository) {
+        throw new InvalidInputError('Only GitHub HTTPS repository URLs are supported');
+      }
+      const existing = await this.projects.findByOrganizationAndGithubUrl(
+        organizationId,
+        repository.url,
+      );
+      if (existing) {
+        throw new ConflictError('A project with this repository already exists in the organization');
+      }
+      const project = createProject({
+        organizationId,
+        name: input.name || repository.name,
+        githubUrl: repository.url,
+        githubOwner: repository.owner,
+        githubRepo: repository.name,
+        sourceBranch: input.sourceBranch,
+        targetBranch: input.targetBranch,
+        nodeVersion: input.nodeVersion || null,
+        environmentMetadata: Object.keys(input.environmentMetadata).length
+          ? maskEnvironmentMetadata(input.environmentMetadata)
+          : null,
+      });
 
-    await this.unitOfWork.run(async () => {
       await this.projects.save(project);
       await this.audit.record({
         actorId,
@@ -50,8 +67,9 @@ export class CreateProjectUseCase {
         resourceType: 'PROJECT',
         resourceId: project.id,
         after: { name: project.name, githubUrl: project.githubUrl },
+        requestId: options.requestId,
       });
+      return project;
     });
-    return project;
   }
 }
