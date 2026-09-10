@@ -61,6 +61,8 @@ if (!organization) {
     status: OrganizationStatus.ACTIVE
   })
   em.persist(organization)
+} else if (organization.ownerId !== user.id) {
+  throw new Error('Seed organization is owned by another user')
 }
 const builtInRoles = [
   {
