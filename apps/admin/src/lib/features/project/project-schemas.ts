@@ -36,24 +36,15 @@ export const projectResponseEnvelopeSchema = z.object({
   })
 })
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 /*
  * The RTK Query base query unwraps the standard `data` envelope before
- * `transformResponse` runs, so each parser accepts both the documented wire
- * shape and the already-unwrapped payload it receives.
+ * `transformResponse` runs, so each parser validates the payload it receives
+ * against the documented envelope of its endpoint.
  */
-function toDocumentedEnvelope(response: unknown) {
-  return isRecord(response) && 'data' in response ? response : { data: response }
-}
-
 export function parseProjectListResponse(response: unknown): Project[] {
-  return projectListResponseSchema.parse(toDocumentedEnvelope(response)).data
+  return projectListResponseSchema.parse({ data: response }).data
 }
 
 export function parseProjectResponse(response: unknown): { project: Project } {
-  return projectResponseEnvelopeSchema.parse(toDocumentedEnvelope(response))
-    .data
+  return projectResponseEnvelopeSchema.parse({ data: response }).data
 }

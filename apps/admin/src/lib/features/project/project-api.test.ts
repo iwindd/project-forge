@@ -163,12 +163,13 @@ describe('project transport contracts', () => {
     expect(result.error).toBeDefined()
   })
 
-  it('parses the documented wire envelopes', () => {
-    expect(parseProjectListResponse({ data: [project] })).toEqual([project])
+  it('parses the unwrapped payload the base query delivers', () => {
     expect(parseProjectListResponse([project])).toEqual([project])
-    expect(parseProjectResponse({ data: { project } })).toEqual({ project })
     expect(parseProjectResponse({ project })).toEqual({ project })
-    expect(() => parseProjectListResponse({ data: project })).toThrow()
-    expect(() => parseProjectResponse({ data: { project: {} } })).toThrow()
+  })
+
+  it('rejects output that is not the documented payload', () => {
+    expect(() => parseProjectListResponse({ data: [project] })).toThrow()
+    expect(() => parseProjectResponse({ data: { project } })).toThrow()
   })
 })
