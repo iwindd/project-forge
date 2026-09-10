@@ -5,6 +5,7 @@ import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
 import { ORGANIZATION_PERMISSIONS } from '../domain/organization.js';
 import { OrganizationService } from '../application/organization.service.js';
+import { CancelOrganizationInvitationUseCase } from '../application/use-cases/cancel-organization-invitation-use-case.js';
 import { CreateOrganizationRoleUseCase } from '../application/use-cases/create-organization-role-use-case.js';
 import { DeleteOrganizationRoleUseCase } from '../application/use-cases/delete-organization-role-use-case.js';
 import { ListOrganizationMembersUseCase } from '../application/use-cases/list-organization-members-use-case.js';
@@ -69,6 +70,7 @@ export class OrganizationsController {
     private readonly createOrganizationRole: CreateOrganizationRoleUseCase,
     private readonly updateOrganizationRole: UpdateOrganizationRoleUseCase,
     private readonly deleteOrganizationRole: DeleteOrganizationRoleUseCase,
+    private readonly cancelOrganizationInvitation: CancelOrganizationInvitationUseCase,
   ) {}
 
   @Get()
@@ -294,7 +296,7 @@ export class OrganizationsController {
     @Param() rawParams: unknown,
   ) {
     const { id: organizationId, invitationId } = organizationInvitationParamSchema.parse(rawParams);
-    const result = await this.organizations.cancelInvitation(
+    const result = await this.cancelOrganizationInvitation.execute(
       principal.id,
       organizationId,
       invitationId,
