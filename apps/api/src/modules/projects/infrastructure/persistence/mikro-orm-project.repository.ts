@@ -1,5 +1,7 @@
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager, UniqueConstraintViolationException } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { ConflictError } from '../../../../common/errors/application-error.js';
+import { DUPLICATE_REPOSITORY_CONFLICT_MESSAGE } from '../../application/ports/project.repository.js';
 import type { ProjectRepository } from '../../application/ports/project.repository.js';
 import type { ProjectRecord } from '../../domain/project.js';
 import { ProjectOrmEntity } from './project.orm-entity.js';
@@ -26,43 +28,57 @@ export class MikroOrmProjectRepository implements ProjectRepository {
     return project ? toRecord(project) : null;
   }
 
+  /**
+   * Persist then flush. The flush is explicit because the duplicate-repository guarantee lives in
+   * the `(organization_id, github_url)` unique constraint: the violation is raised by the driver at
+   * flush time, not by `persist`, so translating it here is the only place the real failure path can
+   * be observed. `ConflictError` is the port contract documented on `ProjectRepository.save`.
+   */
   async save(project: ProjectRecord): Promise<void> {
     const entity = await this.em.findOne(ProjectOrmEntity, { id: project.id });
-    if (!entity) {
-      this.em.persist(
-        this.em.create(ProjectOrmEntity, {
-          id: project.id,
-          organizationId: project.organizationId,
-          name: project.name,
-          githubUrl: project.githubUrl,
-          githubOwner: project.githubOwner,
-          githubRepo: project.githubRepo,
-          sourceBranch: project.sourceBranch,
-          targetBranch: project.targetBranch,
-          nodeVersion: project.nodeVersion,
-          environmentMetadata: project.environmentMetadata,
-          status: project.status,
-          createdAt: project.createdAt,
-          updatedAt: project.updatedAt,
-          archivedAt: project.archivedAt,
-        }),
-      );
-      return;
+    try {
+      if (!entity) {
+        this.em.persist(
+          this.em.create(ProjectOrmEntity, {
+            id: project.id,
+            organizationId: project.organizationId,
+            name: project.name,
+            githubUrl: project.githubUrl,
+            githubOwner: project.githubOwner,
+            githubRepo: project.githubRepo,
+            sourceBranch: project.sourceBranch,
+            targetBranch: project.targetBranch,
+            nodeVersion: project.nodeVersion,
+            environmentMetadata: project.environmentMetadata,
+            status: project.status,
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+            archivedAt: project.archivedAt,
+          }),
+        );
+      } else {
+        entity.organizationId = project.organizationId;
+        entity.name = project.name;
+        entity.githubUrl = project.githubUrl;
+        entity.githubOwner = project.githubOwner;
+        entity.githubRepo = project.githubRepo;
+        entity.sourceBranch = project.sourceBranch;
+        entity.targetBranch = project.targetBranch;
+        entity.nodeVersion = project.nodeVersion;
+        entity.environmentMetadata = project.environmentMetadata;
+        entity.status = project.status;
+        entity.createdAt = project.createdAt;
+        entity.updatedAt = project.updatedAt;
+        entity.archivedAt = project.archivedAt;
+        this.em.persist(entity);
+      }
+      await this.em.flush();
+    } catch (error) {
+      if (error instanceof UniqueConstraintViolationException) {
+        throw new ConflictError(DUPLICATE_REPOSITORY_CONFLICT_MESSAGE);
+      }
+      throw error;
     }
-    entity.organizationId = project.organizationId;
-    entity.name = project.name;
-    entity.githubUrl = project.githubUrl;
-    entity.githubOwner = project.githubOwner;
-    entity.githubRepo = project.githubRepo;
-    entity.sourceBranch = project.sourceBranch;
-    entity.targetBranch = project.targetBranch;
-    entity.nodeVersion = project.nodeVersion;
-    entity.environmentMetadata = project.environmentMetadata;
-    entity.status = project.status;
-    entity.createdAt = project.createdAt;
-    entity.updatedAt = project.updatedAt;
-    entity.archivedAt = project.archivedAt;
-    this.em.persist(entity);
   }
 }
 

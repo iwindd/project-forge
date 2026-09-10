@@ -1,6 +1,6 @@
-import { UniqueConstraintViolationException } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { ConflictError } from '../../../../common/errors/application-error.js';
+import { DUPLICATE_REPOSITORY_CONFLICT_MESSAGE } from '../../application/ports/project.repository.js';
 import { ProjectStatus } from '../../domain/project.js';
 import { createProjectSchema } from '../../presentation/dto/project.schemas.js';
 import { CreateProjectUseCase } from './create-project-use-case.js';
@@ -16,14 +16,6 @@ const input = {
 
 function unitOfWork() {
   return { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
-}
-
-function uniqueConstraintViolation() {
-  return new UniqueConstraintViolationException(
-    new Error(
-      'duplicate key value violates unique constraint "projects_organization_id_github_url_unique"',
-    ),
-  );
 }
 
 function setup(existing: { id: string; status: ProjectStatus } | null = null) {
@@ -129,9 +121,17 @@ describe('CreateProjectUseCase', () => {
     async (status) => {
       const { useCase, projects, audit } = setup({ id: 'existing-project-id', status });
 
-      await expect(
-        useCase.execute('actor-id', 'organization-id', input),
-      ).rejects.toBeInstanceOf(ConflictError);
+      const error = await useCase.execute('actor-id', 'organization-id', input).then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+
+      expect(error).toBeInstanceOf(ConflictError);
+      expect(error).toMatchObject({
+        code: 'CONFLICT',
+        status: 409,
+        message: DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
+      });
       expect(projects.findByOrganizationAndGithubUrl).toHaveBeenCalledWith(
         'organization-id',
         'https://github.com/acme/demo',
@@ -147,35 +147,27 @@ describe('CreateProjectUseCase', () => {
       status: ProjectStatus.ACTIVE,
     });
 
-    await expect(
-      useCase.execute('actor-id', 'organization-id', {
+    const error = await useCase
+      .execute('actor-id', 'organization-id', {
         ...input,
         githubUrl: 'https://github.com/ACME/Demo.git',
-      }),
-    ).rejects.toBeInstanceOf(ConflictError);
-    expect(projects.findByOrganizationAndGithubUrl).toHaveBeenCalledWith(
-      'organization-id',
-      'https://github.com/acme/demo',
-    );
-    expect(projects.save).not.toHaveBeenCalled();
-    expect(audit.record).not.toHaveBeenCalled();
-  });
-
-  it('maps a concurrent duplicate repository violation to a typed 409 conflict', async () => {
-    const { useCase, projects, audit } = setup();
-    projects.save.mockRejectedValueOnce(uniqueConstraintViolation());
-
-    const error = await useCase.execute('actor-id', 'organization-id', input).then(
-      () => null,
-      (caught: unknown) => caught,
-    );
+      })
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
 
     expect(error).toBeInstanceOf(ConflictError);
     expect(error).toMatchObject({
       code: 'CONFLICT',
       status: 409,
-      message: 'A project with this repository already exists in the organization',
+      message: DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
     });
+    expect(projects.findByOrganizationAndGithubUrl).toHaveBeenCalledWith(
+      'organization-id',
+      'https://github.com/acme/demo',
+    );
+    expect(projects.save).not.toHaveBeenCalled();
     expect(audit.record).not.toHaveBeenCalled();
   });
 
