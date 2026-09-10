@@ -1,5 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { apiSuccess } from '../../../common/http/api-response.js';
+import {
+  apiNullSuccessResponseSchema,
+  apiSuccess,
+} from '../../../common/http/api-response.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
@@ -296,12 +299,12 @@ export class OrganizationsController {
     @Param() rawParams: unknown,
   ) {
     const { id: organizationId, invitationId } = organizationInvitationParamSchema.parse(rawParams);
-    const result = await this.cancelOrganizationInvitation.execute(
+    await this.cancelOrganizationInvitation.execute(
       principal.id,
       organizationId,
       invitationId,
     );
-    return apiSuccess(okResponseSchema.parse(result));
+    return apiNullSuccessResponseSchema.parse(apiSuccess(null));
   }
 
   @Post('invitations/:token/accept')

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   parseAcceptInvitationResponse,
+  parseCancelInvitationResponse,
   parseCreateInvitationResponse,
   parseDeleteRoleResponse,
   parseMemberRoleResponse,
@@ -142,5 +143,7 @@ describe('organization member transport contracts', () => {
     ).toEqual({ invitation, token: 'invite-token' })
     expect(parseDeleteRoleResponse({ ok: true })).toEqual({ ok: true })
     expect(() => parseDeleteRoleResponse({ ok: 'yes' })).toThrow()
+    expect(parseCancelInvitationResponse(null)).toBeNull()
+    expect(() => parseCancelInvitationResponse({ ok: true })).toThrow()
   })
 })

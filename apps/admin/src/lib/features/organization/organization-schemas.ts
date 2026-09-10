@@ -95,6 +95,8 @@ export const okResponseSchema = z.object({
   ok: z.literal(true)
 })
 
+export const nullResponseSchema = z.null()
+
 export const organizationRolesMetaSchema = z.object({
   availablePermissions: z.array(
     z.object({ key: z.literal('organization.manage') })
