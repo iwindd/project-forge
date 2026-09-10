@@ -125,19 +125,55 @@ Admin 31 files / 88 tests → 32 files / 112 tests.
 
 ---
 
+## CI verification (GitHub Actions, real run)
+
+- Pull Request: **#13** (draft) — https://github.com/iwindd/project-forge/pull/13
+- Workflow run: https://github.com/iwindd/project-forge/actions/runs/34524319176
+- Reviewed commit: `233826e55b57f8c3c6f280ad041d1d33b48eeea1` (identical to the local branch HEAD)
+- Result: **success** — job "Verify pull request" passed in 2m36s
+
+Every CI step passed:
+
+| Step | Result |
+| --- | --- |
+| Checkout / Setup pnpm / Setup Node.js | success |
+| Install dependencies (`pnpm install --frozen-lockfile`) | success |
+| Prepare CI environment | success |
+| API lint | success |
+| API test | success |
+| API typecheck | success |
+| API build | success |
+| Admin lint | success |
+| Admin test | success |
+| Admin typecheck | success |
+| Admin client-boundary check | success |
+| Admin UI i18n check | success |
+| Admin build | success |
+
+The ten real GitHub checks match Forge's local results exactly, so the earlier local runs are
+confirmed rather than merely asserted.
+
+---
+
 ## Forge readiness decision
 
 All Spec and Standard findings from both rounds are resolved, the follow-up worker confirms no
-regressions, and all ten required checks pass at `e9a9128`, independently re-run by Forge.
+regressions, and all ten required checks pass — both locally at `e9a9128` and, for real, in
+GitHub Actions at `233826e`.
 
 - **Spec:** no open findings. All nine acceptance criteria PASS at review #2; SPEC-005 corrected and re-verified.
 - **Standard:** no open findings. All corrected findings verified real; the three deferrals are documented and drafted.
 - **Follow-up:** no regressions; all 11 prior findings confirmed genuinely resolved.
-- **CI:** GitHub checks run against the pushed branch and the draft Pull Request; this ledger is the
-  tracked `<!-- forge-review-ledger -->` comment on that Pull Request, so the next review round
-  increments the review number here instead of adding a new comment.
+- **CI:** green. Workflow run 34524319176 succeeded on `233826e`, every step passing.
+- **Deferred:** SPEC-003N dismissed by policy (ADR 0005); STD-005, STD-008, STD-009 drafted in `issue-3-follow-ups.md`; residuals listed above and accepted.
 
-**Decision: the change set is complete and ready for the user's final review as a DRAFT Pull
-Request.** It is not ready to merge until GitHub CI passes and the three deferred low-severity
-items are either accepted or scheduled. The user performs the final review and merge decision;
-Forge never merges.
+**Decision: the change set is complete, review-clean and CI-green, and is ready for the user's
+final review as a DRAFT Pull Request (#13).** The three deferred low-severity items must be
+accepted, scheduled or fixed before merge, and the draft should be marked ready only once the user
+has seen the PR. The user performs the final review and merge decision; Forge never merges.
+
+### What the next review round must do
+
+This is the single tracked comment. A future round must **update this comment in place**, not add
+a new one: increment the review number, timestamp it, record the latest reviewed HEAD SHA, append
+new rows to the findings table without deleting old ones, and re-state the readiness decision.
