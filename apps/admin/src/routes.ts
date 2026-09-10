@@ -7,6 +7,11 @@ const adminRoutes = ROUTER({
     navigationLabelKey: 'overview',
     hiddenBreadcrumb: true
   },
+  projects: {
+    path: '/:organizationSlug/projects',
+    label: 'โปรเจกต์',
+    navigationLabelKey: 'projects'
+  },
   account: {
     path: '/account',
     label: 'บัญชีของฉัน',
