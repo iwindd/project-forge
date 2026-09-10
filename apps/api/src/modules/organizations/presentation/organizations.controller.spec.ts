@@ -14,8 +14,8 @@ function createController() {
     {
       listForUser: vi.fn(),
       createInvitation: vi.fn(),
-      cancelInvitation: vi.fn(),
     } as never,
+    { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
     { execute: vi.fn() } as never,
@@ -255,8 +255,8 @@ describe('OrganizationsController', () => {
   it('cancels an invitation through the standard acknowledgement envelope', async () => {
     const controller = createController();
     const cancelInvitation = vi.mocked(
-      (controller as unknown as { organizations: { cancelInvitation: ReturnType<typeof vi.fn> } })
-        .organizations.cancelInvitation,
+      (controller as unknown as { cancelOrganizationInvitation: { execute: ReturnType<typeof vi.fn> } })
+        .cancelOrganizationInvitation.execute,
     );
     cancelInvitation.mockResolvedValue({ ok: true });
 

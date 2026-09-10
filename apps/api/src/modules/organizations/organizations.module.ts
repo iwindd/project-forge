@@ -10,6 +10,7 @@ import { OrganizationOrmEntity } from './infrastructure/persistence/organization
 import { OrganizationRoleOrmEntity } from './infrastructure/persistence/organization-role.orm-entity.js';
 import { OrganizationService } from './application/organization.service.js';
 import { ORGANIZATION_MEMBER_QUERY } from './application/ports/organization-member.query.js';
+import { CancelOrganizationInvitationUseCase } from './application/use-cases/cancel-organization-invitation-use-case.js';
 import { CreateOrganizationRoleUseCase } from './application/use-cases/create-organization-role-use-case.js';
 import { DeleteOrganizationRoleUseCase } from './application/use-cases/delete-organization-role-use-case.js';
 import { ListOrganizationMembersUseCase } from './application/use-cases/list-organization-members-use-case.js';
@@ -25,6 +26,7 @@ import { OrganizationsController } from './presentation/organizations.controller
     OrganizationService,
     MikroOrmOrganizationMemberQuery,
     { provide: ORGANIZATION_MEMBER_QUERY, useExisting: MikroOrmOrganizationMemberQuery },
+    CancelOrganizationInvitationUseCase,
     ListOrganizationMembersUseCase,
     ListOrganizationRolesUseCase,
     CreateOrganizationRoleUseCase,
