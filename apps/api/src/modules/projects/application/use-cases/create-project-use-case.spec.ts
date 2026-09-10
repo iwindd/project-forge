@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConflictError } from '../../../../common/errors/application-error.js';
 import { ProjectStatus } from '../../domain/project.js';
+import { createProjectSchema } from '../../presentation/dto/project.schemas.js';
 import { CreateProjectUseCase } from './create-project-use-case.js';
 
 const input = {
@@ -52,6 +53,44 @@ describe('CreateProjectUseCase', () => {
       'organization-id',
     );
     expect(audit.record).toHaveBeenCalledOnce();
+  });
+
+  it('persists the supplied branch and runtime metadata on the saved record', async () => {
+    const { useCase, projects } = setup();
+
+    await useCase.execute('actor-id', 'organization-id', {
+      ...input,
+      sourceBranch: 'release',
+      targetBranch: 'production',
+      nodeVersion: '20.11.0',
+    });
+
+    expect(projects.save).toHaveBeenCalledOnce();
+    expect(projects.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceBranch: 'release',
+        targetBranch: 'production',
+        nodeVersion: '20.11.0',
+      }),
+    );
+  });
+
+  it('applies the schema branch and runtime defaults when the request omits them', async () => {
+    const { useCase, projects } = setup();
+
+    await useCase.execute(
+      'actor-id',
+      'organization-id',
+      createProjectSchema.parse({ githubUrl: input.githubUrl }),
+    );
+
+    expect(projects.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceBranch: 'main',
+        targetBranch: 'main',
+        nodeVersion: null,
+      }),
+    );
   });
 
   it('records the request ID on the audit event when supplied', async () => {

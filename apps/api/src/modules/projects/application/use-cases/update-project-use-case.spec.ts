@@ -61,6 +61,68 @@ describe('UpdateProjectUseCase', () => {
     expect(audit.record).toHaveBeenCalledOnce();
   });
 
+  it('propagates branch and runtime changes to the saved record and the audit payload', async () => {
+    const { useCase, projects, audit } = setup();
+
+    const result = await useCase.execute('actor-id', 'organization-id', 'project-id', {
+      sourceBranch: 'release',
+      targetBranch: 'production',
+      nodeVersion: '20.11.0',
+    });
+
+    expect(result.sourceBranch).toBe('release');
+    expect(result.targetBranch).toBe('production');
+    expect(result.nodeVersion).toBe('20.11.0');
+    expect(projects.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceBranch: 'release',
+        targetBranch: 'production',
+        nodeVersion: '20.11.0',
+      }),
+    );
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        before: {
+          name: 'Old name',
+          sourceBranch: 'main',
+          targetBranch: 'main',
+          nodeVersion: null,
+        },
+        after: {
+          name: 'Old name',
+          sourceBranch: 'release',
+          targetBranch: 'production',
+          nodeVersion: '20.11.0',
+        },
+      }),
+    );
+  });
+
+  it('masks environment metadata on the update side and stores only the masked keys', async () => {
+    const { useCase, projects, audit } = setup();
+
+    const result = await useCase.execute('actor-id', 'organization-id', 'project-id', {
+      environmentMetadata: {
+        DATABASE_URL: 'postgres://user:secret@localhost/db',
+        API_TOKEN: 'sk-live-token',
+      },
+    });
+
+    expect(result.environmentMetadata).toEqual({
+      DATABASE_URL: 'configured',
+      API_TOKEN: 'configured',
+    });
+    expect(projects.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        environmentMetadata: {
+          DATABASE_URL: 'configured',
+          API_TOKEN: 'configured',
+        },
+      }),
+    );
+    expect(audit.record).toHaveBeenCalledOnce();
+  });
+
   it('rejects an update to an archived project with a typed conflict', async () => {
     const archived = project({ status: ProjectStatus.ARCHIVED, archivedAt: new Date() });
     const { useCase, projects, audit } = setup(archived);
