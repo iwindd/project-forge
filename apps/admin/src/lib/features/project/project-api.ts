@@ -39,9 +39,8 @@ export const projectApi = api.injectEndpoints({
         body
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId, projectId }) => [
-        { type: 'Projects', id: organizationId },
-        { type: 'Projects', id: projectId }
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: 'Projects', id: organizationId }
       ]
     }),
     archiveProject: builder.mutation<{ project: Project }, ArchiveProjectInput>({
@@ -51,9 +50,8 @@ export const projectApi = api.injectEndpoints({
         body: { reason }
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId, projectId }) => [
-        { type: 'Projects', id: organizationId },
-        { type: 'Projects', id: projectId }
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: 'Projects', id: organizationId }
       ]
     }),
     restoreProject: builder.mutation<{ project: Project }, RestoreProjectInput>({
@@ -63,9 +61,8 @@ export const projectApi = api.injectEndpoints({
         body: { reason }
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId, projectId }) => [
-        { type: 'Projects', id: organizationId },
-        { type: 'Projects', id: projectId }
+      invalidatesTags: (_result, _error, { organizationId }) => [
+        { type: 'Projects', id: organizationId }
       ]
     })
   }),
