@@ -1,8 +1,6 @@
 import { z } from 'zod'
+import { MASKED_ENVIRONMENT_METADATA_VALUE } from '@/lib/features/project/project-schemas'
 import type { Project } from '@/lib/features/project/types'
-
-/** Value the API stores for every environment variable key it accepts. */
-export const MASKED_ENVIRONMENT_METADATA_VALUE = 'configured'
 
 const GITHUB_REPOSITORY_SEGMENT_PATTERN = /^[A-Za-z0-9_.-]+$/
 

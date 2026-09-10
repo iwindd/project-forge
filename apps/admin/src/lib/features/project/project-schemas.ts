@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import type { Project } from './types'
 
+/** Value the API stores for every environment variable key it accepts. */
+export const MASKED_ENVIRONMENT_METADATA_VALUE = 'configured'
+
 const postgresUuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -17,7 +20,9 @@ export const projectSchema = z.object({
   sourceBranch: z.string().min(1),
   targetBranch: z.string().min(1),
   nodeVersion: z.string().nullable(),
-  environmentMetadata: z.record(z.string(), z.string()).nullable(),
+  environmentMetadata: z
+    .record(z.string(), z.literal(MASKED_ENVIRONMENT_METADATA_VALUE))
+    .nullable(),
   status: z.enum(['ACTIVE', 'ARCHIVED']),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
