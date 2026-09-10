@@ -7,7 +7,6 @@ import { defineConfig } from '@mikro-orm/postgresql';
 import { Migrator } from '@mikro-orm/migrations';
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { AuditLogOrmEntity } from './src/common/audit/audit-log.orm-entity.js';
-import { AccessRequestOrmEntity } from './src/modules/access-requests/infrastructure/persistence/access-request.orm-entity.js';
 import { OAuthAccountOrmEntity } from './src/modules/auth/infrastructure/persistence/oauth-account.orm-entity.js';
 import { SessionOrmEntity } from './src/modules/auth/infrastructure/persistence/session.orm-entity.js';
 import { ProjectOrmEntity } from './src/modules/projects/infrastructure/persistence/project.orm-entity.js';
@@ -34,7 +33,6 @@ export default defineConfig({
     UserSecurityLogOrmEntity,
     OAuthAccountOrmEntity,
     SessionOrmEntity,
-    AccessRequestOrmEntity,
     AuditLogOrmEntity,
     ProjectOrmEntity,
   ],

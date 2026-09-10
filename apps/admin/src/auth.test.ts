@@ -55,12 +55,12 @@ describe('auth session contract', () => {
     })
   })
 
-  it('keeps an active pending user in the account session', async () => {
+  it('keeps an active user without organization access in the account session', async () => {
     mocks.apiServerFetch.mockImplementation(
       async (_path: string, schema: { parse: (value: unknown) => unknown }) =>
         schema.parse({
           ...authResponse,
-          user: { ...authResponse.user, accessStatus: 'PENDING' }
+          user: { ...authResponse.user, accessStatus: 'APPROVED' }
         })
     )
 

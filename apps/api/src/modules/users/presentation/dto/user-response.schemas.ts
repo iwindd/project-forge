@@ -7,7 +7,7 @@ const userResponseSchema = z.object({
   email: z.string(),
   role: z.enum(['ADMIN', 'EDITOR']),
   isActive: z.boolean(),
-  accessStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']),
+  accessStatus: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   githubLogin: z.string().min(1),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1)

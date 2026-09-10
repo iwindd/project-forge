@@ -8,7 +8,7 @@ const identitySchema = z.object({
   name: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   role: z.enum(['ADMIN', 'USER']),
-  accessStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']),
+  accessStatus: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   isActive: z.boolean(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),

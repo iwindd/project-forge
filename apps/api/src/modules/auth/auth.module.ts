@@ -20,7 +20,6 @@ import { AesSecretCipherAdapter } from './infrastructure/crypto/aes-secret-ciphe
 import { NodeTokenGeneratorAdapter } from './infrastructure/crypto/node-token-generator.adapter.js';
 import { Sha256TokenHasherAdapter } from './infrastructure/crypto/sha256-token-hasher.adapter.js';
 import { AdminGuard } from '../../common/auth/admin.guard.js';
-import { ApprovedGuard } from '../../common/auth/approved.guard.js';
 import { SessionGuard } from '../../common/auth/session.guard.js';
 import { AuthController } from './presentation/auth.controller.js';
 import { SecurityModule } from '../../common/security/security.module.js';
@@ -65,9 +64,8 @@ import { OrganizationService } from '../organizations/application/organization.s
     OrganizationService,
     { provide: SESSION_AUTHENTICATOR, useExisting: AuthenticateSessionUseCase },
     SessionGuard,
-    ApprovedGuard,
     AdminGuard,
   ],
-  exports: [SessionGuard, ApprovedGuard, AdminGuard, SESSION_AUTHENTICATOR],
+  exports: [SessionGuard, AdminGuard, SESSION_AUTHENTICATOR],
 })
 export class AuthModule {}
