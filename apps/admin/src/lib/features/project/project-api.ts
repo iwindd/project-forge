@@ -6,7 +6,6 @@ import {
 import type {
   ArchiveProjectInput,
   CreateProjectInput,
-  GetProjectInput,
   Project,
   RestoreProjectInput,
   UpdateProjectInput
@@ -20,16 +19,6 @@ export const projectApi = api.injectEndpoints({
       transformResponse: parseProjectListResponse,
       providesTags: (_result, _error, { organizationId }) => [
         { type: 'Projects', id: organizationId }
-      ]
-    }),
-    getProject: builder.query<{ project: Project }, GetProjectInput>({
-      query: ({ organizationId, projectId }) => ({
-        url: `organizations/${encodeURIComponent(organizationId)}/projects/${encodeURIComponent(projectId)}`
-      }),
-      transformResponse: parseProjectResponse,
-      providesTags: (_result, _error, { organizationId, projectId }) => [
-        { type: 'Projects', id: organizationId },
-        { type: 'Projects', id: projectId }
       ]
     }),
     createProject: builder.mutation<{ project: Project }, CreateProjectInput>({
@@ -86,7 +75,6 @@ export const projectApi = api.injectEndpoints({
 export const {
   useArchiveProjectMutation,
   useCreateProjectMutation,
-  useGetProjectQuery,
   useGetProjectsQuery,
   useRestoreProjectMutation,
   useUpdateProjectMutation
