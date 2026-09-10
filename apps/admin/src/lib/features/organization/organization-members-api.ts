@@ -146,7 +146,7 @@ export function parseCreateInvitationResponse(response: unknown) {
   return organizationInvitationResponseSchema.parse(response)
 }
 
-export function parseDeleteRoleResponse(response: unknown) {
+export function parseOkResponse(response: unknown) {
   return okResponseSchema.parse(response)
 }
 
@@ -211,7 +211,7 @@ export const organizationMembersApi = api.injectEndpoints({
         url: `organizations/${encodeURIComponent(organizationId)}/roles/${encodeURIComponent(roleId)}`,
         method: 'DELETE'
       }),
-      transformResponse: parseDeleteRoleResponse,
+      transformResponse: parseOkResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationRoles', id: organizationId }
       ]
@@ -295,7 +295,7 @@ export const organizationMembersApi = api.injectEndpoints({
         url: `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`,
         method: 'DELETE'
       }),
-      transformResponse: parseDeleteRoleResponse,
+      transformResponse: parseOkResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [
         { type: 'OrganizationMembers', id: organizationId },
         { type: 'OrganizationRoles', id: organizationId }

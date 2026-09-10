@@ -3,7 +3,7 @@ import {
   parseAcceptInvitationResponse,
   parseCancelInvitationResponse,
   parseCreateInvitationResponse,
-  parseDeleteRoleResponse,
+  parseOkResponse,
   parseMemberRoleResponse,
   parseMemberUserResponse,
   parseMembersResponse,
@@ -141,8 +141,8 @@ describe('organization member transport contracts', () => {
     expect(
       parseCreateInvitationResponse({ invitation, token: 'invite-token' })
     ).toEqual({ invitation, token: 'invite-token' })
-    expect(parseDeleteRoleResponse({ ok: true })).toEqual({ ok: true })
-    expect(() => parseDeleteRoleResponse({ ok: 'yes' })).toThrow()
+    expect(parseOkResponse({ ok: true })).toEqual({ ok: true })
+    expect(() => parseOkResponse({ ok: 'yes' })).toThrow()
     expect(parseCancelInvitationResponse(null)).toBeNull()
     expect(() => parseCancelInvitationResponse({ ok: true })).toThrow()
   })
