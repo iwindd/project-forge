@@ -23,6 +23,15 @@ function createController() {
 }
 
 describe('OrganizationsController', () => {
+  it('does not expose organization member profile mutation', () => {
+    expect(
+      Object.prototype.hasOwnProperty.call(
+        OrganizationsController.prototype,
+        'memberName',
+      ),
+    ).toBe(false);
+  });
+
   it('returns the authenticated organization list in the standard envelope', async () => {
     const controller = createController();
     const listForUser = vi.mocked(

@@ -49,8 +49,6 @@ export const updateOrganizationRoleSchema = z.object({
   permissions: organizationRolePermissionsSchema.optional(),
 });
 
-export const updateMemberNameSchema = z.object({ name: z.string().trim().min(1).max(200) });
-
 export const updateMemberStatusSchema = z.object({ active: z.boolean() });
 
 export const createInvitationSchema = z.object({

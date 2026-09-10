@@ -13,7 +13,6 @@ import {
   createInvitationSchema,
   createOrganizationSchema,
   updateMemberRoleSchema,
-  updateMemberNameSchema,
   updateMemberStatusSchema,
   updateOrganizationSchema,
   createOrganizationRoleSchema,
@@ -262,23 +261,6 @@ export class OrganizationsController {
       principal.id,
       organizationId,
       userId,
-    );
-    return apiSuccess(organizationMemberUserResponseSchema.parse({ user }));
-  }
-
-  @Patch(':id/members/:userId/name')
-  async memberName(
-    @Principal() principal: AuthenticatedPrincipal,
-    @Param() rawParams: unknown,
-    @Body() body: unknown,
-  ) {
-    const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
-    const input = updateMemberNameSchema.parse(body);
-    const user = await this.organizations.updateMemberName(
-      principal.id,
-      organizationId,
-      userId,
-      input.name,
     );
     return apiSuccess(organizationMemberUserResponseSchema.parse({ user }));
   }

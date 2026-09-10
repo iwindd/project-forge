@@ -12,7 +12,6 @@ import {
   NotFoundError,
 } from '../../../common/errors/application-error.js';
 import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/connection.orm-entity.js';
-import { ProfileOrmEntity } from '../../users/infrastructure/persistence/profile.orm-entity.js';
 import { AccessStatus } from '../../users/domain/user.js';
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js';
 import {
@@ -372,36 +371,6 @@ export class OrganizationService {
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
-  }
-
-  async updateMemberName(actorId: string, organizationId: string, targetUserId: string, name: string) {
-    await this.requireManager(actorId, organizationId);
-    const user = await this.em.findOne(UserOrmEntity, { id: targetUserId });
-    if (!user) throw new NotFoundError('User was not found');
-    const normalizedName = name.trim();
-    if (!normalizedName) throw new InvalidInputError('User name is required');
-    const before = { name: user.name };
-    user.name = normalizedName;
-    user.updatedAt = new Date();
-    const profile = await this.em.findOne(ProfileOrmEntity, { userId: targetUserId });
-    if (profile) {
-      profile.displayName = normalizedName;
-      profile.updatedAt = new Date();
-      this.em.persist(profile);
-    }
-    this.em.persist(user);
-    await this.audit.record({
-      organizationId,
-      actorId,
-      targetUserId,
-      action: 'ORGANIZATION_MEMBER_NAME_CHANGED',
-      resourceType: 'PROFILE',
-      resourceId: targetUserId,
-      before,
-      after: { name: normalizedName },
-    });
-    await this.em.flush();
-    return this.getMember(actorId, organizationId, targetUserId);
   }
 
   async updateOrganization(actorId: string, organizationId: string, name: string) {
