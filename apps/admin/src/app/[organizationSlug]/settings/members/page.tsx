@@ -119,6 +119,7 @@ export default function OrganizationMembersPage() {
     validate: schemaResolver(inviteRowsSchema),
     validateInputOnBlur: true
   })
+  const { setValues: setInviteValues } = inviteForm
   const [inviteLinks, setInviteLinks] = useState<
     Array<{ email: string | null; url: string }>
   >([])
@@ -198,12 +199,16 @@ export default function OrganizationMembersPage() {
 
   useEffect(() => {
     if (!defaultInviteRoleId) return
-    inviteForm.setValues(values => ({
-      rows: (values.rows ?? []).map(row =>
-        row.roleId ? row : { ...row, roleId: defaultInviteRoleId }
-      )
-    }))
-  }, [defaultInviteRoleId, inviteForm])
+    setInviteValues(values => {
+      const rows = values.rows ?? []
+      if (!rows.some(row => !row.roleId)) return values
+      return {
+        rows: rows.map(row =>
+          row.roleId ? row : { ...row, roleId: defaultInviteRoleId }
+        )
+      }
+    })
+  }, [defaultInviteRoleId, setInviteValues])
   const invitations = invitationsResult ?? []
   const allVisibleSelected =
     members.length > 0 &&
