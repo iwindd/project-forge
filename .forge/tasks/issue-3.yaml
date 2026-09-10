@@ -8,14 +8,16 @@ issue:
 assignedProfile: programmer
 status: ready-for-review
 reviewState:
-  rounds: 2
+  rounds: 3
   openFindings: 0
   deferredFindings: [STD-005, STD-008, STD-009]
   ledger: .forge/tasks/issue-3-review-ledger.md
   followUps: .forge/tasks/issue-3-follow-ups.md
-  headAtLastReview: e9a9128
-  pushed: false
-  pullRequest: none
+  headAtLastReview: 109e7b8
+  ciVerifiedCommit: 233826e
+  pushed: true
+  pullRequest: https://github.com/iwindd/project-forge/pull/13
+  browserVerified: true
 branch:
   name: issue/3-organization-scoped-project-lifecycle
   base: main
