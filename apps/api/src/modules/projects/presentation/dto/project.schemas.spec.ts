@@ -31,7 +31,7 @@ describe('createProjectSchema environment metadata', () => {
     expect(() =>
       createProjectSchema.parse({
         ...request,
-        environmentMetadata: { 'API_KEY=«redacted:sk-…»': 'configured' },
+        environmentMetadata: { 'API_KEY=sk-live-abcdef123456': 'configured' },
       }),
     ).toThrow();
   });

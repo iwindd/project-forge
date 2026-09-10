@@ -77,6 +77,14 @@ const archivedProject = projectRecord({
   archivedAt: updatedAt,
 });
 
+/** The audit projection of a project record that a PATCH must leave untouched. */
+const unchangedAuditSummary = {
+  name: 'My Application',
+  sourceBranch: 'release',
+  targetBranch: 'production',
+  nodeVersion: '20.11.0',
+};
+
 describe('projects HTTP contracts', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -355,18 +363,8 @@ describe('projects HTTP contracts', () => {
         action: 'PROJECT_UPDATED',
         resourceId: activeProjectId,
         requestId: 'projects-patch-single-field',
-        before: {
-          name: 'My Application',
-          sourceBranch: 'release',
-          targetBranch: 'production',
-          nodeVersion: '20.11.0',
-        },
-        after: {
-          name: 'My Application',
-          sourceBranch: 'release',
-          targetBranch: 'production',
-          nodeVersion: '22.0.0',
-        },
+        before: unchangedAuditSummary,
+        after: { ...unchangedAuditSummary, nodeVersion: '22.0.0' },
       }),
     );
   });
@@ -400,18 +398,8 @@ describe('projects HTTP contracts', () => {
       expect.objectContaining({
         action: 'PROJECT_UPDATED',
         requestId: 'projects-patch-empty',
-        before: {
-          name: 'My Application',
-          sourceBranch: 'release',
-          targetBranch: 'production',
-          nodeVersion: '20.11.0',
-        },
-        after: {
-          name: 'My Application',
-          sourceBranch: 'release',
-          targetBranch: 'production',
-          nodeVersion: '20.11.0',
-        },
+        before: unchangedAuditSummary,
+        after: unchangedAuditSummary,
       }),
     );
   });
