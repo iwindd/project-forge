@@ -160,6 +160,7 @@
     "noInvitations": "ไม่มีคำเชิญที่รอดำเนินการ",
     "loadFailed": "ไม่สามารถโหลดข้อมูลสมาชิกได้",
     "invitationsLoadFailed": "ไม่สามารถโหลดคำเชิญได้",
+    "retry": "ลองใหม่",
     "personalWorkspaceNotice": "Personal Workspace ไม่สามารถเชิญสมาชิกหรือจัดการทีมได้",
     "makeAdmin": "เปลี่ยนเป็นผู้ดูแล",
     "makeMember": "เปลี่ยนเป็นสมาชิก",
