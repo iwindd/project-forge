@@ -86,6 +86,89 @@ describe('AuthController', () => {
     )
   })
 
+  it('records invalid OAuth state without recording OAuth values', async () => {
+    const security = { record: vi.fn().mockResolvedValue(undefined) }
+    const response = { redirect: vi.fn() }
+    const controller = new AuthController(
+      {} as never,
+      {} as never,
+      {} as never,
+      { adminOrigin: 'http://localhost:5051' } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      security as never
+    )
+
+    await controller.callback(
+      { code: 'oauth-secret', state: 'unexpected-state' },
+      {
+        headers: { cookie: 'pf_oauth_state=expected-state' },
+        header: vi.fn((name: string) => name === 'x-request-id' ? 'request-123' : undefined),
+        ip: '127.0.0.1'
+      } as never,
+      response as never
+    )
+
+    expect(response.redirect).toHaveBeenCalledWith(
+      'http://localhost:5051/admin/login?error=invalid_oauth_state'
+    )
+    expect(security.record).toHaveBeenCalledWith({
+      organizationId: null,
+      userId: null,
+      provider: 'GITHUB',
+      event: 'AUTHENTICATION_FAILED',
+      ipAddress: '127.0.0.1',
+      userAgent: null,
+      metadata: { requestId: 'request-123', code: 'INVALID_OAUTH_STATE' }
+    })
+    expect(JSON.stringify(security.record.mock.calls)).not.toContain('oauth-secret')
+  })
+
+  it('records GitHub login failures without recording the error or OAuth code', async () => {
+    const security = { record: vi.fn().mockResolvedValue(undefined) }
+    const completeGithubLogin = {
+      execute: vi.fn().mockRejectedValue(new Error('provider failure oauth-secret'))
+    }
+    const response = { redirect: vi.fn() }
+    const controller = new AuthController(
+      {} as never,
+      completeGithubLogin as never,
+      {} as never,
+      { adminOrigin: 'http://localhost:5051' } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      security as never
+    )
+
+    await controller.callback(
+      { code: 'oauth-secret', state: 'expected-state' },
+      {
+        headers: { cookie: 'pf_oauth_state=expected-state' },
+        header: vi.fn((name: string) => name === 'x-request-id' ? 'request-123' : undefined),
+        ip: '127.0.0.1'
+      } as never,
+      response as never
+    )
+
+    expect(response.redirect).toHaveBeenCalledWith(
+      'http://localhost:5051/admin/login?error=provider%20failure%20oauth-secret'
+    )
+    expect(security.record).toHaveBeenCalledWith({
+      organizationId: null,
+      userId: null,
+      provider: 'GITHUB',
+      event: 'AUTHENTICATION_FAILED',
+      ipAddress: '127.0.0.1',
+      userAgent: null,
+      metadata: { requestId: 'request-123', code: 'GITHUB_LOGIN_FAILED' }
+    })
+    expect(JSON.stringify(security.record.mock.calls)).not.toContain('oauth-secret')
+  })
+
   it('keeps a session cookie for an OAuth login without organization access', async () => {
     const completeGithubLogin = {
       execute: vi.fn().mockResolvedValue({
