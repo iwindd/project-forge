@@ -17,6 +17,7 @@ import {
   Alert,
   Badge,
   Combobox,
+  Button,
   Group,
   Paper,
   Stack,
@@ -99,7 +100,7 @@ export function UsersTable() {
     sortableFields: SORTABLE_FIELDS,
   });
   const { query, setSearchValue, updateQuery } = datatable;
-  const { data, isFetching, isError } = useGetUsersQuery(
+  const { data, isFetching, isError, refetch } = useGetUsersQuery(
     {
       organizationId: organizationId ?? "",
       query,
@@ -350,7 +351,11 @@ export function UsersTable() {
       />
 
       {isError ? (
-        <Alert color="red">ไม่สามารถโหลดรายการผู้ใช้งานได้</Alert>
+        <Alert color="red" title="ไม่สามารถโหลดรายการผู้ใช้งานได้">
+          <Button variant="light" size="xs" mt="sm" onClick={() => void refetch()}>
+            ลองใหม่
+          </Button>
+        </Alert>
       ) : null}
 
       <Paper p={0}>
@@ -360,6 +365,7 @@ export function UsersTable() {
           records={data?.data ?? []}
           columns={columns}
           totalRecords={data?.total ?? 0}
+          noRecordsText={isFetching ? "กำลังโหลดรายการผู้ใช้งาน..." : "ไม่พบผู้ใช้งาน"}
         />
       </Paper>
     </Stack>

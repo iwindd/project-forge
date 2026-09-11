@@ -10,8 +10,11 @@ export function SecurityLogsTable({ userId }: { userId?: string }) {
   const organizationContext = useOptionalOrganizationContext();
   const organizationId = organizationContext?.activeId;
   const missingOrganizationScope = Boolean(userId && !organizationId);
+  const queryArg = userId && organizationId
+    ? { userId, organizationId }
+    : {};
   const { data, isLoading, isError, refetch } = useGetSecurityLogsQuery(
-    { organizationId: organizationId ?? undefined, userId },
+    queryArg,
     { skip: missingOrganizationScope }
   );
   const logs = data?.data ?? [];
