@@ -92,7 +92,14 @@ describe('account profile loading states', () => {
 
     const tree = AccountSettingsPage();
     expect(textContent(tree)).toContain('ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
-    findButton(tree)?.onClick?.();
+    const button = findButton(tree);
+    expect(button).not.toBeNull();
+    if (!button) throw new Error('Expected retry button');
+
+    const { onClick } = button;
+    expect(onClick).toBeDefined();
+    if (!onClick) throw new Error('Expected retry button callback');
+    onClick();
     expect(mocks.state.retry).toHaveBeenCalledOnce();
   });
 });
