@@ -3,7 +3,7 @@ import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema
 
 const profileConnectionSchema = z.object({
   id: databaseUuidSchema,
-  provider: z.string().min(1),
+  provider: z.literal('GITHUB'),
   username: z.string().nullable(),
   email: z.string().nullable(),
   connectedAt: z.string().min(1)
@@ -40,3 +40,15 @@ export const profileUpdateResponseSchema = z.object({
 })
 
 export const profileConnectionsResponseSchema = z.array(profileConnectionSchema)
+
+export const profileResponseEnvelopeSchema = z.object({
+  data: profileResponseSchema,
+}).strict()
+
+export const profileUpdateResponseEnvelopeSchema = z.object({
+  data: profileUpdateResponseSchema,
+}).strict()
+
+export const profileConnectionsResponseEnvelopeSchema = z.object({
+  data: profileConnectionsResponseSchema,
+}).strict()

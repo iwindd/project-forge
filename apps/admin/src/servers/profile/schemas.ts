@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const connectionSchema = z.object({
   id: z.string().min(1),
-  provider: z.string().min(1),
+  provider: z.literal('GITHUB'),
   username: z.string().nullable(),
   email: z.string().nullable(),
   connectedAt: z.string().min(1)
@@ -32,3 +32,11 @@ export const profileUpdateResponseSchema = z.object({
     updatedAt: z.string().min(1)
   })
 })
+
+export const profileResponseEnvelopeSchema = z.object({
+  data: profileResponseSchema
+}).strict()
+
+export const profileUpdateResponseEnvelopeSchema = z.object({
+  data: profileUpdateResponseSchema
+}).strict()

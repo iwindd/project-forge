@@ -24,6 +24,7 @@ export function ProfileNameForm() {
   const { invalidateAdminCaches } = useAdminCacheInvalidation()
   const [updateProfileRequest, { isLoading: pending }] = useUpdateProfileMutation()
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const form = useForm<ProfileNameFormValues>({
     initialValues: { name: profile.name },
     validate: schemaResolver(profileNameFormSchema),
@@ -32,6 +33,7 @@ export function ProfileNameForm() {
 
   const save = async (values: ProfileNameFormValues) => {
     setError(null)
+    setSuccess(null)
     try {
       const result = await updateProfileRequest({
         displayName: values.name.trim() || null
@@ -46,6 +48,7 @@ export function ProfileNameForm() {
       form.setInitialValues({ name: nextName })
       form.resetDirty()
       invalidateAdminCaches({ resources: ['users'] })
+      setSuccess('บันทึกชื่อสำเร็จ')
     } catch (saveError) {
       setError(
         getBrowserApiErrorMessage(saveError, 'ไม่สามารถบันทึกชื่อได้')
@@ -68,6 +71,7 @@ export function ProfileNameForm() {
             </Button>
           </Group>
           {error ? <Alert color='red'>{error}</Alert> : null}
+          {success ? <Alert color='green'>{success}</Alert> : null}
         </Stack>
       </form>
     </ProfileEditCard>

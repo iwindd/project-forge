@@ -11,17 +11,20 @@ export function ConnectionsCard() {
   const [disconnectConnection] = useDisconnectConnectionMutation();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const connections = profile.connections ?? [];
 
   const disconnect = async (id: string) => {
     setPendingId(id);
     setError(null);
+    setSuccess(null);
     try {
       await disconnectConnection(id).unwrap();
       updateProfile({
         ...profile,
         connections: connections.filter((connection) => connection.id !== id),
       });
+      setSuccess("ยกเลิกการเชื่อมต่อสำเร็จ");
     } catch (disconnectError) {
       setError(
         getBrowserApiErrorMessage(
@@ -41,6 +44,9 @@ export function ConnectionsCard() {
           <Text fw={600}>บัญชีที่เชื่อมต่อ</Text>
           <Text size="sm" c="dimmed">ใช้ตรวจสอบตัวตนและเข้าสู่ระบบด้วย GitHub</Text>
         </Stack>
+        {connections.length === 0 ? (
+          <Text size="sm" c="dimmed">ยังไม่มีบัญชี GitHub ที่เชื่อมต่อ</Text>
+        ) : null}
         {connections.map((connection) => (
           <Group key={connection.id} justify="space-between" wrap="nowrap">
             <Stack gap={0}>
@@ -66,6 +72,7 @@ export function ConnectionsCard() {
         ))}
         {connections.length === 1 ? <Text size="xs" c="dimmed">ต้องมีบัญชีเข้าสู่ระบบอย่างน้อยหนึ่งบัญชี</Text> : null}
         {error ? <Alert color="red">{error}</Alert> : null}
+        {success ? <Alert color="green">{success}</Alert> : null}
       </Stack>
     </Card>
   );
