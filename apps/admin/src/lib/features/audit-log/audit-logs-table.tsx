@@ -113,7 +113,10 @@ function AuditLogExportMenuItem({
       anchor.click()
       anchor.remove()
       URL.revokeObjectURL(objectUrl)
-      invalidateAdminCaches()
+      invalidateAdminCaches({
+        organizationId,
+        auditLogScope: scope
+      })
     } catch (error) {
       notifications.show({
         title: 'ดาวน์โหลดไม่สำเร็จ',
