@@ -80,6 +80,10 @@ export class ProfileController {
   async update(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
     const input = updateProfileSchema.parse(body);
     return this.unitOfWork.run(async () => {
+      const existingProfile = await this.profileConnections.findProfile(principal.id);
+      const before = existingProfile
+        ? { displayName: existingProfile.displayName, bio: existingProfile.bio, timezone: existingProfile.timezone }
+        : undefined;
       const profile = await this.profileConnections.updateProfile(principal.id, input);
       if (!profile) throw new NotFoundError('Profile was not found');
       const user = await this.em.findOne(UserOrmEntity, { id: principal.id });
@@ -94,6 +98,7 @@ export class ProfileController {
         action: 'PROFILE_UPDATED',
         resourceType: 'PROFILE',
         resourceId: principal.id,
+        before,
         after: { displayName: profile.displayName, bio: profile.bio, timezone: profile.timezone },
       });
       return apiSuccess(profileUpdateResponseSchema.parse({

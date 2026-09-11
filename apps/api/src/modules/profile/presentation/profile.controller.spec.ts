@@ -78,8 +78,21 @@ describe('ProfileController HTTP boundaries', () => {
     const profile = {
       displayName: null,
       avatarUrl: null,
-      bio: null,
-      timezone: null,
+      bio: 'Updated bio',
+      timezone: 'UTC',
+      updatedAt,
+    };
+    const beforeProfile: {
+      displayName: string | null;
+      avatarUrl: string | null;
+      bio: string | null;
+      timezone: string | null;
+      updatedAt: Date;
+    } = {
+      displayName: 'Previous name',
+      avatarUrl: null,
+      bio: 'Previous bio',
+      timezone: 'Asia/Bangkok',
       updatedAt,
     };
     const em = {
@@ -88,7 +101,15 @@ describe('ProfileController HTTP boundaries', () => {
       flush: vi.fn().mockResolvedValue(undefined),
     };
     const profileConnections = {
-      updateProfile: vi.fn().mockResolvedValue(profile),
+      findProfile: vi.fn().mockResolvedValue(beforeProfile),
+      updateProfile: vi.fn().mockImplementation(async () => {
+        beforeProfile.displayName = profile.displayName;
+        beforeProfile.bio = profile.bio;
+        beforeProfile.timezone = profile.timezone;
+        beforeProfile.avatarUrl = profile.avatarUrl;
+        beforeProfile.updatedAt = profile.updatedAt;
+        return beforeProfile;
+      }),
     };
     const audit = { record: vi.fn().mockResolvedValue(undefined) };
     const controller = new ProfileController(em as never, profileConnections as never, {} as never, audit as never, { run: async (work: () => Promise<unknown>) => work() } as never);
@@ -99,8 +120,8 @@ describe('ProfileController HTTP boundaries', () => {
           id: user.id,
           displayName: null,
           avatarUrl: null,
-          bio: null,
-          timezone: null,
+          bio: 'Updated bio',
+          timezone: 'UTC',
           updatedAt: updatedAt.toISOString(),
         },
       },
@@ -108,6 +129,15 @@ describe('ProfileController HTTP boundaries', () => {
 
     expect(profileConnections.updateProfile).toHaveBeenCalledWith(user.id, {
       displayName: null,
+    });
+    expect(audit.record).toHaveBeenCalledWith({
+      actorId: user.id,
+      targetUserId: user.id,
+      action: 'PROFILE_UPDATED',
+      resourceType: 'PROFILE',
+      resourceId: user.id,
+      before: { displayName: 'Previous name', bio: 'Previous bio', timezone: 'Asia/Bangkok' },
+      after: { displayName: null, bio: 'Updated bio', timezone: 'UTC' },
     });
     expect(user.name).toBeNull();
   });
