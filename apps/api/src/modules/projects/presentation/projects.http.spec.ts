@@ -8,6 +8,7 @@ import { SessionGuard } from '../../../common/auth/session.guard.js';
 import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js';
 import { ForbiddenError, NotFoundError } from '../../../common/errors/application-error.js';
 import { PublicErrorFilter } from '../../../common/errors/public-error.filter.js';
+import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js';
 import { OrganizationService } from '../../organizations/application/organization.service.js';
 import { AccessStatus, UserRole } from '../../users/domain/user.js';
 import { ArchiveProjectUseCase } from '../application/use-cases/archive-project-use-case.js';
@@ -134,6 +135,7 @@ describe('projects HTTP contracts', () => {
     requireProjectManager: vi.fn(async () => undefined),
   };
   const audit = { record: vi.fn(async () => undefined) };
+  const security = { record: vi.fn(async () => undefined) };
   const unitOfWork = { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
   const authenticator = {
     principalFromToken: vi.fn(async (token: string | undefined) =>
@@ -155,6 +157,7 @@ describe('projects HTTP contracts', () => {
       providers: [
         SessionGuard,
         { provide: SESSION_AUTHENTICATOR, useValue: authenticator },
+        { provide: SECURITY_LOGGER, useValue: security },
         { provide: PROJECT_REPOSITORY, useValue: projects },
         { provide: OrganizationService, useValue: organizations },
         { provide: AUDIT_LOGGER, useValue: audit },
