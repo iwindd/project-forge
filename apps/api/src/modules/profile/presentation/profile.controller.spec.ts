@@ -15,6 +15,71 @@ describe('ProfileController HTTP boundaries', () => {
     ).rejects.toThrow();
   });
 
+  it('reads identity and connections from the canonical connection repository', async () => {
+    const user = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      name: 'Ada',
+      githubLogin: 'ada-old',
+      avatarUrl: null,
+      role: 'USER',
+      accessStatus: 'APPROVED',
+      createdAt: new Date('2026-09-10T00:00:00.000Z'),
+    };
+    const profile = {
+      displayName: 'Ada Lovelace',
+      avatarUrl: null,
+      bio: null,
+      timezone: 'Asia/Bangkok',
+      updatedAt: new Date('2026-09-10T00:00:00.000Z'),
+    };
+    const em = { findOne: vi.fn().mockResolvedValue(user) };
+    const profileConnections = {
+      ensureProfile: vi.fn().mockResolvedValue(profile),
+      findConnections: vi.fn().mockResolvedValue([
+        {
+          id: '650e8400-e29b-41d4-a716-446655440000',
+          provider: 'GITHUB',
+          providerUsername: 'ada',
+          providerEmail: 'ada@example.com',
+          connectedAt: new Date('2026-09-10T00:00:00.000Z'),
+        },
+      ]),
+    };
+    const controller = new ProfileController(
+      em as never,
+      profileConnections as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(controller.get({ id: user.id } as never)).resolves.toEqual({
+      data: {
+        profile: {
+          id: user.id,
+          displayName: 'Ada Lovelace',
+          avatarUrl: null,
+          bio: null,
+          timezone: 'Asia/Bangkok',
+          platformRole: 'USER',
+          accountStatus: 'APPROVED',
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: profile.updatedAt.toISOString(),
+        },
+        connections: [
+          {
+            id: '650e8400-e29b-41d4-a716-446655440000',
+            provider: 'GITHUB',
+            username: 'ada',
+            email: 'ada@example.com',
+            connectedAt: '2026-09-10T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    expect(profileConnections.findConnections).toHaveBeenCalledWith(user.id);
+  });
+
   it('accepts a nullable display name and preserves the standard response shape', async () => {
     const updatedAt = new Date('2026-09-10T00:00:00.000Z');
     const user = {
