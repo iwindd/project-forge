@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const expectedAcmeMembersPath =
+  '/api/v1/organizations/00000000-0000-0000-0000-000000000001/members';
+
 async function signedIn(page: Page) {
   await page
     .context()
@@ -43,13 +46,13 @@ test('organization users shows loading, scoped users, and retry recovery', async
       }),
     });
   });
-  let membersSeen = false;
+  let membersRequestPath: string | undefined;
   page.on('request', (request) => {
     if (request.method() === 'GET' && request.url().includes('/api/v1/') && request.url().includes('/members'))
-      membersSeen = true;
+      membersRequestPath = new URL(request.url()).pathname;
   });
   await page.goto('/acme/users');
-  await expect.poll(() => membersSeen, { timeout: 30_000 }).toBe(true);
+  await expect.poll(() => membersRequestPath, { timeout: 30_000 }).toBe(expectedAcmeMembersPath);
   await expect(page.getByText('กำลังโหลดรายการผู้ใช้งาน...')).toBeVisible();
   await expect(page.getByRole('table')).toBeVisible();
 });
@@ -96,13 +99,13 @@ test('organization users recovers after a forced request failure', async ({ page
       }),
     });
   });
-  let membersSeen = false;
+  let membersRequestPath: string | undefined;
   page.on('request', (request) => {
     if (request.method() === 'GET' && request.url().includes('/api/v1/') && request.url().includes('/members'))
-      membersSeen = true;
+      membersRequestPath = new URL(request.url()).pathname;
   });
   await page.goto('/acme/users');
-  await expect.poll(() => membersSeen, { timeout: 30_000 }).toBe(true);
+  await expect.poll(() => membersRequestPath, { timeout: 30_000 }).toBe(expectedAcmeMembersPath);
   await expect.poll(() => calls, { timeout: 30_000 }).toBe(1);
   await expect(page.getByText('ไม่สามารถโหลดรายการผู้ใช้งานได้')).toBeVisible();
   const retry = page.getByRole('button', { name: 'ลองใหม่' });
