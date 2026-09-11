@@ -2,7 +2,7 @@ export type Profile = {
   id: string;
   name: string;
   email: string | null;
-  role: "ADMIN" | "EDITOR";
+  role: 'ADMIN' | 'EDITOR';
   createdAt: string;
   updatedAt: string;
   avatarUrl?: string | null;

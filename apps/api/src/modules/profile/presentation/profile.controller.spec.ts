@@ -3,16 +3,9 @@ import { ProfileController } from './profile.controller.js';
 
 describe('ProfileController HTTP boundaries', () => {
   it('rejects invalid connection route parameters before querying persistence', async () => {
-    const controller = new ProfileController(
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
-    );
+    const controller = new ProfileController({} as never, {} as never, {} as never, {} as never);
 
-    await expect(
-      controller.disconnect({ id: 'user-1' } as never, { id: 'not-a-uuid' }),
-    ).rejects.toThrow();
+    await expect(controller.disconnect({ id: 'user-1' } as never, { id: 'not-a-uuid' })).rejects.toThrow();
   });
 
   it('reads identity and connections from the canonical connection repository', async () => {
@@ -45,12 +38,7 @@ describe('ProfileController HTTP boundaries', () => {
         },
       ]),
     };
-    const controller = new ProfileController(
-      em as never,
-      profileConnections as never,
-      {} as never,
-      {} as never,
-    );
+    const controller = new ProfileController(em as never, profileConnections as never, {} as never, {} as never);
 
     await expect(controller.get({ id: user.id } as never)).resolves.toEqual({
       data: {
@@ -103,19 +91,9 @@ describe('ProfileController HTTP boundaries', () => {
       updateProfile: vi.fn().mockResolvedValue(profile),
     };
     const audit = { record: vi.fn().mockResolvedValue(undefined) };
-    const controller = new ProfileController(
-      em as never,
-      profileConnections as never,
-      {} as never,
-      audit as never,
-    );
+    const controller = new ProfileController(em as never, profileConnections as never, {} as never, audit as never);
 
-    await expect(
-      controller.update(
-        { id: user.id } as never,
-        { displayName: null },
-      ),
-    ).resolves.toEqual({
+    await expect(controller.update({ id: user.id } as never, { displayName: null })).resolves.toEqual({
       data: {
         profile: {
           id: user.id,
