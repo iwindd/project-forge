@@ -184,7 +184,13 @@ describe('admin profile mutation flows', () => {
       const tree = renderComponent(component);
       expect(mocks.buttonProps[0]?.loading).toBe(true);
 
-      await (getHostElement(tree, 'form')?.props.onSubmit as (values: Record<string, string>) => Promise<void>)(values);
+      const form = getHostElement(tree, 'form');
+      expect(form).not.toBeNull();
+      if (!form) throw new Error('Expected profile form to be rendered');
+      const onSubmit = form.props.onSubmit;
+      expect(onSubmit).toEqual(expect.any(Function));
+      if (typeof onSubmit !== 'function') throw new Error('Expected profile form onSubmit handler');
+      await (onSubmit as (values: Record<string, string>) => Promise<void>)(values);
 
       expect(mocks.updateProfile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -206,7 +212,13 @@ describe('admin profile mutation flows', () => {
     mocks.updateProfileRequest.mockReturnValue({ unwrap: () => Promise.reject(new Error(message)) });
     const tree = renderComponent(component);
 
-    await (getHostElement(tree, 'form')?.props.onSubmit as (values: Record<string, string>) => Promise<void>)(values);
+    const form = getHostElement(tree, 'form');
+    expect(form).not.toBeNull();
+    if (!form) throw new Error('Expected profile form to be rendered');
+    const onSubmit = form.props.onSubmit;
+    expect(onSubmit).toEqual(expect.any(Function));
+    if (typeof onSubmit !== 'function') throw new Error('Expected profile form onSubmit handler');
+    await (onSubmit as (values: Record<string, string>) => Promise<void>)(values);
 
     expect(mocks.updateProfile).not.toHaveBeenCalled();
     const updatedTree = renderComponent(component);
