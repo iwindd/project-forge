@@ -1,7 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const expectedAcmeMembersPath =
-  '/api/v1/organizations/00000000-0000-0000-0000-000000000001/members';
+const expectedAcmeMembersPath = '/api/v1/organizations/00000000-0000-0000-0000-000000000001/members';
 
 async function signedIn(page: Page) {
   await page
