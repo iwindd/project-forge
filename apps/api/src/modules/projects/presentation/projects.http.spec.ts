@@ -202,6 +202,15 @@ describe('projects HTTP contracts', () => {
       },
     });
     expect(response.headers.get('x-request-id')).toBe('projects-401');
+    expect(security.record).toHaveBeenCalledWith({
+      organizationId: null,
+      userId: null,
+      event: 'AUTHENTICATION_FAILED',
+      ipAddress: '127.0.0.1',
+      userAgent: 'node',
+      metadata: { requestId: 'projects-401', code: 'UNAUTHENTICATED' },
+    });
+    expect(JSON.stringify(security.record.mock.calls)).not.toContain('pf_session');
   });
 
   it('returns 403 when the caller is not a member of the organization', async () => {
