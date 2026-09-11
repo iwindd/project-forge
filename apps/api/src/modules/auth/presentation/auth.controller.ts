@@ -25,6 +25,7 @@ import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js'
 import { getCookie } from '../../../common/http/request-context.js'
 import type { SecurityLogPort } from '../../../common/security/security-log.port.js'
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js'
+import { recordSecurityFailure } from '../../../common/security/security-failure.js'
 import type { UserRepository } from '../../users/application/ports/user.repository.js'
 import { USER_REPOSITORY } from '../../users/application/ports/user.repository.js'
 import type { AuthConfig } from '../application/ports/auth.ports.js'
@@ -95,6 +96,12 @@ export class AuthController {
     const parsedQuery = githubCallbackQuerySchema.safeParse(query)
     const expected = getCookie(request, 'pf_oauth_state')
     if (!parsedQuery.success || parsedQuery.data.state !== expected) {
+      await recordSecurityFailure(this.security, {
+        request,
+        provider: 'GITHUB',
+        event: 'AUTHENTICATION_FAILED',
+        code: 'INVALID_OAUTH_STATE',
+      })
       return response.redirect(
         this.adminRedirect('/admin/login?error=invalid_oauth_state')
       )
@@ -123,6 +130,12 @@ export class AuthController {
         : '/account')
       return response.redirect(this.adminRedirect(destination))
     } catch (error) {
+      await recordSecurityFailure(this.security, {
+        request,
+        provider: 'GITHUB',
+        event: 'AUTHENTICATION_FAILED',
+        code: 'GITHUB_LOGIN_FAILED',
+      })
       const message =
         error instanceof Error ? error.message : 'github_login_failed'
       return response.redirect(

@@ -9,6 +9,8 @@ const principal = {
   id: userId,
 } as AuthenticatedPrincipal;
 
+const request = { header: vi.fn().mockReturnValue('request-id') } as never;
+
 function createController() {
   return new OrganizationsController(
     {
@@ -189,7 +191,7 @@ describe('OrganizationsController', () => {
       controller.createRole(principal, { id: organizationId }, {
         name: 'แอดมิน',
         permissions: ['organization.manage'],
-      }),
+      }, request),
     ).rejects.toThrow();
   });
 
@@ -226,7 +228,7 @@ describe('OrganizationsController', () => {
     });
 
     await expect(
-      controller.invite(principal, { id: organizationId }, { email: 'person@example.com' }),
+      controller.invite(principal, { id: organizationId }, { email: 'person@example.com' }, request),
     ).resolves.toEqual({
       data: {
         invitation: {
@@ -252,6 +254,7 @@ describe('OrganizationsController', () => {
       organizationId,
       'person@example.com',
       { roleId: undefined, role: 'MEMBER' },
+      { requestId: 'request-id' },
     );
   });
 
@@ -267,8 +270,9 @@ describe('OrganizationsController', () => {
       controller.cancelInvitation(
         principal,
         { id: organizationId, invitationId: userId },
+        request,
       ),
     ).resolves.toEqual({ data: null });
-    expect(cancelInvitation).toHaveBeenCalledWith(userId, organizationId, userId);
+    expect(cancelInvitation).toHaveBeenCalledWith(userId, organizationId, userId, { requestId: 'request-id' });
   });
 });
