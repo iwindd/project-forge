@@ -599,10 +599,20 @@ describe('OrganizationService', () => {
       [OrganizationInvitationOrmEntity, invitation],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
-    const service = createService(em);
+    const events: unknown[] = [];
+    const audit = { record: vi.fn() };
+    const security = { record: vi.fn() };
+    const service = new OrganizationService(
+      em as never,
+      audit as never,
+      security as never,
+      new TransactionalFakeUnitOfWork(em, events) as never,
+    );
 
     await expect(service.acceptInvitation('member-id', token)).rejects.toThrow('Invitation has expired');
     expect(invitation.status).toBe(OrganizationInvitationStatus.EXPIRED);
     expect(em.flushCount).toBe(1);
+    expect(audit.record).not.toHaveBeenCalled();
+    expect(security.record).not.toHaveBeenCalled();
   });
 });

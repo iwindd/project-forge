@@ -1,4 +1,4 @@
-import { EntityManager, LockMode } from '@mikro-orm/core';
+import { type EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
@@ -55,6 +55,8 @@ const DEFAULT_ROLE_NAMES = {
   admin: 'แอดมิน',
   member: 'สมาชิก',
 } as const;
+
+class ExpiredInvitationError extends Error {}
 
 @Injectable()
 export class OrganizationService {
@@ -610,9 +612,15 @@ export class OrganizationService {
   }
 
   async acceptInvitation(userId: string, token: string, options: MutationOptions = {}) {
-    return this.unitOfWork.run(() =>
-      this.acceptInvitationInTransaction(userId, token, options),
-    );
+    try {
+      return await this.unitOfWork.run(() =>
+        this.acceptInvitationInTransaction(userId, token, options),
+      );
+    } catch (error) {
+      if (!(error instanceof ExpiredInvitationError)) throw error;
+      await this.unitOfWork.run(() => this.expireInvitation(token));
+      throw new ConflictError('Invitation has expired');
+    }
   }
 
   private async acceptInvitationInTransaction(userId: string, token: string, options: MutationOptions) {
@@ -622,10 +630,7 @@ export class OrganizationService {
     }, { lockMode: LockMode.PESSIMISTIC_WRITE });
     if (!invitation) throw new NotFoundError('Invitation was not found or has already been used');
     if (invitation.expiresAt.getTime() <= Date.now()) {
-      invitation.status = OrganizationInvitationStatus.EXPIRED;
-      this.em.persist(invitation);
-      await this.em.flush();
-      throw new ConflictError('Invitation has expired');
+      throw new ExpiredInvitationError();
     }
     if (!invitation.email) {
       throw new ConflictError('Invitation requires an email address');
@@ -694,6 +699,17 @@ export class OrganizationService {
     await this.security.record({ organizationId: organization.id, userId, event: 'INVITATION_ACCEPTED' });
     await this.em.flush();
     return organization;
+  }
+
+  private async expireInvitation(token: string) {
+    const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
+      tokenHash: this.hashToken(token),
+      status: OrganizationInvitationStatus.PENDING,
+    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
+    if (!invitation || invitation.expiresAt.getTime() > Date.now()) return;
+    invitation.status = OrganizationInvitationStatus.EXPIRED;
+    this.em.persist(invitation);
+    await this.em.flush();
   }
 
   hashToken(token: string) {
