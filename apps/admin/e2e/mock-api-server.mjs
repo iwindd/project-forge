@@ -11,29 +11,35 @@ const users = [
   { id: 'user-2', name: 'Scoped Editor', email: 'editor@example.test', role: 'EDITOR', isActive: true, createdAt: '2026-01-02T00:00:00.000Z' }
 ]
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) })
-const send = (res, status, body) => {
-  res.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-credentials': 'true' })
+const send = (req, res, status, body) => {
+  res.writeHead(status, {
+    'content-type': 'application/json',
+    'access-control-allow-origin': req.headers.origin ?? '*',
+    'access-control-allow-credentials': 'true',
+    'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
+    'access-control-allow-headers': 'content-type'
+  })
   res.end(body)
 }
 
 const server = http.createServer((req, res) => {
-  if (req.method === 'OPTIONS') return send(res, 204, '')
+  if (req.method === 'OPTIONS') return send(req, res, 204, '')
   const path = new URL(req.url, 'http://127.0.0.1').pathname.replace('/api/v1/', '')
-  if (path === 'auth/me') return send(res, 200, envelope({ user: { id: 'user-1', githubUserId: 'github-1', githubLogin: 'ada', name: 'Ada Lovelace', avatarUrl: null, role: 'ADMIN', accessStatus: 'APPROVED', isActive: true, createdAt: profile.createdAt, updatedAt: profile.updatedAt }, profile: null }))
-  if (path === 'organizations') return send(res, 200, envelope([organization]))
-  if (path === 'profile' && req.method === 'GET') return send(res, 200, envelope({ profile, connections: [] }))
+  if (path === 'auth/me') return send(req, res, 200, envelope({ user: { id: 'user-1', githubUserId: 'github-1', githubLogin: 'ada', name: 'Ada Lovelace', avatarUrl: null, role: 'ADMIN', accessStatus: 'APPROVED', isActive: true, createdAt: profile.createdAt, updatedAt: profile.updatedAt }, profile: null }))
+  if (path === 'organizations') return send(req, res, 200, envelope([organization]))
+  if (path === 'profile' && req.method === 'GET') return send(req, res, 200, envelope({ profile, connections: [] }))
   if (path === 'profile' && req.method === 'PATCH') {
     let body = ''
     req.on('data', chunk => { body += chunk })
     return req.on('end', () => {
       const input = JSON.parse(body)
       Object.assign(profile, { displayName: input.displayName ?? profile.displayName, bio: input.bio ?? profile.bio, timezone: input.timezone ?? profile.timezone, updatedAt: '2026-01-03T00:00:00.000Z' })
-      send(res, 200, envelope({ profile: { id: profile.id, displayName: profile.displayName, avatarUrl: profile.avatarUrl, bio: profile.bio, timezone: profile.timezone, updatedAt: profile.updatedAt } }))
+      send(req, res, 200, envelope({ profile: { id: profile.id, displayName: profile.displayName, avatarUrl: profile.avatarUrl, bio: profile.bio, timezone: profile.timezone, updatedAt: profile.updatedAt } }))
     })
   }
-  if (path === 'organizations/00000000-0000-0000-0000-000000000001/members') return send(res, 200, envelope(users, { total: users.length }))
-  if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001') return send(res, 200, envelope([], { total: 0, page: 1, pageSize: 25, totalPages: 0 }))
-  if (path.startsWith('organizations/invitations/') && path.endsWith('/accept')) return send(res, 403, JSON.stringify({ error: { code: 'FORBIDDEN', message: 'คำเชิญนี้ไม่สามารถใช้ได้', details: {}, requestId: 'e2e' } }))
-  return send(res, 404, JSON.stringify({ error: { code: 'NOT_FOUND', message: 'not found', details: {}, requestId: 'e2e' } }))
+  if (path === 'organizations/00000000-0000-0000-0000-000000000001/members') return send(req, res, 200, envelope(users, { total: users.length }))
+  if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001') return send(req, res, 200, envelope([], { total: 0, page: 1, pageSize: 25, totalPages: 0 }))
+  if (path.startsWith('organizations/invitations/') && path.endsWith('/accept')) return send(req, res, 403, JSON.stringify({ error: { code: 'FORBIDDEN', message: 'คำเชิญนี้ไม่สามารถใช้ได้', details: {}, requestId: 'e2e' } }))
+  return send(req, res, 404, JSON.stringify({ error: { code: 'NOT_FOUND', message: 'not found', details: {}, requestId: 'e2e' } }))
 })
-server.listen(5050, '127.0.0.1', () => process.stdout.write('mock api listening\n'))
+server.listen(5052, '127.0.0.1', () => process.stdout.write('mock api listening\n'))

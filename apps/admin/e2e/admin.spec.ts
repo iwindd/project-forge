@@ -20,7 +20,12 @@ test('organization users shows loading, scoped users, and retry recovery', async
       { id: 'user-2', name: 'Scoped Editor', email: 'editor@example.test', role: 'EDITOR', isActive: true, createdAt: '2026-01-02T00:00:00.000Z' }
     ], meta: { total: 2 } }) })
   })
+  let membersSeen = false
+  page.on('request', request => {
+    if (request.method() === 'GET' && request.url().includes('/api/v1/') && request.url().includes('/members')) membersSeen = true
+  })
   await page.goto('/acme/users')
+  await expect.poll(() => membersSeen, { timeout: 30_000 }).toBe(true)
   await expect(page.getByText('กำลังโหลดรายการผู้ใช้งาน...')).toBeVisible()
   await expect(page.getByRole('table')).toBeVisible()
 })
@@ -42,8 +47,13 @@ test('organization users recovers after a forced request failure', async ({ page
       { id: 'user-2', name: 'Scoped Editor', email: 'editor@example.test', role: 'EDITOR', isActive: true, createdAt: '2026-01-02T00:00:00.000Z' }
     ], meta: { total: 2 } }) })
   })
+  let membersSeen = false
+  page.on('request', request => {
+    if (request.method() === 'GET' && request.url().includes('/api/v1/') && request.url().includes('/members')) membersSeen = true
+  })
   await page.goto('/acme/users')
-  await expect.poll(() => calls).toBe(1)
+  await expect.poll(() => membersSeen, { timeout: 30_000 }).toBe(true)
+  await expect.poll(() => calls, { timeout: 30_000 }).toBe(1)
   await expect(page.getByText('ไม่สามารถโหลดรายการผู้ใช้งานได้')).toBeVisible()
   const retry = page.getByRole('button', { name: 'ลองใหม่' })
   await expect(retry).toBeVisible()
@@ -58,15 +68,14 @@ test('profile edit submits and shows visible success feedback', async ({ page })
   await page.goto('/account/settings')
   const name = page.getByLabel('ชื่อผู้ใช้')
   await expect(name).toHaveValue('Ada Lovelace')
-  await name.click()
-  await page.keyboard.press('ControlOrMeta+A')
-  await page.keyboard.type('Grace Hopper')
-  await name.blur()
-  const patchRequest = page.waitForRequest(request =>
-    request.method() === 'PATCH' && request.url().includes('/api/v1/profile'),
-  )
+  await name.fill('Grace Hopper')
+  await expect(name).toHaveValue('Grace Hopper')
+  let patchSeen = false
+  page.on('request', request => {
+    if (request.method() === 'PATCH' && request.url().includes('/api/v1/profile')) patchSeen = true
+  })
   await page.getByRole('button', { name: 'บันทึก' }).first().click()
-  await patchRequest
+  await expect.poll(() => patchSeen, { timeout: 30_000 }).toBe(true)
   await expect(page.getByText('บันทึกชื่อสำเร็จ')).toBeVisible()
 })
 
@@ -75,19 +84,18 @@ test('controlled audit state and rejected invitation boundary are visible', asyn
   await page.goto('/acme/audit-logs')
   await expect(page.getByText('ไม่พบประวัติการทำรายการ')).toBeVisible()
 
-  await page.goto('/admin/invitations/controlled-invalid-token')
   await page.route('**/api/v1/organizations/invitations/controlled-invalid-token/accept', async route => {
     await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'คำเชิญนี้ไม่สามารถใช้ได้', details: {}, requestId: 'e2e' } }) })
   })
+  await page.goto('/admin/invitations/controlled-invalid-token')
   const join = page.getByRole('button', { name: 'เข้าร่วม' })
   await expect(join).toBeEnabled()
-  const rejectedResponse = page.waitForResponse(response =>
-    response.request().method() === 'POST' &&
-    response.url().includes('/api/v1/organizations/invitations/controlled-invalid-token/accept') &&
-    response.status() === 403,
-  )
+  let rejectedResponseSeen = false
+  page.on('response', response => {
+    if (response.request().method() === 'POST' && response.url().includes('/api/v1/organizations/invitations/controlled-invalid-token/accept') && response.status() === 403) rejectedResponseSeen = true
+  })
   await join.click()
-  await rejectedResponse
+  await expect.poll(() => rejectedResponseSeen, { timeout: 30_000 }).toBe(true)
   await expect(page.getByText('ไม่สามารถเข้าร่วม Organization ได้')).toBeVisible()
   await expect(page.getByText('คำเชิญนี้ไม่สามารถใช้ได้')).toBeVisible()
 })
