@@ -8,12 +8,13 @@ describe('UpdateOrganizationRoleUseCase', () => {
     const useCase = new UpdateOrganizationRoleUseCase(organizations as never);
     const input = { name: 'Managers', permissions: ['organization.manage' as const] };
 
-    await expect(useCase.execute('actor-id', 'organization-id', 'role-id', input)).resolves.toBe(role);
+    await expect(useCase.execute('actor-id', 'organization-id', 'role-id', input, { requestId: 'request-id' })).resolves.toBe(role);
     expect(organizations.updateRole).toHaveBeenCalledWith(
       'actor-id',
       'organization-id',
       'role-id',
       input,
+      { requestId: 'request-id' },
     );
   });
 });

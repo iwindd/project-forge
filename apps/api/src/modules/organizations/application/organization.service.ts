@@ -43,6 +43,8 @@ export type OrganizationRoleView = {
   legacyRole: OrganizationMemberRole | null;
 };
 
+type MutationOptions = { requestId?: string };
+
 type RoleInput = {
   roleId?: string;
   role?: OrganizationMemberRole;
@@ -213,8 +215,9 @@ export class OrganizationService {
     organizationId: string,
     name: string,
     permissions: OrganizationPermission[],
+    options: MutationOptions = {},
   ) {
-    return this.unitOfWork.run(() => this.createRoleInTransaction(actorId, organizationId, name, permissions));
+    return this.unitOfWork.run(() => this.createRoleInTransaction(actorId, organizationId, name, permissions, options));
   }
 
   private async createRoleInTransaction(
@@ -222,6 +225,7 @@ export class OrganizationService {
     organizationId: string,
     name: string,
     permissions: OrganizationPermission[],
+    options: MutationOptions,
   ) {
     await this.requireManager(actorId, organizationId);
     const organization = await this.requireOrganization(organizationId);
@@ -239,6 +243,7 @@ export class OrganizationService {
       organizationId,
       actorId,
       action: 'ORGANIZATION_ROLE_CREATED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_ROLE',
       resourceId: role.id,
       after: { name: role.name, permissions: role.permissions },
@@ -252,8 +257,9 @@ export class OrganizationService {
     organizationId: string,
     roleId: string,
     input: { name?: string; permissions?: OrganizationPermission[] },
+    options: MutationOptions = {},
   ) {
-    return this.unitOfWork.run(() => this.updateRoleInTransaction(actorId, organizationId, roleId, input));
+    return this.unitOfWork.run(() => this.updateRoleInTransaction(actorId, organizationId, roleId, input, options));
   }
 
   private async updateRoleInTransaction(
@@ -261,6 +267,7 @@ export class OrganizationService {
     organizationId: string,
     roleId: string,
     input: { name?: string; permissions?: OrganizationPermission[] },
+    options: MutationOptions,
   ) {
     await this.requireManager(actorId, organizationId);
     const role = await this.requireRoleEntity(organizationId, roleId);
@@ -278,6 +285,7 @@ export class OrganizationService {
       organizationId,
       actorId,
       action: 'ORGANIZATION_ROLE_UPDATED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_ROLE',
       resourceId: role.id,
       before,
@@ -287,11 +295,11 @@ export class OrganizationService {
     return this.roleView(role);
   }
 
-  async deleteRole(actorId: string, organizationId: string, roleId: string) {
-    return this.unitOfWork.run(() => this.deleteRoleInTransaction(actorId, organizationId, roleId));
+  async deleteRole(actorId: string, organizationId: string, roleId: string, options: MutationOptions = {}) {
+    return this.unitOfWork.run(() => this.deleteRoleInTransaction(actorId, organizationId, roleId, options));
   }
 
-  private async deleteRoleInTransaction(actorId: string, organizationId: string, roleId: string) {
+  private async deleteRoleInTransaction(actorId: string, organizationId: string, roleId: string, options: MutationOptions) {
     await this.requireManager(actorId, organizationId);
     const role = await this.requireRoleEntity(organizationId, roleId);
     if (role.isOwner) throw new ForbiddenError('The organization owner role cannot be deleted');
@@ -308,6 +316,7 @@ export class OrganizationService {
       organizationId,
       actorId,
       action: 'ORGANIZATION_ROLE_DELETED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_ROLE',
       resourceId: role.id,
       before: { name: role.name, permissions: role.permissions },
@@ -341,11 +350,11 @@ export class OrganizationService {
     };
   }
 
-  async updateOrganization(actorId: string, organizationId: string, name: string) {
-    return this.unitOfWork.run(() => this.updateOrganizationInTransaction(actorId, organizationId, name));
+  async updateOrganization(actorId: string, organizationId: string, name: string, options: MutationOptions = {}) {
+    return this.unitOfWork.run(() => this.updateOrganizationInTransaction(actorId, organizationId, name, options));
   }
 
-  private async updateOrganizationInTransaction(actorId: string, organizationId: string, name: string) {
+  private async updateOrganizationInTransaction(actorId: string, organizationId: string, name: string, options: MutationOptions) {
     const { organization } = await this.requireManager(actorId, organizationId);
     const normalizedName = name.trim();
     if (!normalizedName) throw new InvalidInputError('Organization name is required');
@@ -356,6 +365,7 @@ export class OrganizationService {
       organizationId,
       actorId,
       action: 'ORGANIZATION_UPDATED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION',
       resourceId: organization.id,
       before,
@@ -365,11 +375,11 @@ export class OrganizationService {
     return organization;
   }
 
-  async updateMemberStatus(actorId: string, organizationId: string, targetUserId: string, active: boolean) {
-    return this.unitOfWork.run(() => this.updateMemberStatusInTransaction(actorId, organizationId, targetUserId, active));
+  async updateMemberStatus(actorId: string, organizationId: string, targetUserId: string, active: boolean, options: MutationOptions = {}) {
+    return this.unitOfWork.run(() => this.updateMemberStatusInTransaction(actorId, organizationId, targetUserId, active, options));
   }
 
-  private async updateMemberStatusInTransaction(actorId: string, organizationId: string, targetUserId: string, active: boolean) {
+  private async updateMemberStatusInTransaction(actorId: string, organizationId: string, targetUserId: string, active: boolean, options: MutationOptions) {
     await this.requireManager(actorId, organizationId);
     const membership = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
@@ -388,6 +398,7 @@ export class OrganizationService {
       actorId,
       targetUserId,
       action: 'ORGANIZATION_MEMBER_STATUS_CHANGED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_MEMBER',
       resourceId: membership.id,
       before,
@@ -397,11 +408,11 @@ export class OrganizationService {
     return this.getMember(actorId, organizationId, targetUserId);
   }
 
-  async updateMemberRole(actorId: string, organizationId: string, targetUserId: string, input: RoleInput) {
-    return this.unitOfWork.run(() => this.updateMemberRoleInTransaction(actorId, organizationId, targetUserId, input));
+  async updateMemberRole(actorId: string, organizationId: string, targetUserId: string, input: RoleInput, options: MutationOptions = {}) {
+    return this.unitOfWork.run(() => this.updateMemberRoleInTransaction(actorId, organizationId, targetUserId, input, options));
   }
 
-  private async updateMemberRoleInTransaction(actorId: string, organizationId: string, targetUserId: string, input: RoleInput) {
+  private async updateMemberRoleInTransaction(actorId: string, organizationId: string, targetUserId: string, input: RoleInput, options: MutationOptions) {
     await this.requireManager(actorId, organizationId);
     const nextRole = await this.resolveRequestedRole(organizationId, input);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
@@ -422,6 +433,7 @@ export class OrganizationService {
       actorId,
       targetUserId,
       action: 'ORGANIZATION_MEMBER_ROLE_CHANGED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_MEMBER',
       resourceId: target.id,
       before: { role: currentRole.name, roleId: currentRole.id },
@@ -431,11 +443,11 @@ export class OrganizationService {
     return this.getMember(actorId, organizationId, targetUserId);
   }
 
-  async removeMember(actorId: string, organizationId: string, targetUserId: string) {
-    return this.unitOfWork.run(() => this.removeMemberInTransaction(actorId, organizationId, targetUserId));
+  async removeMember(actorId: string, organizationId: string, targetUserId: string, options: MutationOptions = {}) {
+    return this.unitOfWork.run(() => this.removeMemberInTransaction(actorId, organizationId, targetUserId, options));
   }
 
-  private async removeMemberInTransaction(actorId: string, organizationId: string, targetUserId: string) {
+  private async removeMemberInTransaction(actorId: string, organizationId: string, targetUserId: string, options: MutationOptions) {
     await this.requireManager(actorId, organizationId);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
@@ -453,6 +465,7 @@ export class OrganizationService {
       actorId,
       targetUserId,
       action: 'ORGANIZATION_MEMBER_REMOVED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_MEMBER',
       resourceId: target.id,
       after: { status: target.status },
@@ -461,9 +474,9 @@ export class OrganizationService {
     return target;
   }
 
-  async createInvitation(actorId: string, organizationId: string, email: string, input: RoleInput) {
+  async createInvitation(actorId: string, organizationId: string, email: string, input: RoleInput, options: MutationOptions = {}) {
     return this.unitOfWork.run(() =>
-      this.createInvitationInTransaction(actorId, organizationId, email, input),
+      this.createInvitationInTransaction(actorId, organizationId, email, input, options),
     );
   }
 
@@ -472,6 +485,7 @@ export class OrganizationService {
     organizationId: string,
     email: string,
     input: RoleInput,
+    options: MutationOptions,
   ) {
     await this.requireManager(actorId, organizationId);
     const role = await this.resolveRequestedRole(
@@ -524,6 +538,7 @@ export class OrganizationService {
       action: existingInvitation
         ? 'ORGANIZATION_INVITATION_RESENT'
         : 'ORGANIZATION_INVITATION_CREATED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_INVITATION',
       resourceId: invitation.id,
       after: {
@@ -559,9 +574,9 @@ export class OrganizationService {
     })));
   }
 
-  async cancelInvitation(actorId: string, organizationId: string, invitationId: string) {
+  async cancelInvitation(actorId: string, organizationId: string, invitationId: string, options: MutationOptions = {}) {
     return this.unitOfWork.run(() =>
-      this.cancelInvitationInTransaction(actorId, organizationId, invitationId),
+      this.cancelInvitationInTransaction(actorId, organizationId, invitationId, options),
     );
   }
 
@@ -569,6 +584,7 @@ export class OrganizationService {
     actorId: string,
     organizationId: string,
     invitationId: string,
+    options: MutationOptions,
   ) {
     await this.requireManager(actorId, organizationId);
     const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
@@ -584,6 +600,7 @@ export class OrganizationService {
       organizationId,
       actorId,
       action: 'ORGANIZATION_INVITATION_CANCELLED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_INVITATION',
       resourceId: invitation.id,
       after: { email: invitation.email, status: invitation.status },
@@ -592,13 +609,13 @@ export class OrganizationService {
     return { ok: true as const };
   }
 
-  async acceptInvitation(userId: string, token: string) {
+  async acceptInvitation(userId: string, token: string, options: MutationOptions = {}) {
     return this.unitOfWork.run(() =>
-      this.acceptInvitationInTransaction(userId, token),
+      this.acceptInvitationInTransaction(userId, token, options),
     );
   }
 
-  private async acceptInvitationInTransaction(userId: string, token: string) {
+  private async acceptInvitationInTransaction(userId: string, token: string, options: MutationOptions) {
     const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
       tokenHash: this.hashToken(token),
       status: OrganizationInvitationStatus.PENDING,
@@ -669,6 +686,7 @@ export class OrganizationService {
       actorId: userId,
       targetUserId: userId,
       action: 'ORGANIZATION_INVITATION_ACCEPTED',
+      requestId: options.requestId,
       resourceType: 'ORGANIZATION_MEMBER',
       resourceId: membership.id,
       after: { role: role.name, roleId: role.id },

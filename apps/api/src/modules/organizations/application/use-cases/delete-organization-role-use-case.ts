@@ -5,7 +5,7 @@ import { OrganizationService } from '../organization.service.js';
 export class DeleteOrganizationRoleUseCase {
   constructor(private readonly organizations: OrganizationService) {}
 
-  execute(actorId: string, organizationId: string, roleId: string) {
-    return this.organizations.deleteRole(actorId, organizationId, roleId);
+  execute(actorId: string, organizationId: string, roleId: string, options: { requestId?: string } = {}) {
+    return this.organizations.deleteRole(actorId, organizationId, roleId, options);
   }
 }

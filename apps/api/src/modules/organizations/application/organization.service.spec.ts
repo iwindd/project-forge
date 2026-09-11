@@ -141,10 +141,10 @@ function user(overrides: Partial<UserOrmEntity> = {}) {
   });
 }
 
-function createService(em: FakeEntityManager) {
+function createService(em: FakeEntityManager, audit = { record: vi.fn() }) {
   return new OrganizationService(
     em as never,
-    { record: vi.fn() } as never,
+    audit as never,
     { record: vi.fn() } as never,
     { run: vi.fn(async <T>(work: () => Promise<T>) => work()) } as never,
   );
@@ -170,6 +170,23 @@ function standardOrganizationRecords() {
 }
 
 describe('OrganizationService', () => {
+  it('propagates the API request ID to organization update audit events', async () => {
+    const org = organization();
+    const records = [
+      [OrganizationOrmEntity, org],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+    ] as Array<[EntityConstructor<unknown>, unknown]>;
+    const audit = { record: vi.fn() };
+    const service = createService(new FakeEntityManager(records), audit);
+
+    await service.updateOrganization('owner-id', 'organization-id', 'Renamed', { requestId: 'request-id' });
+
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'ORGANIZATION_UPDATED', requestId: 'request-id' }),
+    );
+  });
+
   it('creates shared organizations with Thai built-in roles and one Owner membership', async () => {
     const em = new FakeEntityManager([]);
     const service = createService(em);

@@ -16,7 +16,8 @@ export class UpdateOrganizationRoleUseCase {
     organizationId: string,
     roleId: string,
     input: UpdateOrganizationRoleInput,
+    options: { requestId?: string } = {},
   ) {
-    return this.organizations.updateRole(actorId, organizationId, roleId, input);
+    return this.organizations.updateRole(actorId, organizationId, roleId, input, options);
   }
 }

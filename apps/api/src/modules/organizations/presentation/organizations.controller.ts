@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   apiNullSuccessResponseSchema,
   apiSuccess,
 } from '../../../common/http/api-response.js';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
+import { getRequestId } from '../../../common/http/request-context.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
 import { ORGANIZATION_PERMISSIONS } from '../domain/organization.js';
 import { OrganizationService } from '../application/organization.service.js';
@@ -116,6 +118,7 @@ export class OrganizationsController {
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
     @Body() body: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId } = organizationIdParamSchema.parse(rawParams);
     const input = createOrganizationRoleSchema.parse(body);
@@ -123,6 +126,7 @@ export class OrganizationsController {
       principal.id,
       organizationId,
       input,
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationRoleResponseSchema.parse({ role }));
   }
@@ -132,6 +136,7 @@ export class OrganizationsController {
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
     @Body() body: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId, roleId } = organizationRoleParamSchema.parse(rawParams);
     const input = updateOrganizationRoleSchema.parse(body);
@@ -140,6 +145,7 @@ export class OrganizationsController {
       organizationId,
       roleId,
       input,
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationRoleResponseSchema.parse({ role }));
   }
@@ -148,12 +154,14 @@ export class OrganizationsController {
   async deleteRole(
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId, roleId } = organizationRoleParamSchema.parse(rawParams);
     const result = await this.deleteOrganizationRole.execute(
       principal.id,
       organizationId,
       roleId,
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(okResponseSchema.parse(result));
   }
@@ -182,7 +190,7 @@ export class OrganizationsController {
   }
 
   @Patch(':id')
-  async update(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() body: unknown) {
+  async update(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() body: unknown, @Req() request: Request) {
     const { id: organizationId } = organizationIdParamSchema.parse(rawParams);
     const input = updateOrganizationSchema.parse(body);
     if (input.name === undefined) {
@@ -195,6 +203,7 @@ export class OrganizationsController {
       principal.id,
       organizationId,
       input.name,
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationResponseSchema.parse({
       organization: serializeOrganization(organization),
@@ -206,6 +215,7 @@ export class OrganizationsController {
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
     @Body() body: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
     const input = updateMemberRoleSchema.parse(body);
@@ -214,6 +224,7 @@ export class OrganizationsController {
       organizationId,
       userId,
       input,
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationMemberRoleResponseSchema.parse({ membership }));
   }
@@ -237,6 +248,7 @@ export class OrganizationsController {
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
     @Body() body: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
     const input = updateMemberStatusSchema.parse(body);
@@ -245,6 +257,7 @@ export class OrganizationsController {
       organizationId,
       userId,
       input.active,
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationMemberUserResponseSchema.parse({ user }));
   }
@@ -253,14 +266,15 @@ export class OrganizationsController {
   async removeMember(
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId, userId } = organizationMemberParamSchema.parse(rawParams);
-    await this.organizations.removeMember(principal.id, organizationId, userId);
+    await this.organizations.removeMember(principal.id, organizationId, userId, { requestId: getRequestId(request) });
     return apiSuccess(okResponseSchema.parse({ ok: true }));
   }
 
   @Post(':id/invitations')
-  async invite(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() body: unknown) {
+  async invite(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() body: unknown, @Req() request: Request) {
     const { id: organizationId } = organizationIdParamSchema.parse(rawParams);
     const input = createInvitationSchema.parse(body);
     const result = await this.organizations.createInvitation(
@@ -268,6 +282,7 @@ export class OrganizationsController {
       organizationId,
       input.email,
       { roleId: input.roleId, role: input.role },
+      { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationInvitationResponseSchema.parse({
       invitation: {
@@ -300,20 +315,22 @@ export class OrganizationsController {
   async cancelInvitation(
     @Principal() principal: AuthenticatedPrincipal,
     @Param() rawParams: unknown,
+    @Req() request: Request,
   ) {
     const { id: organizationId, invitationId } = organizationInvitationParamSchema.parse(rawParams);
     await this.cancelOrganizationInvitation.execute(
       principal.id,
       organizationId,
       invitationId,
+      { requestId: getRequestId(request) },
     );
     return apiNullSuccessResponseSchema.parse(apiSuccess(null));
   }
 
   @Post('invitations/:token/accept')
-  async accept(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
+  async accept(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Req() request: Request) {
     const { token } = invitationTokenParamSchema.parse(rawParams);
-    const organization = await this.organizations.acceptInvitation(principal.id, token);
+    const organization = await this.organizations.acceptInvitation(principal.id, token, { requestId: getRequestId(request) });
     return apiSuccess(organizationResponseSchema.parse({
       organization: serializeOrganization(organization),
     }));
