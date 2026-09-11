@@ -57,7 +57,7 @@ export function ProfileNameForm() {
         <Stack gap='md'>
           <TextInput label='ชื่อผู้ใช้' maw={400} {...form.getInputProps('name')} />
           <Group>
-            <Button type='submit' loading={pending || form.submitting} disabled={!form.isDirty()}>
+            <Button type='submit' loading={pending || form.submitting}>
               บันทึก
             </Button>
           </Group>

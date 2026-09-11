@@ -18,11 +18,12 @@ export default function InvitationPage({ params }: { params: Promise<{ token: st
   }, [params]);
 
   const accept = async () => {
-    if (!token) return;
+    const invitationToken = token ?? window.location.pathname.split('/').pop();
+    if (!invitationToken) return;
     setMessage("กำลังเข้าร่วม Organization...");
     setError(null);
     try {
-      const result = await acceptInvitation({ token }).unwrap();
+      const result = await acceptInvitation({ token: invitationToken }).unwrap();
       setMessage("เข้าร่วม Organization สำเร็จ");
       router.push(`/${encodeURIComponent(result.organization.slug)}`);
       router.refresh();
@@ -43,7 +44,7 @@ export default function InvitationPage({ params }: { params: Promise<{ token: st
         <Title order={3}>คำเชิญเข้า Organization</Title>
         <Text>{message}</Text>
         {error ? <Alert color="red">{error}</Alert> : null}
-        <Button onClick={() => void accept()} loading={isLoading} disabled={!token || isLoading}>เข้าร่วม</Button>
+        <Button onClick={() => void accept()} loading={isLoading} disabled={isLoading}>เข้าร่วม</Button>
       </Stack>
     </Card>
   );
