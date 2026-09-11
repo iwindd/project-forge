@@ -28,9 +28,11 @@ export function ProfileDetailsForm() {
     validateInputOnBlur: true,
   });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const save = async (values: ProfileDetailsFormValues) => {
     setError(null);
+    setSuccess(null);
     try {
       const result = await updateProfileRequest({
         bio: values.bio || null,
@@ -49,6 +51,7 @@ export function ProfileDetailsForm() {
       form.setValues(nextValues);
       form.setInitialValues(nextValues);
       form.resetDirty();
+      setSuccess("บันทึกข้อมูลโปรไฟล์สำเร็จ");
     } catch (saveError) {
       setError(
         getBrowserApiErrorMessage(
@@ -71,6 +74,7 @@ export function ProfileDetailsForm() {
             </Button>
           </Group>
           {error ? <Alert color="red">{error}</Alert> : null}
+          {success ? <Alert color="green">{success}</Alert> : null}
         </Stack>
       </form>
     </ProfileEditCard>

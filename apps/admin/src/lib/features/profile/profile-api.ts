@@ -1,5 +1,9 @@
 import { api } from '@/lib/api/api'
-import { profileUpdateResponseSchema } from '@/servers/profile/schemas'
+import {
+  profileResponseSchema,
+  profileUpdateResponseSchema
+} from '@/servers/profile/schemas'
+import type { Profile } from '@/servers/profile/types'
 import { z } from 'zod'
 
 const profileUpdateInputSchema = z.object({
@@ -12,6 +16,26 @@ export type ProfileUpdateInput = z.infer<typeof profileUpdateInputSchema>
 
 export const profileApi = api.injectEndpoints({
   endpoints: builder => ({
+    getProfile: builder.query<Profile, void>({
+      query: () => 'profile',
+      transformResponse: (response: unknown) => {
+        const result = profileResponseSchema.parse(response)
+        return {
+          id: result.profile.id,
+          name: result.profile.displayName,
+          email:
+            result.connections.find(connection => connection.provider === 'GITHUB')?.email ?? null,
+          role: result.profile.platformRole === 'ADMIN' ? 'ADMIN' : 'EDITOR',
+          createdAt: result.profile.createdAt,
+          updatedAt: result.profile.updatedAt,
+          avatarUrl: result.profile.avatarUrl,
+          bio: result.profile.bio,
+          timezone: result.profile.timezone,
+          connections: result.connections
+        }
+      },
+      providesTags: ['Profile']
+    }),
     updateProfile: builder.mutation<
       z.infer<typeof profileUpdateResponseSchema>,
       ProfileUpdateInput
@@ -38,6 +62,7 @@ export const profileApi = api.injectEndpoints({
 })
 
 export const {
+  useGetProfileQuery,
   useDisconnectConnectionMutation,
   useUpdateProfileMutation
 } = profileApi

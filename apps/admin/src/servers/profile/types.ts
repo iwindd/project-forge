@@ -8,7 +8,7 @@ export type Profile = {
   avatarUrl?: string | null;
   bio?: string | null;
   timezone?: string | null;
-  connections?: Array<{
+  connections: Array<{
     id: string;
     provider: string;
     username: string | null;
