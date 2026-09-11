@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, UseGuards } from '@nestjs/common';
-import { EntityManager } from '@mikro-orm/core';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
+import type { EntityManager } from '@mikro-orm/core';
 import { z } from 'zod';
 import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
@@ -13,10 +14,11 @@ import {
   apiNullSuccessResponseSchema,
   apiSuccess,
 } from '../../../common/http/api-response.js';
+import { getRequestId } from '../../../common/http/request-context.js';
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
 import type { AuditLogPort } from '../../../common/audit/audit.port.js';
 import { ConnectionOrmEntity } from '../../auth/infrastructure/persistence/connection.orm-entity.js';
-import { ProfileConnectionRepository } from '../../auth/infrastructure/persistence/profile-connection.repository.js';
+import type { ProfileConnectionRepository } from '../../auth/infrastructure/persistence/profile-connection.repository.js';
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity.js';
 import { databaseUuidSchema } from '../../../common/http/database-uuid.schema.js';
 import {
@@ -77,7 +79,11 @@ export class ProfileController {
   }
 
   @Patch('profile')
-  async update(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
+  async update(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
     const input = updateProfileSchema.parse(body);
     return this.unitOfWork.run(async () => {
       const existingProfile = await this.profileConnections.findProfile(principal.id);
@@ -100,6 +106,7 @@ export class ProfileController {
         resourceId: principal.id,
         before,
         after: { displayName: profile.displayName, bio: profile.bio, timezone: profile.timezone },
+        requestId: getRequestId(request),
       });
       return apiSuccess(profileUpdateResponseSchema.parse({
         profile: {
@@ -127,7 +134,11 @@ export class ProfileController {
   }
 
   @Delete('connections/:id')
-  async disconnect(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
+  async disconnect(
+    @Principal() principal: AuthenticatedPrincipal,
+    @Param() rawParams: unknown,
+    @Req() request: Request,
+  ) {
     const { id } = connectionIdParamSchema.parse(rawParams);
     return this.unitOfWork.run(async () => {
       const connection = await this.em.findOne(ConnectionOrmEntity, { id, userId: principal.id });
@@ -142,6 +153,7 @@ export class ProfileController {
         resourceType: 'CONNECTION',
         resourceId: connection.id,
         before: { provider: connection.provider },
+        requestId: getRequestId(request),
       });
       await this.security.record({
         organizationId: null,
