@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start --port 5051",
     "test": "vitest run",
+    "test:browser": "playwright test",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint \"src/components/**/*.{ts,tsx}\" \"src/app/admin/**/*.{ts,tsx}\" \"src/app/**/[[]organizationSlug[]]/**/*.{ts,tsx}\" \"src/servers/**/*.{ts,tsx}\" \"src/hooks/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\"",
@@ -49,6 +50,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
