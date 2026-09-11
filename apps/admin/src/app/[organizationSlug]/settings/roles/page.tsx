@@ -24,7 +24,16 @@ import {
   Text,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconAlertCircle, IconDots, IconLock, IconPencil, IconPlus, IconShieldCheck, IconTrash } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconDots,
+  IconLock,
+  IconPencil,
+  IconPlus,
+  IconRefresh,
+  IconShieldCheck,
+  IconTrash,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -47,7 +56,7 @@ export default function OrganizationRolesPage() {
       (activeOrganization.role.isOwner ||
         activeOrganization.role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)),
   );
-  const { data, isFetching, isError } = useGetRolesQuery(
+  const { data, isFetching, isError, refetch: refetchRoles } = useGetRolesQuery(
     { organizationId },
     { skip: !organizationId || !canManage },
   );
@@ -89,7 +98,19 @@ export default function OrganizationRolesPage() {
         </Alert>
       ) : isError ? (
         <Alert color="red" icon={<IconAlertCircle size={18} />}>
-          {t("loadFailed")}
+          <Group justify="space-between" gap="sm" wrap="nowrap">
+            <Text size="sm">{t("loadFailed")}</Text>
+            <Button
+              size="compact-sm"
+              variant="light"
+              color="red"
+              leftSection={<IconRefresh size={14} />}
+              loading={isFetching}
+              onClick={() => void refetchRoles()}
+            >
+              {t("retry")}
+            </Button>
+          </Group>
         </Alert>
       ) : (
         <Paper className={classes.card} withBorder radius="md">
