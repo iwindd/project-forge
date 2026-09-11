@@ -103,6 +103,10 @@ export class OrganizationService {
   }
 
   async createShared(ownerId: string, name: string, requestedSlug?: string) {
+    return this.unitOfWork.run(() => this.createSharedInTransaction(ownerId, name, requestedSlug));
+  }
+
+  private async createSharedInTransaction(ownerId: string, name: string, requestedSlug?: string) {
     const normalizedName = name.trim();
     if (!normalizedName) throw new InvalidInputError('Organization name is required');
     const baseSlug = slugifyOrganizationName(requestedSlug?.trim() || normalizedName);
@@ -210,6 +214,15 @@ export class OrganizationService {
     name: string,
     permissions: OrganizationPermission[],
   ) {
+    return this.unitOfWork.run(() => this.createRoleInTransaction(actorId, organizationId, name, permissions));
+  }
+
+  private async createRoleInTransaction(
+    actorId: string,
+    organizationId: string,
+    name: string,
+    permissions: OrganizationPermission[],
+  ) {
     await this.requireManager(actorId, organizationId);
     const organization = await this.requireOrganization(organizationId);
     if (organization.type === OrganizationType.PERSONAL) {
@@ -235,6 +248,15 @@ export class OrganizationService {
   }
 
   async updateRole(
+    actorId: string,
+    organizationId: string,
+    roleId: string,
+    input: { name?: string; permissions?: OrganizationPermission[] },
+  ) {
+    return this.unitOfWork.run(() => this.updateRoleInTransaction(actorId, organizationId, roleId, input));
+  }
+
+  private async updateRoleInTransaction(
     actorId: string,
     organizationId: string,
     roleId: string,
@@ -266,6 +288,10 @@ export class OrganizationService {
   }
 
   async deleteRole(actorId: string, organizationId: string, roleId: string) {
+    return this.unitOfWork.run(() => this.deleteRoleInTransaction(actorId, organizationId, roleId));
+  }
+
+  private async deleteRoleInTransaction(actorId: string, organizationId: string, roleId: string) {
     await this.requireManager(actorId, organizationId);
     const role = await this.requireRoleEntity(organizationId, roleId);
     if (role.isOwner) throw new ForbiddenError('The organization owner role cannot be deleted');
@@ -316,6 +342,10 @@ export class OrganizationService {
   }
 
   async updateOrganization(actorId: string, organizationId: string, name: string) {
+    return this.unitOfWork.run(() => this.updateOrganizationInTransaction(actorId, organizationId, name));
+  }
+
+  private async updateOrganizationInTransaction(actorId: string, organizationId: string, name: string) {
     const { organization } = await this.requireManager(actorId, organizationId);
     const normalizedName = name.trim();
     if (!normalizedName) throw new InvalidInputError('Organization name is required');
@@ -336,6 +366,10 @@ export class OrganizationService {
   }
 
   async updateMemberStatus(actorId: string, organizationId: string, targetUserId: string, active: boolean) {
+    return this.unitOfWork.run(() => this.updateMemberStatusInTransaction(actorId, organizationId, targetUserId, active));
+  }
+
+  private async updateMemberStatusInTransaction(actorId: string, organizationId: string, targetUserId: string, active: boolean) {
     await this.requireManager(actorId, organizationId);
     const membership = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
@@ -364,6 +398,10 @@ export class OrganizationService {
   }
 
   async updateMemberRole(actorId: string, organizationId: string, targetUserId: string, input: RoleInput) {
+    return this.unitOfWork.run(() => this.updateMemberRoleInTransaction(actorId, organizationId, targetUserId, input));
+  }
+
+  private async updateMemberRoleInTransaction(actorId: string, organizationId: string, targetUserId: string, input: RoleInput) {
     await this.requireManager(actorId, organizationId);
     const nextRole = await this.resolveRequestedRole(organizationId, input);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
@@ -394,6 +432,10 @@ export class OrganizationService {
   }
 
   async removeMember(actorId: string, organizationId: string, targetUserId: string) {
+    return this.unitOfWork.run(() => this.removeMemberInTransaction(actorId, organizationId, targetUserId));
+  }
+
+  private async removeMemberInTransaction(actorId: string, organizationId: string, targetUserId: string) {
     await this.requireManager(actorId, organizationId);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,

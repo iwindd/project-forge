@@ -6,6 +6,8 @@ import { SessionGuard } from '../../../common/auth/session.guard.js';
 import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js';
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js';
 import type { SecurityLogPort } from '../../../common/security/security-log.port.js';
+import { UNIT_OF_WORK } from '../../../common/database/unit-of-work.port.js';
+import type { UnitOfWork } from '../../../common/database/unit-of-work.port.js';
 import { NotFoundError, ForbiddenError } from '../../../common/errors/application-error.js';
 import {
   apiNullSuccessResponseSchema,
@@ -39,6 +41,7 @@ export class ProfileController {
     private readonly profileConnections: ProfileConnectionRepository,
     @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort,
     @Inject(AUDIT_LOGGER) private readonly audit: AuditLogPort,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
   @Get('profile')
@@ -76,33 +79,34 @@ export class ProfileController {
   @Patch('profile')
   async update(@Principal() principal: AuthenticatedPrincipal, @Body() body: unknown) {
     const input = updateProfileSchema.parse(body);
-    const profile = await this.profileConnections.updateProfile(principal.id, input);
-    if (!profile) throw new NotFoundError('Profile was not found');
-    const user = await this.em.findOne(UserOrmEntity, { id: principal.id });
-    if (user && input.displayName !== undefined) {
-      user.name = profile.displayName;
-      user.updatedAt = new Date();
-      this.em.persist(user);
-      await this.em.flush();
-    }
-    await this.audit.record({
-      actorId: principal.id,
-      targetUserId: principal.id,
-      action: 'PROFILE_UPDATED',
-      resourceType: 'PROFILE',
-      resourceId: principal.id,
-      after: { displayName: profile.displayName, bio: profile.bio, timezone: profile.timezone },
+    return this.unitOfWork.run(async () => {
+      const profile = await this.profileConnections.updateProfile(principal.id, input);
+      if (!profile) throw new NotFoundError('Profile was not found');
+      const user = await this.em.findOne(UserOrmEntity, { id: principal.id });
+      if (user && input.displayName !== undefined) {
+        user.name = profile.displayName;
+        user.updatedAt = new Date();
+        this.em.persist(user);
+      }
+      await this.audit.record({
+        actorId: principal.id,
+        targetUserId: principal.id,
+        action: 'PROFILE_UPDATED',
+        resourceType: 'PROFILE',
+        resourceId: principal.id,
+        after: { displayName: profile.displayName, bio: profile.bio, timezone: profile.timezone },
+      });
+      return apiSuccess(profileUpdateResponseSchema.parse({
+        profile: {
+          id: principal.id,
+          displayName: profile.displayName,
+          avatarUrl: profile.avatarUrl,
+          bio: profile.bio,
+          timezone: profile.timezone,
+          updatedAt: profile.updatedAt.toISOString(),
+        },
+      }));
     });
-    return apiSuccess(profileUpdateResponseSchema.parse({
-      profile: {
-        id: principal.id,
-        displayName: profile.displayName,
-        avatarUrl: profile.avatarUrl,
-        bio: profile.bio,
-        timezone: profile.timezone,
-        updatedAt: profile.updatedAt.toISOString(),
-      },
-    }));
   }
 
   @Get('connections')
@@ -120,18 +124,27 @@ export class ProfileController {
   @Delete('connections/:id')
   async disconnect(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
     const { id } = connectionIdParamSchema.parse(rawParams);
-    const connection = await this.em.findOne(ConnectionOrmEntity, { id, userId: principal.id });
-    if (!connection) throw new NotFoundError('Connection was not found');
-    const total = await this.em.count(ConnectionOrmEntity, { userId: principal.id });
-    if (total <= 1) throw new ForbiddenError('You cannot remove your only sign-in connection');
-    this.em.remove(connection);
-    await this.em.flush();
-    await this.security.record({
-      organizationId: null,
-      userId: principal.id,
-      provider: connection.provider,
-      event: 'OAUTH_CONNECTION_REMOVED',
+    return this.unitOfWork.run(async () => {
+      const connection = await this.em.findOne(ConnectionOrmEntity, { id, userId: principal.id });
+      if (!connection) throw new NotFoundError('Connection was not found');
+      const total = await this.em.count(ConnectionOrmEntity, { userId: principal.id });
+      if (total <= 1) throw new ForbiddenError('You cannot remove your only sign-in connection');
+      this.em.remove(connection);
+      await this.audit.record({
+        actorId: principal.id,
+        targetUserId: principal.id,
+        action: 'OAUTH_CONNECTION_REMOVED',
+        resourceType: 'CONNECTION',
+        resourceId: connection.id,
+        before: { provider: connection.provider },
+      });
+      await this.security.record({
+        organizationId: null,
+        userId: principal.id,
+        provider: connection.provider,
+        event: 'OAUTH_CONNECTION_REMOVED',
+      });
+      return apiNullSuccessResponseSchema.parse(apiSuccess(null));
     });
-    return apiNullSuccessResponseSchema.parse(apiSuccess(null));
   }
 }
