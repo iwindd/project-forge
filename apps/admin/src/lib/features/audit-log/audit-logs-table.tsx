@@ -6,7 +6,6 @@ import {
   type FilterResultRemoveEvent
 } from '@/components/filter-result'
 import TableSearchInput from '@/components/table-search-input'
-import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation'
 import useDatatable from '@/hooks/use-datatable'
 import { getBrowserApiErrorMessage } from '@/lib/api/api'
 import { parseListAuditLogsQuery } from '@/servers/audit-log/queries/get-audit-log-list-schema'
@@ -92,7 +91,6 @@ function AuditLogExportMenuItem({
   auditLogId: string
   organizationId?: string
 }) {
-  const { invalidateAdminCaches } = useAdminCacheInvalidation()
   const [exportAuditLog] = useExportAuditLogMutation()
   const [downloading, setDownloading] = useState(false)
 
@@ -113,10 +111,6 @@ function AuditLogExportMenuItem({
       anchor.click()
       anchor.remove()
       URL.revokeObjectURL(objectUrl)
-      invalidateAdminCaches({
-        organizationId,
-        auditLogScope: scope
-      })
     } catch (error) {
       notifications.show({
         title: 'ดาวน์โหลดไม่สำเร็จ',
