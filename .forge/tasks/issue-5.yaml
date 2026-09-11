@@ -1,0 +1,43 @@
+schemaVersion: 1
+issue: 5
+title: "Transactional business audit and security audit"
+objective: >-
+  Make organization, project, identity, and security changes observable through
+  consistent audit behavior while keeping business audit writes atomic with
+  successful mutations.
+scope:
+  - Business audit port, persistence, and UnitOfWork integration across successful organization, project, and identity mutations
+  - Separate security-audit behavior for authentication and authorization failures
+  - Organization-scoped audit queries and exports using the standard API response/error contract
+  - Removal of direct audit ORM access from controllers and unrelated modules
+  - End-to-end API and admin coverage for atomicity, permissions, queries, exports, and feedback
+out_of_scope:
+  - New domain capabilities not required to make existing organization, project, identity, or security changes auditable
+  - Reading or modifying environment/credential files
+  - Changing accepted ADR decisions or introducing project sharing
+acceptance_criteria:
+  - Successful business mutations record audit events through an AuditPort in the same UnitOfWork.
+  - Authentication and authorization failures follow the separate security-audit policy.
+  - Business audit records include actor, organization, target, action, before, after, reason, request ID, and timestamp where applicable.
+  - Invitation tokens, session tokens, GitHub access tokens, and environment secret values never enter audit payloads.
+  - Audit queries and exports use organization scope and the standard success/error response contract.
+  - Controllers and unrelated modules do not query or persist audit ORM state directly.
+  - Atomicity, permission, query, export, and admin feedback tests cover the end-to-end flow.
+constraints:
+  - Preserve repository and subdirectory AGENTS.md rules.
+  - Keep API authorization and persistence in apps/api; admin remains an API client.
+  - Use kebab-case for new API files and local Zod validation at API boundaries.
+  - Follow CONTEXT.md and ADR 0003, 0006, 0009, and 0012.
+  - Do not modify environment or credential files.
+required_checks:
+  - pnpm --filter @project-forge/api test
+  - pnpm --filter @project-forge/admin lint
+  - pnpm --filter @project-forge/admin typecheck
+  - pnpm --filter @project-forge/admin check:admin-client-boundary
+  - pnpm --filter @project-forge/admin test -- --run
+  - pnpm run check
+  - pnpm run build
+assigned_profile: programmer
+branch: issue/5-transactional-business-audit
+worktree: E:/Projects/project-forge-issue-5
+status: ready-for-review
