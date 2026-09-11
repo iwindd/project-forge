@@ -42,4 +42,4 @@ required_checks:
 assigned_profile: programmer
 branch: issue/6-migrate-admin-ui
 worktree: E:/Projects/project-forge-issue-6
-status: implementing
+status: ready-for-review
