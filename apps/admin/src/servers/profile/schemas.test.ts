@@ -1,9 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import {
-  profileResponseEnvelopeSchema,
-  profileResponseSchema,
-  profileUpdateResponseSchema
-} from './schemas'
+import { describe, expect, it } from 'vitest';
+import { profileResponseEnvelopeSchema, profileResponseSchema, profileUpdateResponseSchema } from './schemas';
 
 const profileData = {
   profile: {
@@ -14,7 +10,7 @@ const profileData = {
     timezone: null,
     platformRole: 'USER' as const,
     createdAt: '2026-09-10T00:00:00.000Z',
-    updatedAt: '2026-09-10T00:00:00.000Z'
+    updatedAt: '2026-09-10T00:00:00.000Z',
   },
   connections: [
     {
@@ -22,10 +18,10 @@ const profileData = {
       provider: 'GITHUB' as const,
       username: 'ada',
       email: 'ada@example.com',
-      connectedAt: '2026-09-10T00:00:00.000Z'
-    }
-  ]
-}
+      connectedAt: '2026-09-10T00:00:00.000Z',
+    },
+  ],
+};
 
 describe('profile transport schemas', () => {
   it('accepts a cleared display name in a profile update response', () => {
@@ -37,22 +33,24 @@ describe('profile transport schemas', () => {
           avatarUrl: null,
           bio: null,
           timezone: null,
-          updatedAt: '2026-09-10T00:00:00.000Z'
-        }
-      }).profile.displayName
-    ).toBeNull()
-  })
+          updatedAt: '2026-09-10T00:00:00.000Z',
+        },
+      }).profile.displayName,
+    ).toBeNull();
+  });
 
   it('validates the standard success envelope', () => {
     expect(profileResponseEnvelopeSchema.parse({ data: profileData })).toEqual({
-      data: profileData
-    })
-  })
+      data: profileData,
+    });
+  });
 
   it('rejects a non-GitHub external identity', () => {
-    expect(() => profileResponseSchema.parse({
-      ...profileData,
-      connections: [{ ...profileData.connections[0], provider: 'GOOGLE' }]
-    })).toThrow()
-  })
-})
+    expect(() =>
+      profileResponseSchema.parse({
+        ...profileData,
+        connections: [{ ...profileData.connections[0], provider: 'GOOGLE' }],
+      }),
+    ).toThrow();
+  });
+});

@@ -1,13 +1,13 @@
-import { z } from 'zod'
-import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js'
+import { z } from 'zod';
+import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
 
 const profileConnectionSchema = z.object({
   id: databaseUuidSchema,
   provider: z.literal('GITHUB'),
   username: z.string().nullable(),
   email: z.string().nullable(),
-  connectedAt: z.string().min(1)
-})
+  connectedAt: z.string().min(1),
+});
 
 const profileDataSchema = z.object({
   id: databaseUuidSchema,
@@ -18,8 +18,8 @@ const profileDataSchema = z.object({
   platformRole: z.enum(['ADMIN', 'USER']),
   accountStatus: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   createdAt: z.string().min(1),
-  updatedAt: z.string().min(1)
-})
+  updatedAt: z.string().min(1),
+});
 
 const profileUpdateDataSchema = z.object({
   id: databaseUuidSchema,
@@ -27,28 +27,34 @@ const profileUpdateDataSchema = z.object({
   avatarUrl: z.string().nullable(),
   bio: z.string().nullable(),
   timezone: z.string().nullable(),
-  updatedAt: z.string().min(1)
-})
+  updatedAt: z.string().min(1),
+});
 
 export const profileResponseSchema = z.object({
   profile: profileDataSchema,
-  connections: z.array(profileConnectionSchema)
-})
+  connections: z.array(profileConnectionSchema),
+});
 
 export const profileUpdateResponseSchema = z.object({
-  profile: profileUpdateDataSchema
-})
+  profile: profileUpdateDataSchema,
+});
 
-export const profileConnectionsResponseSchema = z.array(profileConnectionSchema)
+export const profileConnectionsResponseSchema = z.array(profileConnectionSchema);
 
-export const profileResponseEnvelopeSchema = z.object({
-  data: profileResponseSchema,
-}).strict()
+export const profileResponseEnvelopeSchema = z
+  .object({
+    data: profileResponseSchema,
+  })
+  .strict();
 
-export const profileUpdateResponseEnvelopeSchema = z.object({
-  data: profileUpdateResponseSchema,
-}).strict()
+export const profileUpdateResponseEnvelopeSchema = z
+  .object({
+    data: profileUpdateResponseSchema,
+  })
+  .strict();
 
-export const profileConnectionsResponseEnvelopeSchema = z.object({
-  data: profileConnectionsResponseSchema,
-}).strict()
+export const profileConnectionsResponseEnvelopeSchema = z
+  .object({
+    data: profileConnectionsResponseSchema,
+  })
+  .strict();
