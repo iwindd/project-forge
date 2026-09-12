@@ -190,7 +190,8 @@ describe('project transport contracts', () => {
   it.each([
     [403, 'FORBIDDEN'],
     [404, 'NOT_FOUND'],
-    [409, 'CONFLICT']
+    [409, 'CONFLICT'],
+    [422, 'INVALID_INPUT']
   ] as const)(
     'surfaces the API %s error envelope for the project list request',
     async (status, code) => {
@@ -218,7 +219,8 @@ describe('project transport contracts', () => {
   it.each([
     [403, 'FORBIDDEN'],
     [404, 'NOT_FOUND'],
-    [409, 'CONFLICT']
+    [409, 'CONFLICT'],
+    [422, 'INVALID_INPUT']
   ] as const)(
     'surfaces the API %s error envelope for a project mutation',
     async (status, code) => {

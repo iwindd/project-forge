@@ -213,6 +213,30 @@ describe('projects HTTP contracts', () => {
     expect(JSON.stringify(security.record.mock.calls)).not.toContain('pf_session');
   });
 
+  it('returns a 422 envelope when the HTTP body fails presentation validation', async () => {
+    const response = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects`, {
+      method: 'POST',
+      headers: jsonHeaders('projects-422-validation'),
+      body: JSON.stringify({ githubUrl: 'not-a-github-url' }),
+    });
+    const body = (await response.json()) as { error: Record<string, unknown> };
+
+    expect(response.status).toBe(422);
+    expect(response.headers.get('x-request-id')).toBe('projects-422-validation');
+    expect(body.error).toMatchObject({
+      code: 'INVALID_INPUT',
+      message: 'Request validation failed',
+      requestId: 'projects-422-validation',
+    });
+    expect(body.error.details).toEqual({
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: ['githubUrl'] }),
+      ]),
+    });
+    expect(records).toHaveLength(2);
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
   it('returns 403 when the caller is not a member of the organization', async () => {
     organizations.requireProjectAccess.mockRejectedValueOnce(
       new ForbiddenError('You are not a member of this organization'),
