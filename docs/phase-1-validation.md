@@ -27,6 +27,24 @@ The pull-request workflow runs the same API and Admin gates, installs Chromium, 
 browser acceptance suite. Any pre-existing lint or formatting warning must remain visible in the
 command output and must be reported separately from failures introduced by the change.
 
+## Latest local validation
+
+The final local run for Issue #8 on 2026-09-13 produced these results:
+
+| Boundary | Result |
+| --- | --- |
+| API tests | 45 test files, 202 tests passed |
+| Admin tests | 34 test files, 151 tests passed |
+| API typecheck and build | Passed |
+| Admin typecheck, build, client-boundary, and UI i18n checks | Passed |
+| API and Admin lint | Passed; API reported 52 pre-existing Biome warnings and no errors |
+| Browser acceptance | 20 tests passed with the standalone Next.js server and controlled HTTP fixture |
+| Whitespace check | `git diff --check` passed |
+| Database migration/seed/verification | Not run; no explicit database approval was provided |
+
+The browser result is controlled fixture evidence. It does not assert production OAuth, GitHub,
+or database connectivity.
+
 ## HTTP contract coverage
 
 Contract tests exercise the Nest HTTP boundary and assert the public response shape, request ID,
