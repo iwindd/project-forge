@@ -13,5 +13,7 @@ describe('organization app routes', () => {
       '/acme/audit-logs'
     )
     expect(findRouteTrail('/acme/audit-logs')?.at(-1)?.name).toBe('auditLogs')
+    expect(findRouteTrail('/acme/profile')).toBeNull()
+    expect(findRouteTrail('/acme/users')).toBeNull()
   })
 })

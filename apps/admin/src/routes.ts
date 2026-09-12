@@ -29,18 +29,6 @@ const organizationAppRoutes = ROUTER({
       }
     }
   },
-  profile: {
-    path: '/:organizationSlug/profile',
-    label: 'โปรไฟล์',
-    navigationLabelKey: 'profile',
-    children: {
-      logging: {
-        path: '/:organizationSlug/profile/logging',
-        label: 'ประวัติการทำรายการ',
-        navigationLabelKey: 'auditLogs'
-      }
-    }
-  },
   login: {
     path: '/login',
     label: 'เข้าสู่ระบบ'
