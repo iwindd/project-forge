@@ -18,11 +18,14 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      command: 'pnpm build && pnpm start',
+      command: 'pnpm build && node .next/standalone/server.js',
       url: 'http://127.0.0.1:5051/admin/login',
       reuseExistingServer: false,
       timeout: 120_000,
-      env: { NEXT_PUBLIC_API_URL: 'http://127.0.0.1:5052' },
+      env: {
+        NEXT_PUBLIC_API_URL: 'http://127.0.0.1:5052',
+        PORT: '5051',
+      },
     },
   ],
 });
