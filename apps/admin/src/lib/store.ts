@@ -7,7 +7,6 @@ import { organizationApi } from "@/lib/features/organization/organization-api";
 import "@/lib/features/organization/organization-members-api";
 import "@/lib/features/profile/profile-api";
 import "@/lib/features/security/security-api";
-import "@/lib/features/user/users-api";
 import type { Organization } from "@/lib/features/organization/types";
 
 export type PreloadedState = {

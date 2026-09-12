@@ -12,11 +12,11 @@ const organization = {
   slug: 'organization-a',
   type: 'SHARED' as const,
   role: {
-    id: null,
+    id: '00000000-0000-0000-0000-000000000001',
     name: 'เจ้าของ',
     permissions: ['organization.manage'],
     isOwner: true,
-    legacyRole: 'OWNER' as const
+    code: 'OWNER' as const
   },
   status: 'ACTIVE' as const,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -41,7 +41,7 @@ describe('organization response schemas', () => {
         name: 'สมาชิก',
         permissions: [],
         isOwner: false,
-        legacyRole: 'MEMBER'
+        code: 'MEMBER'
       })
     ).toThrow()
   })

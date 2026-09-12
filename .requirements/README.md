@@ -1,12 +1,12 @@
-# Project Forge requirements
+# Archived product requirements
 
-เอกสารในโฟลเดอร์นี้เป็นข้อกำหนดที่ใช้ตรวจ implementation ของ Project Forge แต่ละ phase
+เอกสารในโฟลเดอร์นี้เป็น historical product input ที่ใช้สังเคราะห์ architecture/refactor ticket set แล้ว ไม่ใช่ source of truth และไม่ใช่คำสั่งให้ contributor ทำตามใน checkout ปัจจุบัน
 
-## Source of truth
+เอกสารปัจจุบันอยู่ที่:
 
-- [phase_1.md](phase_1.md) — GitHub-only login, access approval, admin user management และ Project metadata
-- [architecture.md](architecture.md) — boundary ของ `apps/admin` และ `apps/api`
-- [security.md](security.md) — session, access policy, secret และ audit rules
-- [../PROJECT_FORGE.plan](../PROJECT_FORGE.plan) — roadmap ระยะยาว
+- [../CONTEXT.md](../CONTEXT.md)
+- [../docs/architecture-refactor-spec.md](../docs/architecture-refactor-spec.md)
+- [../docs/architecture-refactor-tickets.md](../docs/architecture-refactor-tickets.md)
+- [../docs/adr/](../docs/adr/)
 
-Phase 1 ไม่มี Hermes, Chat, Sandbox, Discord, GitHub App, Issues หรือ Pull Requests
+หากข้อกำหนดในโฟลเดอร์นี้ขัดกับเอกสารข้างต้นหรือ GitHub Issues ให้ถือเอกสารปัจจุบันและ issue acceptance เป็น authority

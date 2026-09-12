@@ -5,11 +5,11 @@ import { ORGANIZATION_PERMISSIONS } from '../../domain/organization.js';
 const organizationDateSchema = z.string().min(1);
 
 export const organizationRoleSchema = z.object({
-  id: databaseUuidSchema.nullable(),
+  id: databaseUuidSchema,
   name: z.string().min(1),
   permissions: z.array(z.string()),
   isOwner: z.boolean(),
-  legacyRole: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable(),
+  code: z.enum(['OWNER', 'ADMIN', 'MEMBER']).nullable(),
 });
 
 export const organizationResourceSchema = z.object({

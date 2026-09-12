@@ -97,9 +97,6 @@ vi.mock('./profile-context', () => ({ useProfile: mocks.useProfile }));
 vi.mock('./profile-edit-card', () => ({
   ProfileEditCard: ({ children }: { children: ReactElement }) => createElement('div', null, children),
 }));
-vi.mock('@/hooks/use-admin-cache-invalidation', () => ({
-  useAdminCacheInvalidation: () => ({ invalidateAdminCaches: vi.fn() }),
-}));
 vi.mock('@/lib/features/profile/profile-api', () => ({
   useUpdateProfileMutation: () => [mocks.updateProfileRequest, mocks.updateProfileState],
   useDisconnectConnectionMutation: () => [mocks.disconnect, mocks.disconnectState],

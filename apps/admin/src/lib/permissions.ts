@@ -1,6 +1,5 @@
 const PERMISSIONS = {
   manageOrganization: "organization.manage",
-  manageUsers: "users.manage",
   viewAuditLogs: "audit-logs.view",
 } as const;
 

@@ -128,17 +128,11 @@ export default function OrganizationMembersPage() {
   const [memberActionId, setMemberActionId] = useState<string | null>(null)
   const nextInviteRowId = useRef(1)
 
-  const legacyRoleFilter = ['OWNER', 'ADMIN', 'MEMBER'].includes(roleFilter)
-    ? roleFilter
-    : null
-
   const memberQuery = useMemo(
     () => ({
       ...(search.trim() ? { search: search.trim() } : {}),
       ...(roleFilter !== 'all'
-        ? legacyRoleFilter
-          ? { role: legacyRoleFilter as 'OWNER' | 'ADMIN' | 'MEMBER' }
-          : { roleId: roleFilter }
+        ? { roleId: roleFilter }
         : {}),
       ...(status !== 'all' ? { status } : {}),
       page: 1,
@@ -146,7 +140,7 @@ export default function OrganizationMembersPage() {
       sortBy: 'createdAt' as const,
       sortDirection
     }),
-    [legacyRoleFilter, roleFilter, search, sortDirection, status]
+    [roleFilter, search, sortDirection, status]
   )
 
   const {
@@ -539,7 +533,7 @@ export default function OrganizationMembersPage() {
                 data={[
                   { value: 'all', label: t('allRoles') },
                   ...roles.map(role => ({
-                    value: role.id ?? role.legacyRole ?? role.name,
+                    value: role.id,
                     label: role.name
                   }))
                 ]}

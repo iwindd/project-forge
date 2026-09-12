@@ -15,7 +15,6 @@ import {
   nullResponseSchema,
   okResponseSchema
 } from './organization-schemas'
-import type { OrganizationMemberRole } from './types'
 export type { OrganizationRole } from './types'
 
 type OrganizationPermission = 'organization.manage' | 'project.manage'
@@ -34,7 +33,6 @@ export type OrganizationInvitation = z.infer<typeof organizationInvitationSchema
 
 export type OrganizationMembersQuery = {
   search?: string
-  role?: OrganizationMemberRole
   roleId?: string
   status?: 'active' | 'inactive'
   page?: number
@@ -79,8 +77,7 @@ type CancelInvitationInput = {
 type UpdateMemberRoleInput = {
   organizationId: string
   userId: string
-  roleId?: string
-  role?: OrganizationMemberRole
+  roleId: string
 }
 
 type UpdateMemberStatusInput = {
@@ -265,10 +262,10 @@ export const organizationMembersApi = api.injectEndpoints({
       { membership: OrganizationMemberUser },
       UpdateMemberRoleInput
     >({
-      query: ({ organizationId, userId, roleId, role }) => ({
+      query: ({ organizationId, userId, roleId }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/members/${encodeURIComponent(userId)}`,
         method: 'PATCH',
-        body: { roleId, role }
+        body: { roleId }
       }),
       transformResponse: parseMemberRoleResponse,
       invalidatesTags: (_result, _error, { organizationId }) => [

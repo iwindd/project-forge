@@ -39,7 +39,7 @@ export const profileApi = api.injectEndpoints({
         body: profileUpdateInputSchema.parse(input),
       }),
       transformResponse: (response: unknown) => profileUpdateResponseSchema.parse(response),
-      invalidatesTags: ['Profile', 'Users'],
+      invalidatesTags: ['Profile'],
     }),
     disconnectConnection: builder.mutation<null, string>({
       query: (connectionId) => ({

@@ -21,7 +21,7 @@ describe('organization member transport contracts', () => {
             name: 'แอดมิน',
             permissions: ['organization.manage'],
             isOwner: false,
-            legacyRole: 'ADMIN',
+            code: 'ADMIN',
             memberCount: 2,
             invitationCount: 1
           }
@@ -39,7 +39,7 @@ describe('organization member transport contracts', () => {
           name: 'แอดมิน',
           permissions: ['organization.manage'],
           isOwner: false,
-          legacyRole: 'ADMIN',
+          code: 'ADMIN',
           memberCount: 2,
           invitationCount: 1
         }
@@ -59,7 +59,7 @@ describe('organization member transport contracts', () => {
         name: 'สมาชิก',
         permissions: [],
         isOwner: false,
-        legacyRole: 'MEMBER' as const
+        code: 'MEMBER' as const
       },
       status: 'ACTIVE' as const,
       isActive: true,
@@ -106,7 +106,7 @@ describe('organization member transport contracts', () => {
         name: 'สมาชิก',
         permissions: [],
         isOwner: false,
-        legacyRole: 'MEMBER' as const
+        code: 'MEMBER' as const
       },
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
@@ -125,7 +125,7 @@ describe('organization member transport contracts', () => {
       name: 'แอดมิน',
       permissions: ['organization.manage'],
       isOwner: false,
-      legacyRole: 'ADMIN' as const
+      code: 'ADMIN' as const
     }
     const invitation = {
       id: '550e8400-e29b-41d4-a716-446655440003',

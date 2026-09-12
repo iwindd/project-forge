@@ -1,10 +1,5 @@
-# Phase 1 security requirements
+# Archived Phase 1 security input (non-authoritative)
 
-- Identity ใช้ immutable GitHub numeric user ID ไม่ใช้ login name เป็น primary identity
-- Session token เก็บใน HttpOnly cookie และเก็บเฉพาะ SHA-256 hash ใน database
-- OAuth access token เก็บเป็น AES-256-GCM ciphertext ด้วย `SESSION_SECRET` และไม่ส่งให้ browser
-- `SESSION_SECRET`, GitHub client secret และ database URL อยู่ใน environment เท่านั้น
-- Backend guard ตรวจ session, active state, access status และ admin role ทุกครั้ง ไม่พึ่ง navigation ที่ซ่อนใน UI
-- Admin action ห้าม suspend ตัวเองหรือปิด admin คนสุดท้าย
-- Project environment เก็บเฉพาะชื่อ key ที่ถูก mask เป็น `configured`
-- Phase 1 ไม่มี public registration ที่เข้าใช้งานได้ทันที และไม่มี public AI endpoint
+เอกสารนี้เป็น historical input ที่ถูกแทนที่ด้วย [current architecture specification](../docs/architecture-refactor-spec.md), [CONTEXT.md](../CONTEXT.md) และ accepted ADRs แล้ว
+
+ห้ามใช้ไฟล์นี้เป็น implementation contract โดยตรง ให้ตรวจ security behavior จาก current API boundaries และ GitHub issue acceptance แทน

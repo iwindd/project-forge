@@ -5,8 +5,9 @@ import type { OrganizationMemberRole, OrganizationPermission } from '../../domai
 @Entity({ tableName: 'organization_roles' })
 @Index({ properties: ['organizationId'] })
 @Unique({ properties: ['organizationId', 'name'] })
+@Unique({ properties: ['organizationId', 'code'] })
 export class OrganizationRoleOrmEntity {
-  [OptionalProps]?: 'id' | 'permissions' | 'isOwner' | 'legacyRole' | 'createdAt' | 'updatedAt';
+  [OptionalProps]?: 'id' | 'permissions' | 'isOwner' | 'code' | 'createdAt' | 'updatedAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();
@@ -24,7 +25,7 @@ export class OrganizationRoleOrmEntity {
   isOwner = false;
 
   @Property({ type: 'text', nullable: true })
-  legacyRole: OrganizationMemberRole | null = null;
+  code: OrganizationMemberRole | null = null;
 
   @Property({ type: 'timestamptz' })
   createdAt = new Date();

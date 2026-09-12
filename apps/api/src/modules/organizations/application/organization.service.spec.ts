@@ -133,7 +133,6 @@ function matches(record: unknown, where: Record<string, unknown>) {
 function organization(overrides: Partial<OrganizationOrmEntity> = {}) {
   return Object.assign(new OrganizationOrmEntity(), {
     id: 'organization-id',
-    ownerId: 'owner-id',
     name: 'Organization',
     slug: 'organization',
     type: OrganizationType.SHARED,
@@ -151,7 +150,7 @@ function role(overrides: Partial<OrganizationRoleOrmEntity> = {}) {
     name: 'สมาชิก',
     permissions: [],
     isOwner: false,
-    legacyRole: OrganizationMemberRole.MEMBER,
+    code: OrganizationMemberRole.MEMBER,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
@@ -163,7 +162,6 @@ function member(overrides: Partial<OrganizationMemberOrmEntity> = {}) {
     id: 'membership-id',
     organizationId: 'organization-id',
     userId: 'member-id',
-    role: OrganizationMemberRole.MEMBER,
     roleId: 'member-role-id',
     status: OrganizationMemberStatus.ACTIVE,
     joinedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -202,13 +200,13 @@ function standardOrganizationRecords() {
       name: 'เจ้าของ',
       permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
       isOwner: true,
-      legacyRole: OrganizationMemberRole.OWNER,
+      code: OrganizationMemberRole.OWNER,
     }),
     role({
       id: 'admin-role-id',
       name: 'แอดมิน',
       permissions: [ORGANIZATION_PERMISSIONS.MANAGE],
-      legacyRole: OrganizationMemberRole.ADMIN,
+      code: OrganizationMemberRole.ADMIN,
     }),
     role(),
   ];
@@ -217,7 +215,7 @@ function standardOrganizationRecords() {
 describe('OrganizationService', () => {
   it('rolls back an organization update when the business audit fails', async () => {
     const org = organization();
-    const em = new FakeEntityManager([[OrganizationOrmEntity, org], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const em = new FakeEntityManager([[OrganizationOrmEntity, org], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })]] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
     const audit = { record: vi.fn(async (event: unknown) => { events.push(event); throw new Error('audit unavailable'); }) };
     const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
@@ -229,7 +227,7 @@ describe('OrganizationService', () => {
 
   it('rolls back a member mutation when the business audit fails', async () => {
     const target = member();
-    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })], [OrganizationMemberOrmEntity, target], [UserOrmEntity, user()]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })], [OrganizationMemberOrmEntity, target], [UserOrmEntity, user()]] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
     const audit = { record: vi.fn(async (event: unknown) => { events.push(event); throw new Error('audit unavailable'); }) };
     const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
@@ -240,8 +238,8 @@ describe('OrganizationService', () => {
   });
 
   it('rolls back a role mutation when persistence fails, including its business audit', async () => {
-    const target = role({ id: 'custom-role-id', name: 'Custom role', legacyRole: null });
-    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationRoleOrmEntity, target], [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const target = role({ id: 'custom-role-id', name: 'Custom role', code: null });
+    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationRoleOrmEntity, target], [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })]] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
     const audit = { record: vi.fn(async (event: unknown) => { events.push(event); }) };
     const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
@@ -253,8 +251,8 @@ describe('OrganizationService', () => {
   });
 
   it('rolls back an invitation mutation when persistence fails, including its business audit', async () => {
-    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), { id: 'invitation-id', organizationId: 'organization-id', invitedBy: 'owner-id', email: 'person@example.com', tokenHash: 'token-hash', role: OrganizationMemberRole.MEMBER, roleId: 'member-role-id', status: OrganizationInvitationStatus.PENDING, expiresAt: new Date('2026-01-08T00:00:00.000Z'), acceptedBy: null, acceptedAt: null, createdAt: new Date('2026-01-01T00:00:00.000Z') });
-    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })], [OrganizationInvitationOrmEntity, invitation]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), { id: 'invitation-id', organizationId: 'organization-id', invitedBy: 'owner-id', email: 'person@example.com', tokenHash: 'token-hash', roleId: 'member-role-id', status: OrganizationInvitationStatus.PENDING, expiresAt: new Date('2026-01-08T00:00:00.000Z'), acceptedBy: null, acceptedAt: null, createdAt: new Date('2026-01-01T00:00:00.000Z') });
+    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })], [OrganizationInvitationOrmEntity, invitation]] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
     const audit = { record: vi.fn(async (event: unknown) => { events.push(event); }) };
     const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
@@ -269,7 +267,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const audit = { record: vi.fn() };
     const service = createService(new FakeEntityManager(records), audit);
@@ -296,7 +294,6 @@ describe('OrganizationService', () => {
     expect(em.all(OrganizationMemberOrmEntity)).toHaveLength(1);
     expect(em.all(OrganizationMemberOrmEntity)[0]).toMatchObject({
       userId: 'owner-id',
-      role: OrganizationMemberRole.OWNER,
       roleId: em.all(OrganizationRoleOrmEntity)[0]?.id,
     });
   });
@@ -306,7 +303,6 @@ describe('OrganizationService', () => {
     const ownerMember = member({
       id: 'owner-membership-id',
       userId: 'owner-id',
-      role: OrganizationMemberRole.OWNER,
       roleId: 'owner-role-id',
     });
     const records = [
@@ -341,7 +337,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationMemberOrmEntity, member({ id: 'target-membership-id', userId: 'member-id' })],
       [UserOrmEntity, user()],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
@@ -360,7 +356,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'member-id', role: OrganizationMemberRole.MEMBER, roleId: 'member-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'member-id', roleId: 'member-role-id' })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);
@@ -378,7 +374,6 @@ describe('OrganizationService', () => {
       invitedBy: 'previous-owner-id',
       email: 'person@example.com',
       tokenHash: 'old-token-hash',
-      role: OrganizationMemberRole.ADMIN,
       roleId: 'admin-role-id',
       status: OrganizationInvitationStatus.PENDING,
       expiresAt: new Date('2026-01-02T00:00:00.000Z'),
@@ -389,17 +384,18 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, existingInvitation],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);
 
-    const result = await service.createInvitation('owner-id', 'organization-id', ' Person@Example.com ', {});
+    const result = await service.createInvitation('owner-id', 'organization-id', ' Person@Example.com ', {
+      roleId: 'member-role-id',
+    });
 
     expect(result.invitation.id).toBe('invitation-id');
     expect(result.invitation.email).toBe('person@example.com');
-    expect(result.invitation.role).toBe(OrganizationMemberRole.MEMBER);
     expect(result.invitation.roleId).toBe('member-role-id');
     expect(result.invitation.tokenHash).not.toBe('old-token-hash');
     expect(result.invitation.expiresAt.getTime()).toBeGreaterThan(new Date('2026-01-02T00:00:00.000Z').getTime());
@@ -411,8 +407,8 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationRoleOrmEntity, role({ id: 'custom-role-id', name: 'Reviewer', legacyRole: null })],
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationRoleOrmEntity, role({ id: 'custom-role-id', name: 'Reviewer', code: null })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);
@@ -424,7 +420,7 @@ describe('OrganizationService', () => {
     ).rejects.toBeInstanceOf(InvalidInputError);
     await expect(
       service.createInvitation('owner-id', 'organization-id', 'person@example.com', {
-        role: OrganizationMemberRole.OWNER,
+        roleId: 'owner-role-id',
       }),
     ).rejects.toBeInstanceOf(InvalidInputError);
   });
@@ -437,7 +433,6 @@ describe('OrganizationService', () => {
       invitedBy: 'owner-id',
       email: 'person@example.com',
       tokenHash: 'token-hash',
-      role: OrganizationMemberRole.MEMBER,
       roleId: 'member-role-id',
       status: OrganizationInvitationStatus.PENDING,
       expiresAt: new Date('2026-01-08T00:00:00.000Z'),
@@ -448,7 +443,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
@@ -469,7 +464,6 @@ describe('OrganizationService', () => {
       invitedBy: 'owner-id',
       email: 'person@example.com',
       tokenHash: createHash('sha256').update(token).digest('hex'),
-      role: OrganizationMemberRole.MEMBER,
       roleId: 'member-role-id',
       status: OrganizationInvitationStatus.PENDING,
       expiresAt: new Date(Date.now() + 60_000),
@@ -480,7 +474,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
       [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
         userId: 'member-id',
@@ -508,7 +502,6 @@ describe('OrganizationService', () => {
       invitedBy: 'owner-id',
       email: 'secondary@example.com',
       tokenHash: createHash('sha256').update(token).digest('hex'),
-      role: OrganizationMemberRole.MEMBER,
       roleId: 'member-role-id',
       status: OrganizationInvitationStatus.PENDING,
       expiresAt: new Date(Date.now() + 60_000),
@@ -519,7 +512,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
       [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
         userId: 'member-id',
@@ -547,7 +540,6 @@ describe('OrganizationService', () => {
       invitedBy: 'owner-id',
       email: 'owner@example.com',
       tokenHash: createHash('sha256').update(token).digest('hex'),
-      role: OrganizationMemberRole.MEMBER,
       roleId: 'member-role-id',
       status: OrganizationInvitationStatus.PENDING,
       expiresAt: new Date(Date.now() + 60_000),
@@ -558,7 +550,7 @@ describe('OrganizationService', () => {
     const records = [
       [OrganizationOrmEntity, org],
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
-      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', role: OrganizationMemberRole.OWNER, roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
       [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
         userId: 'owner-id',
@@ -586,7 +578,6 @@ describe('OrganizationService', () => {
       invitedBy: 'owner-id',
       email: 'person@example.com',
       tokenHash: createHash('sha256').update(token).digest('hex'),
-      role: OrganizationMemberRole.MEMBER,
       roleId: 'member-role-id',
       status: OrganizationInvitationStatus.PENDING,
       expiresAt: new Date('2026-01-01T00:00:00.000Z'),

@@ -37,7 +37,6 @@
     "description": "ใช้บัญชี GitHub เพื่อเข้าสู่ Organization ของคุณ",
     "login": "เข้าสู่ระบบ",
     "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
-    "userLoadFailed": "ไม่สามารถโหลดข้อมูลผู้ใช้หลังเข้าสู่ระบบได้",
     "loginFailed": "ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่อีกครั้ง",
     "enterPassword": "กรอกรหัสผ่าน"
   },
@@ -47,8 +46,6 @@
     "content": "จัดการเนื้อหา",
     "system": "ระบบ",
     "dashboard": "แดชบอร์ด",
-    "users": "ผู้ใช้งาน",
-    "userDetail": "รายละเอียดผู้ใช้งาน",
     "auditLogs": "ประวัติการทำรายการ",
     "profile": "โปรไฟล์",
     "account": "บัญชี",
@@ -65,22 +62,6 @@
   "Home": {
     "greeting": "สวัสดี!",
     "welcome": "ยินดีต้อนรับกลับเข้าสู่ระบบจัดการเว็บไซต์"
-  },
-  "Users": {
-    "title": "ผู้ใช้งาน",
-    "create": "สร้างผู้ใช้งาน",
-    "active": "เปิดใช้งาน",
-    "inactive": "ปิดใช้งาน",
-    "allRoles": "บทบาททั้งหมด",
-    "allStatuses": "สถานะทั้งหมด",
-    "view": "เปิดข้อมูล {name}",
-    "editItem": "แก้ไขรายการ",
-    "searchPlaceholder": "ค้นหาจากชื่อหรืออีเมล",
-    "deleteSearch": "ลบคำค้นหา",
-    "deleteRole": "ลบบทบาท",
-    "deleteStatus": "ลบสถานะ",
-    "search": "ค้นหา",
-    "roles": "บทบาท"
   },
   "Profile": {
     "title": "โปรไฟล์",

@@ -4,9 +4,9 @@ Status: proposed. This is the formal specification synthesized from the complete
 
 ## Problem Statement
 
-Project Forge has moved from `apps/web` to `apps/admin`, but the current frontend and backend boundaries still reflect an earlier architecture. The admin application has multiple independent RTK Query APIs, raw browser fetches in components and providers, localStorage-driven organization scope, and server fetches that rely on unchecked TypeScript casts. The API has controllers and a large organization service that perform ORM queries and business decisions directly, inconsistent validation and response shapes, and overlapping identity/session/organization concepts.
+Project Forge has moved from the legacy frontend application to `apps/admin`, but the current frontend and backend boundaries still reflect an earlier architecture. The admin application has multiple independent RTK Query APIs, raw browser fetches in components and providers, localStorage-driven organization scope, and server fetches that rely on unchecked TypeScript casts. The API has controllers and a large organization service that perform ORM queries and business decisions directly, inconsistent validation and response shapes, and overlapping identity/session/organization concepts.
 
-This makes organization authorization difficult to reason about, makes API behavior hard to test consistently, and makes the preserved admin UI dependent on implementation details that are difficult to change safely. Active documentation and scripts also still refer to the removed `apps/web` application.
+This makes organization authorization difficult to reason about, makes API behavior hard to test consistently, and makes the preserved admin UI dependent on implementation details that are difficult to change safely. Active documentation and scripts also still refer to the removed frontend application.
 
 ## Solution
 
@@ -48,7 +48,7 @@ The admin application will retain Mantine, the current shell/header/sidebar, nav
 28. As a maintainer, I want security failures treated separately from business audit events, so that security monitoring has the right semantics.
 29. As a maintainer, I want domain/application code independent of NestJS and MikroORM, so that use-cases can be tested through ports and adapters.
 30. As an admin maintainer, I want frontend and backend schemas to remain separate while contract tests verify their compatibility, so that the monorepo does not become coupled through a shared runtime schema package.
-31. As a maintainer, I want active docs and scripts to describe `apps/admin` and `apps/api`, so that new contributors do not follow removed `apps/web` workflows.
+31. As a maintainer, I want active docs and scripts to describe `apps/admin` and `apps/api`, so that new contributors do not follow removed frontend workflows.
 32. As an existing admin user, I want the current AdminShell, AppHeader, sidebar, Mantine styling, labels, and `app/admin/account` navigation modes preserved, so that architecture work does not regress the existing UI.
 
 ## Implementation Decisions
@@ -110,6 +110,7 @@ The admin application will retain Mantine, the current shell/header/sidebar, nav
 
 - No database reset, migration execution, or seed execution is part of this spec phase.
 - After approval, recreate the un-deployed schema and seed new data; do not backfill current disposable records.
+- The active migration path is one DDL-only canonical migration; its explicit read-only `db:verify` companion checks named schema invariants and seeded records without changing the database.
 - The approved schema removes `projects.ownerId`, `project_members`, `organizations.ownerId`, legacy organization/invitation role columns, `sessions.active_organization_id`, and the parallel `oauth_accounts` identity model.
 - The approved schema requires project organization ownership, role assignment, invitation uniqueness, and explicit foreign keys/indexes.
 - Breaking changes are allowed; no compatibility layer is required.
@@ -128,7 +129,7 @@ The admin application will retain Mantine, the current shell/header/sidebar, nav
 
 ## Out of Scope
 
-- Recreating or maintaining `apps/web`.
+- Recreating or maintaining the removed frontend application.
 - Phase 1 product requirements that do not describe the current admin/API idea.
 - Project sharing, project roles, project owners, and project-specific member lists.
 - Multiple external identity providers beyond GitHub.

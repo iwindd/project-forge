@@ -3,16 +3,13 @@ import { Entity, Enum, Index, PrimaryKey, Property, Unique } from '@mikro-orm/de
 import { OrganizationStatus, OrganizationType } from '../../domain/organization.js';
 
 @Entity({ tableName: 'organizations' })
-@Index({ properties: ['ownerId', 'status'] })
+@Index({ properties: ['status'] })
 @Unique({ properties: ['slug'] })
 export class OrganizationOrmEntity {
   [OptionalProps]?: 'id' | 'status' | 'createdAt' | 'updatedAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();
-
-  @Property({ type: 'uuid' })
-  ownerId!: string;
 
   @Property({ type: 'text' })
   name!: string;

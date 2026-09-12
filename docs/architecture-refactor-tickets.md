@@ -1,6 +1,6 @@
 # Project Forge architecture refactor ticket index
 
-Status: approved and published. GitHub Issues are the canonical tracker records; the individual files under `.scratch/project-forge-architecture-refactor/issues/` remain local mirrors.
+Status: approved and published. GitHub Issues are the canonical tracker records; the individual files under `.scratch/project-forge-architecture-refactor/issues/` remain local mirrors. Always verify live issue state before selecting work.
 
 ## Dependency graph
 
@@ -29,4 +29,4 @@ Status: approved and published. GitHub Issues are the canonical tracker records;
 7. [#7: Legacy schema, route, docs, and script cleanup](https://github.com/iwindd/project-forge/issues/7)
 8. [#8: Full validation and browser acceptance](https://github.com/iwindd/project-forge/issues/8)
 
-All tickets are marked `ready-for-agent`. Native GitHub blocking dependencies are configured; #1 is the current frontier ticket.
+At the time of this checkout, Issues #1–#6 and #11 are closed, #7 is the legacy-cleanup frontier, and #8 is the remaining full-validation ticket. Issues #10 and #15 are separate maintenance tickets. Native GitHub blocking dependencies are configured; live GitHub state takes precedence over this snapshot.

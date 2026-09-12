@@ -1,18 +1,17 @@
 # Project Forge
 
-Project Forge คือระบบเว็บ self-hosted สำหรับผู้ใช้ภายในองค์กร เพื่อเชื่อม GitHub, เลือก Hermes agents, สร้าง project conversations และทำ workflow งานพัฒนาแบบตรวจสอบได้
+Project Forge คือระบบเว็บแบบ self-hosted สำหรับทีมภายใน ใช้ GitHub เป็น identity provider และจัดการ Organization, สมาชิก, โปรเจกต์ และ audit history ผ่าน dashboard เดียว
 
-เอกสารนี้เป็นแผนและ foundation ของระบบใหม่ด้วย NestJS และ Next.js ไม่ใช่การย้าย Discord bot เดิมมาเป็นเว็บ และไม่ผูกกับ Vercel ในการรัน AI หรือ deploy
+## Current Phase 1 baseline
 
-## Phase 1 ที่ทำเสร็จใน workspace นี้
+- `apps/api` เป็น NestJS API และเจ้าของ business rules, authorization, validation, state transitions และ PostgreSQL/MikroORM schema
+- `apps/admin` เป็น Next.js dashboard ที่เรียก API ผ่าน browser/SSR client เท่านั้น
+- Login ใช้ GitHub เท่านั้น; การเข้า Organization เป็น invite-only และสิทธิ์สมาชิกมาจาก active Organization membership
+- Organization เป็นเจ้าของ project metadata โดยตรง; project ยังไม่ clone repository, สร้าง sandbox, เรียก Hermes, install dependency หรือ build
+- มี Organization roles (`OWNER`, `ADMIN`, `MEMBER`) และ custom permissions ตาม scope ที่กำหนด
+- Schema ปัจจุบันใช้ `connections` เป็น canonical GitHub identity model และไม่มี active access-request flow
 
-- `apps/api` — NestJS API, PostgreSQL/MikroORM, GitHub OAuth, session cookie, access request, admin policies, audit log และ Project metadata CRUD
-- `apps/admin` — Next.js App Router, login/access states, protected user shell, Projects list/add/edit/archive และ `/admin` users/access requests
-- `apps/admin` เรียก API ผ่าน canonical clients (`src/lib/api/api.ts` สำหรับ browser และ `src/lib/api-server.ts` สำหรับ SSR); ไม่มีการ import database หรือ MikroORM จาก admin app
-- Add Project ยังเป็น metadata-only: ไม่ clone, ไม่สร้าง sandbox, ไม่เรียก Hermes, ไม่ install และไม่ build
-- ไม่มี Discord, Hermes, Chat, GitHub App, Issues หรือ Pull Requests ใน Phase 1
-
-GitHub OAuth เป็นจุดที่ต้องใส่ credential ของ deployment เองใน `.env`; ค่าใน workspace มีเพียง local development defaults และไม่มี secret จริง
+Hermes, conversations, workers, sandboxes, issue review และ pull-request workflow เป็นงานของ phase ถัดไป
 
 ## Local setup
 
@@ -24,57 +23,54 @@ pnpm dev:api
 pnpm dev:admin
 ```
 
-Admin app อยู่ที่ `http://localhost:5051` และ API อยู่ที่ `http://localhost:5050/api/v1` ส่วน PostgreSQL ของ Project Forge ใช้ host port `55432` เพื่อไม่ชนกับ project-bot ที่ใช้ `5433`
+Admin app อยู่ที่ `http://localhost:5051` และ API อยู่ที่ `http://localhost:5050/api/v1` PostgreSQL ใช้ host port `55432`
 
-ตั้งค่า GitHub OAuth ใน `.env` โดยใช้ callback:
+Migration นี้เป็น canonical DDL สำหรับ schema ที่ยังไม่ deploy และไม่ทำ upgrade/backfill จาก migration history รุ่นเก่า หากมี local database จาก checkout ก่อนหน้า ต้องขออนุมัติ schema recreation แยกก่อนดำเนินการ
 
-```text
-http://localhost:5050/api/v1/auth/github/callback
-```
-
-กำหนด `ADMIN_GITHUB_IDS` เป็น GitHub numeric user ID ของผู้ดูแลคนแรก หรือใช้ `SEED_ADMIN_GITHUB_ID` กับ `pnpm --filter @project-forge/api db:seed` หลัง migration
-
-ตรวจระบบโดยไม่ต้อง login:
+การ seed เป็น operation ที่ต้องสั่งแยกและต้องกำหนด `SEED_ADMIN_GITHUB_ID` ก่อน:
 
 ```text
-GET http://localhost:5050/api/v1/health
+pnpm --filter @project-forge/api db:seed
 ```
 
-## เอกสาร
+หลัง schema recreation และ seed ที่ได้รับอนุมัติแล้ว สามารถตรวจ named schema invariants, foreign keys, unique constraints และ seed records แบบ read-only ได้ด้วย:
 
-- [PROJECT_FORGE.plan](PROJECT_FORGE.plan) — machine-readable roadmap, principles, phases และ dependencies
-- [phase_1.md](phase_1.md) — แผนระยะแรก: project foundation, GitHub-only login, request access และ admin/user management
-- [structure.md](structure.md) — โครงสร้างโปรเจคใหม่ที่นำ pattern จาก apptech และ pawpal มารวมกัน
+```text
+pnpm db:verify
+```
 
-## ขอบเขตระบบเต็มรูปแบบ
+ตั้งค่า GitHub OAuth ใน `.env` ด้วย callback `http://localhost:5050/api/v1/auth/github/callback` และใช้ `GET http://localhost:5050/api/v1/health` ตรวจ health โดยไม่ต้อง login
 
-1. Identity และ workspace access
-2. GitHub App และ repository permissions
-3. Projects และ branch/runtime configuration
-4. Hermes agent catalog และ conversations
-5. Sandbox provisioning และ file explorer
-6. Durable streamed agent runs
-7. Find Issue / Ultra Review / pre-issues
-8. Create Feature / Fix Issues / pre-pull-requests
-9. Approval, GitHub Issue/PR publication และ retry
-10. Project sharing, audit, observability และ self-host operations
+## Current documentation
 
-## สถาปัตยกรรมเป้าหมาย
+- [CONTEXT.md](CONTEXT.md) — glossary และ domain rules
+- [architecture-refactor-spec.md](docs/architecture-refactor-spec.md) — current architecture/spec
+- [architecture-refactor-tickets.md](docs/architecture-refactor-tickets.md) — GitHub issue dependency graph
+- [ADR directory](docs/adr/) — accepted architecture decisions
+- [phase_1.md](phase_1.md) — historical archive; ไม่ใช่ source of truth
+- [.requirements/](.requirements/) — historical product input; ไม่ใช่ implementation instruction
+
+## Roadmap
+
+1. Foundation, invite-only access, Organization roles, project metadata และ API-backed dashboard
+2. Hermes conversations และ sandbox lifecycle
+3. Durable conversations และ agent orchestration
+4. Review workflow และ pre-issues
+5. Feature/fix workflow และ pre-pull-requests
+6. GitHub App publication และ synchronization
+7. Sharing, operations, security และ self-host release
+
+## Target architecture
 
 ```text
 Browser
-  -> Next.js admin app (apps/admin)
-  -> NestJS API (apps/api)
+  -> apps/admin (Next.js dashboard)
+  -> apps/api (NestJS API)
       -> PostgreSQL
-      -> Redis/job queue
+      -> worker / job queue
       -> Hermes adapter
       -> sandbox runner
-      -> GitHub App adapter
-  -> NestJS worker
+      -> GitHub adapter
 ```
 
-Next.js admin app ดูแล UI และเรียก NestJS API ผ่าน API client เท่านั้น ส่วน NestJS เป็นเจ้าของ business rules, authorization, state transitions และ external side effects งาน AI ต้องรันผ่าน worker ที่มี checkpoint ไม่ถืออายุงานไว้กับ HTTP request ระบบไม่มี public AI endpoint และ approved internal users เท่านั้นจึงสร้างงาน AI ได้
-
-## Phase order
-
-Phase 1 ทำโครงสร้างระบบ, access, Projects และ user administration ให้มั่นคงก่อน ยังไม่เริ่ม Hermes, Chat, sandbox หรือ workflow ที่มี side effect การเชื่อม Hermes และ chat จะเริ่มใน Phase 2 หลังจาก identity, authorization, database และ layout พร้อมแล้ว
+งาน background ต้องมี persisted state, event history, idempotency และ cancellation/recovery semantics ไม่ผูกอายุงานไว้กับ HTTP request และห้ามส่ง secret หรือ access token ไปยัง browser, prompt หรือ log

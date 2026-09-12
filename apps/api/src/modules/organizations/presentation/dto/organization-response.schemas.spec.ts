@@ -19,11 +19,11 @@ describe('organizationListSchema', () => {
         slug: 'personal-workspace',
         type: 'PERSONAL',
         role: {
-          id: null,
+          id: '00000000-0000-0000-0000-000000000010',
           name: 'เจ้าของ',
           permissions: ['organization.manage'],
           isOwner: true,
-          legacyRole: 'OWNER',
+          code: 'OWNER',
         },
         status: 'ACTIVE',
         createdAt: new Date().toISOString(),
@@ -42,7 +42,7 @@ describe('organizationListSchema', () => {
           name: 'แอดมิน',
           permissions: [],
           isOwner: false,
-          legacyRole: 'ADMIN',
+          code: 'ADMIN',
         },
       }),
     ).not.toThrow()
@@ -54,7 +54,7 @@ describe('organizationListSchema', () => {
       name: 'สมาชิก',
       permissions: [],
       isOwner: false,
-      legacyRole: 'MEMBER' as const,
+      code: 'MEMBER' as const,
     }
     const user = {
       id: '550e8400-e29b-41d4-a716-446655440001',

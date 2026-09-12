@@ -6,12 +6,9 @@ import {
   getAuditLogsTag,
   type AuditLogScopeArg
 } from '@/lib/features/audit-log/audit-logs-api'
-import { getUsersTag } from '@/lib/features/user/users-api'
 import { useCallback } from 'react'
 
-type AdminCacheResource = 'users'
 export type AdminCacheInvalidationOptions = {
-  resources?: readonly AdminCacheResource[]
   organizationId?: string | null
   auditLogs?: boolean
   auditLogScope?: AuditLogScopeArg
@@ -19,18 +16,11 @@ export type AdminCacheInvalidationOptions = {
 }
 
 export function getAdminCacheInvalidationTags({
-  resources = [],
   organizationId,
   auditLogs = true,
   auditLogScope = { kind: 'all' }
 }: AdminCacheInvalidationOptions = {}) {
-  const tags: Array<
-    ReturnType<typeof getUsersTag> | ReturnType<typeof getAuditLogsTag>
-  > = []
-
-  for (const resource of new Set(resources)) {
-    if (resource === 'users') tags.push(getUsersTag(organizationId ?? undefined))
-  }
+  const tags: Array<ReturnType<typeof getAuditLogsTag>> = []
   if (auditLogs) {
     tags.push(getAuditLogsTag(auditLogScope, organizationId ?? undefined))
   }

@@ -7,24 +7,23 @@ import {
 describe('invitation role options', () => {
   it('keeps only persisted Admin and Member roles with ids', () => {
     const roles = [
-      { id: 'owner', legacyRole: 'OWNER' as const },
-      { id: null, legacyRole: 'ADMIN' as const },
-      { id: 'custom', legacyRole: null },
-      { id: 'admin', legacyRole: 'ADMIN' as const },
-      { id: 'member', legacyRole: 'MEMBER' as const }
+      { id: 'owner', code: 'OWNER' as const },
+      { id: 'custom', code: null },
+      { id: 'admin', code: 'ADMIN' as const },
+      { id: 'member', code: 'MEMBER' as const }
     ]
 
     expect(getInvitationRoleOptions(roles)).toEqual([
-      { id: 'admin', legacyRole: 'ADMIN' },
-      { id: 'member', legacyRole: 'MEMBER' }
+      { id: 'admin', code: 'ADMIN' },
+      { id: 'member', code: 'MEMBER' }
     ])
   })
 
   it('prefers the built-in Member role as the default', () => {
     expect(
       getDefaultInvitationRoleId([
-        { id: 'admin', legacyRole: 'ADMIN' },
-        { id: 'member', legacyRole: 'MEMBER' }
+        { id: 'admin', code: 'ADMIN' },
+        { id: 'member', code: 'MEMBER' }
       ])
     ).toBe('member')
   })
