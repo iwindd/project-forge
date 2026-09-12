@@ -18,7 +18,7 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      command: 'pnpm build && node .next/standalone/server.js',
+      command: 'pnpm build && node .next/standalone/apps/admin/server.js',
       url: 'http://127.0.0.1:5051/admin/login',
       reuseExistingServer: false,
       timeout: 120_000,
