@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright browser
+        run: pnpm --filter @project-forge/admin exec playwright install --with-deps chromium
+
       - name: Prepare CI environment
         run: cp .env.example .env
 
@@ -62,3 +65,9 @@ jobs:
 
       - name: Admin build
         run: pnpm --filter @project-forge/admin build
+
+      - name: Admin browser acceptance
+        run: pnpm --filter @project-forge/admin test:browser
+
+      - name: Diff whitespace check
+        run: git diff --check HEAD^ HEAD

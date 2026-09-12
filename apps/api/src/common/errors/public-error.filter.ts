@@ -40,7 +40,7 @@ export class PublicErrorFilter implements ExceptionFilter {
 
     if (exception instanceof ZodError) {
       return {
-        status: HttpStatus.BAD_REQUEST,
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
         code: 'INVALID_INPUT',
         message: 'Request validation failed',
         details: { issues: exception.issues },
