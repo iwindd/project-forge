@@ -67,6 +67,16 @@ export type AuditLogScopeArg =
   | { kind: 'user'; userId: string }
   | { kind: 'own' }
 
+export function getAuditLogsTag(
+  scope: AuditLogScopeArg,
+  organizationId?: string
+) {
+  return {
+    type: 'AuditLogs' as const,
+    id: scope.kind === 'own' ? 'own' : organizationId ?? 'platform'
+  }
+}
+
 function getAuditLogListUrl(
   scope: AuditLogScopeArg,
   organizationId?: string
@@ -154,7 +164,9 @@ export const auditLogsApi = api.injectEndpoints({
         params: toRequestParams(query)
       }),
       transformResponse: parseAuditLogsResponse,
-      providesTags: ['AuditLogs']
+      providesTags: (_result, _error, { scope, organizationId }) => [
+        getAuditLogsTag(scope, organizationId)
+      ]
     }),
     exportAuditLog: builder.mutation<string, AuditLogExportArgs>({
       query: ({ scope, auditLogId, organizationId }) => ({

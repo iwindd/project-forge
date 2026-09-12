@@ -1,0 +1,45 @@
+schemaVersion: 1
+issue: 6
+title: "Migrate remaining admin features and standardize UI states"
+objective: >-
+  Complete the migration of remaining users, members, audit/security, profile,
+  invitation, and account flows onto the canonical API root and make their UI
+  states consistent with the existing Mantine design.
+scope:
+  - Remove raw application-data fetches from Admin components and providers.
+  - Keep all feature endpoints injected into the single root RTK Query API.
+  - Correct mutation invalidation and explicit organization scoping.
+  - Add loading, empty, error, retry, and mutation feedback states across migrated screens.
+  - Preserve invite-only access, organization membership administration, and User Profile self-service boundaries.
+  - Add admin tests, client-boundary checks, and representative browser-flow coverage.
+out_of_scope:
+  - Implementing a separate System Admin application or choosing its package/repository.
+  - Database schema redesign, migration reset, or seed execution.
+  - Default-Organization selector, public access requests, or invitation email delivery.
+  - Reading or modifying environment/credential files.
+acceptance_criteria:
+  - apps/admin has no remaining raw application-data fetch path outside the canonical client.
+  - No feature creates an independent RTK Query API; all endpoints are injected into the single root.
+  - Feature mutations invalidate the correct root tags and use explicit organization IDs where applicable.
+  - Every migrated screen has loading, empty, error, retry, and mutation feedback states.
+  - An authenticated user without an invitation has no Organization/Project access, while an invited user can accept through the one-time link.
+  - Organization membership administration remains inside the Organization app and User Profile remains self-service through /account.
+  - Admin tests, client-boundary checks, and representative browser flows cover the migrated features.
+constraints:
+  - Preserve repository and subdirectory AGENTS.md rules.
+  - Follow CONTEXT.md and ADR 0003, 0006, 0009, 0011, and 0013.
+  - Keep API authorization and persistence in apps/api; Admin remains an API client.
+  - Use Next.js 16 conventions and existing Mantine/next-intl patterns.
+  - Do not modify environment or credential files.
+required_checks:
+  - pnpm --filter @project-forge/admin lint
+  - pnpm --filter @project-forge/admin typecheck
+  - pnpm --filter @project-forge/admin check:admin-client-boundary
+  - pnpm --filter @project-forge/admin test -- --run
+  - pnpm --filter @project-forge/admin build
+  - pnpm run check
+  - pnpm run build
+assigned_profile: programmer
+branch: issue/6-migrate-admin-ui
+worktree: E:/Projects/project-forge-issue-6
+status: ready-for-review

@@ -48,6 +48,7 @@ import {
   IconDots,
   IconExternalLink,
   IconPlus,
+  IconRefresh,
   IconSearch,
   IconUserPlus
 } from '@tabler/icons-react'
@@ -151,7 +152,8 @@ export default function OrganizationMembersPage() {
   const {
     data: membersResult,
     isError: membersError,
-    isFetching: membersFetching
+    isFetching: membersFetching,
+    refetch: refetchMembers
   } = useGetMembersQuery(
     { organizationId, query: memberQuery },
     { skip: !organizationId }
@@ -163,7 +165,8 @@ export default function OrganizationMembersPage() {
   const {
     data: invitationsResult,
     isError: invitationsError,
-    isFetching: invitationsFetching
+    isFetching: invitationsFetching,
+    refetch: refetchInvitations
   } = useGetInvitationsQuery(
     { organizationId },
     { skip: !organizationId || !canManage || activeTab !== 'invitations' }
@@ -573,7 +576,19 @@ export default function OrganizationMembersPage() {
 
             {membersError ? (
               <Alert color='red' icon={<IconAlertCircle size={18} />}>
-                {t('loadFailed')}
+                <Group justify='space-between' gap='sm' wrap='nowrap'>
+                  <Text size='sm'>{t('loadFailed')}</Text>
+                  <Button
+                    size='compact-sm'
+                    variant='light'
+                    color='red'
+                    leftSection={<IconRefresh size={14} />}
+                    loading={membersFetching}
+                    onClick={() => void refetchMembers()}
+                  >
+                    {t('retry')}
+                  </Button>
+                </Group>
               </Alert>
             ) : null}
 
@@ -755,7 +770,19 @@ export default function OrganizationMembersPage() {
         <Tabs.Panel className={classes.tabPanel} value='invitations'>
           {invitationsError ? (
             <Alert color='red' icon={<IconAlertCircle size={18} />}>
-              {t('invitationsLoadFailed')}
+              <Group justify='space-between' gap='sm' wrap='nowrap'>
+                <Text size='sm'>{t('invitationsLoadFailed')}</Text>
+                <Button
+                  size='compact-sm'
+                  variant='light'
+                  color='red'
+                  leftSection={<IconRefresh size={14} />}
+                  loading={invitationsFetching}
+                  onClick={() => void refetchInvitations()}
+                >
+                  {t('retry')}
+                </Button>
+              </Group>
             </Alert>
           ) : (
             <Paper className={classes.membersCard} withBorder radius='md'>

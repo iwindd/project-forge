@@ -40,6 +40,10 @@ type GetUsersArg = {
   query: UserListQuery
 }
 
+export function getUsersTag(organizationId?: string) {
+  return { type: 'Users' as const, id: organizationId ?? 'platform' }
+}
+
 function toUserListItem(
   user: z.infer<typeof apiUserListItemSchema>
 ): UserListResult['data'][number] {
@@ -83,7 +87,9 @@ export const usersApi = api.injectEndpoints({
         params: query
       }),
       transformResponse: parseUsersResponse,
-      providesTags: ['Users']
+      providesTags: (_result, _error, { organizationId }) => [
+        getUsersTag(organizationId)
+      ]
     })
   }),
   overrideExisting: false

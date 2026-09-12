@@ -44,7 +44,7 @@ export function ProfileNameForm() {
       form.setValues({ name: nextName });
       form.setInitialValues({ name: nextName });
       form.resetDirty();
-      invalidateAdminCaches({ resources: ['users'] });
+      invalidateAdminCaches({ resources: ['users'], organizationId: null });
       setSuccess('บันทึกชื่อสำเร็จ');
     } catch (saveError) {
       setError(getBrowserApiErrorMessage(saveError, 'ไม่สามารถบันทึกชื่อได้'));
@@ -57,7 +57,7 @@ export function ProfileNameForm() {
         <Stack gap='md'>
           <TextInput label='ชื่อผู้ใช้' maw={400} {...form.getInputProps('name')} />
           <Group>
-            <Button type='submit' loading={pending || form.submitting} disabled={!form.isDirty()}>
+            <Button type='submit' loading={pending || form.submitting}>
               บันทึก
             </Button>
           </Group>

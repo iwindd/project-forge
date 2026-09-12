@@ -29,9 +29,17 @@ export type SecurityLogsResult = {
   pageSize: number
 }
 
-export type SecurityLogsArg = {
-  organizationId?: string
-  userId?: string
+export type SecurityLogsArg =
+  | { userId?: never; organizationId?: never }
+  | { userId: string; organizationId: string }
+
+export function getSecurityLogsTag(arg: SecurityLogsArg) {
+  return {
+    type: 'SecurityLogs' as const,
+    id: 'userId' in arg && arg.userId
+      ? `${arg.organizationId}:${arg.userId}`
+      : 'own'
+  }
 }
 
 export function parseSecurityLogsResponse(
@@ -58,7 +66,7 @@ export const securityApi = api.injectEndpoints({
           : 'audit-logs/security/me'
       }),
       transformResponse: parseSecurityLogsResponse,
-      providesTags: ['SecurityLogs']
+      providesTags: (_result, _error, arg) => [getSecurityLogsTag(arg)]
     })
   }),
   overrideExisting: false
