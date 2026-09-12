@@ -162,3 +162,44 @@ test('controlled audit state and rejected invitation boundary are visible', asyn
   await expect(page.getByText('ไม่สามารถเข้าร่วม Organization ได้')).toBeVisible();
   await expect(page.getByText('คำเชิญนี้ไม่สามารถใช้ได้')).toBeVisible();
 });
+
+test('authenticated user without an invitation sees a controlled access denial', async ({ page }) => {
+  await signedIn(page);
+  await page.goto('/admin/invitations/controlled-no-invitation');
+  const join = page.getByRole('button', { name: 'เข้าร่วม' });
+  await expect(join).toBeEnabled();
+  let deniedResponse: { status: number; requestId?: string } | undefined;
+  page.on('response', async (response) => {
+    if (
+      response.request().method() === 'POST' &&
+      response.url().includes('/api/v1/organizations/invitations/controlled-no-invitation/accept')
+    ) {
+      const body = await response.json();
+      deniedResponse = { status: response.status(), requestId: body.error?.requestId };
+    }
+  });
+  await join.click();
+  await expect.poll(() => deniedResponse?.status, { timeout: 30_000 }).toBe(403);
+  await expect.poll(() => deniedResponse?.requestId, { timeout: 30_000 }).toBe('e2e-no-invitation');
+  await expect(page.getByText('ไม่สามารถเข้าร่วม Organization ได้')).toBeVisible();
+  await expect(page.getByText('ผู้ใช้ยังไม่ได้รับคำเชิญเข้า Organization นี้')).toBeVisible();
+});
+
+test('invited user accepts a controlled one-time invitation and enters the organization', async ({ page }) => {
+  await signedIn(page);
+  await page.goto('/admin/invitations/controlled-one-time-token');
+  const join = page.getByRole('button', { name: 'เข้าร่วม' });
+  await expect(join).toBeEnabled();
+  let acceptedResponseStatus: number | undefined;
+  page.on('response', (response) => {
+    if (
+      response.request().method() === 'POST' &&
+      response.url().includes('/api/v1/organizations/invitations/controlled-one-time-token/accept')
+    )
+      acceptedResponseStatus = response.status();
+  });
+  await join.click();
+  await expect.poll(() => acceptedResponseStatus, { timeout: 30_000 }).toBe(200);
+  await expect(page).toHaveURL(/\/acme$/);
+  await expect(page.getByText('Acme Organization')).toBeVisible();
+});

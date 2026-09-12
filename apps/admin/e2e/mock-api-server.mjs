@@ -44,6 +44,7 @@ const users = [
     createdAt: '2026-01-02T00:00:00.000Z',
   },
 ];
+let controlledInvitationAccepted = false;
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) });
 const send = (req, res, status, body) => {
   res.writeHead(status, {
@@ -116,6 +117,38 @@ const server = http.createServer((req, res) => {
     return send(req, res, 200, envelope(users, { total: users.length }));
   if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001')
     return send(req, res, 200, envelope([], { total: 0, page: 1, pageSize: 25, totalPages: 0 }));
+  if (path === 'organizations/invitations/controlled-no-invitation/accept')
+    return send(
+      req,
+      res,
+      403,
+      JSON.stringify({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'ผู้ใช้ยังไม่ได้รับคำเชิญเข้า Organization นี้',
+          details: {},
+          requestId: 'e2e-no-invitation',
+        },
+      }),
+    );
+  if (path === 'organizations/invitations/controlled-one-time-token/accept') {
+    if (controlledInvitationAccepted)
+      return send(
+        req,
+        res,
+        403,
+        JSON.stringify({
+          error: {
+            code: 'FORBIDDEN',
+            message: 'คำเชิญนี้ไม่สามารถใช้ได้',
+            details: {},
+            requestId: 'e2e-one-time-used',
+          },
+        }),
+      );
+    controlledInvitationAccepted = true;
+    return send(req, res, 200, envelope({ organization }));
+  }
   if (path.startsWith('organizations/invitations/') && path.endsWith('/accept'))
     return send(
       req,
