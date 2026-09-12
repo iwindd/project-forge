@@ -41,7 +41,6 @@ export enum OrganizationInvitationStatus {
 
 export type OrganizationRecord = {
   id: string;
-  ownerId: string;
   name: string;
   slug: string;
   type: OrganizationType;
@@ -56,7 +55,7 @@ export type OrganizationRoleRecord = {
   name: string;
   permissions: OrganizationPermission[];
   isOwner: boolean;
-  legacyRole: OrganizationMemberRole | null;
+  code: OrganizationMemberRole | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -65,8 +64,7 @@ export type OrganizationMemberRecord = {
   id: string;
   organizationId: string;
   userId: string;
-  role: OrganizationMemberRole;
-  roleId: string | null;
+  roleId: string;
   status: OrganizationMemberStatus;
   joinedAt: Date;
   updatedAt: Date;
@@ -78,8 +76,7 @@ export type OrganizationInvitationRecord = {
   invitedBy: string;
   email: string;
   tokenHash: string;
-  role: OrganizationMemberRole;
-  roleId: string | null;
+  roleId: string;
   status: OrganizationInvitationStatus;
   expiresAt: Date;
   acceptedBy: string | null;
@@ -88,7 +85,6 @@ export type OrganizationInvitationRecord = {
 };
 
 export function createOrganization(input: {
-  ownerId: string;
   name: string;
   slug: string;
   type: OrganizationType;
@@ -96,7 +92,6 @@ export function createOrganization(input: {
   const now = new Date();
   return {
     id: randomUUID(),
-    ownerId: input.ownerId,
     name: input.name,
     slug: input.slug,
     type: input.type,
@@ -111,7 +106,7 @@ export function createOrganizationRole(input: {
   name: string;
   permissions?: OrganizationPermission[];
   isOwner?: boolean;
-  legacyRole?: OrganizationMemberRole | null;
+  code?: OrganizationMemberRole | null;
 }): OrganizationRoleRecord {
   const now = new Date();
   return {
@@ -120,7 +115,7 @@ export function createOrganizationRole(input: {
     name: input.name.trim(),
     permissions: input.permissions ?? [],
     isOwner: input.isOwner ?? false,
-    legacyRole: input.legacyRole ?? null,
+    code: input.code ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -129,8 +124,7 @@ export function createOrganizationRole(input: {
 export function createOrganizationMember(input: {
   organizationId: string;
   userId: string;
-  role: OrganizationMemberRole;
-  roleId?: string | null;
+  roleId: string;
   status?: OrganizationMemberStatus;
 }): OrganizationMemberRecord {
   const now = new Date();
@@ -138,8 +132,7 @@ export function createOrganizationMember(input: {
     id: randomUUID(),
     organizationId: input.organizationId,
     userId: input.userId,
-    role: input.role,
-    roleId: input.roleId ?? null,
+    roleId: input.roleId,
     status: input.status ?? OrganizationMemberStatus.ACTIVE,
     joinedAt: now,
     updatedAt: now,
@@ -151,8 +144,7 @@ export function createOrganizationInvitation(input: {
   invitedBy: string;
   email: string;
   tokenHash: string;
-  role: OrganizationMemberRole;
-  roleId?: string | null;
+  roleId: string;
   expiresAt: Date;
 }): OrganizationInvitationRecord {
   return {
@@ -161,8 +153,7 @@ export function createOrganizationInvitation(input: {
     invitedBy: input.invitedBy,
     email: input.email,
     tokenHash: input.tokenHash,
-    role: input.role,
-    roleId: input.roleId ?? null,
+    roleId: input.roleId,
     status: OrganizationInvitationStatus.PENDING,
     expiresAt: input.expiresAt,
     acceptedBy: null,

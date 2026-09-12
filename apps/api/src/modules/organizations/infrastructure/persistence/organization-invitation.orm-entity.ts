@@ -1,12 +1,12 @@
 import { OptionalProps } from '@mikro-orm/core';
 import { Entity, Enum, Index, PrimaryKey, Property, Unique } from '@mikro-orm/decorators/legacy';
-import { OrganizationInvitationStatus, OrganizationMemberRole } from '../../domain/organization.js';
+import { OrganizationInvitationStatus } from '../../domain/organization.js';
 
 @Entity({ tableName: 'organization_invitations' })
 @Index({ properties: ['organizationId', 'status'] })
 @Unique({ properties: ['tokenHash'] })
 export class OrganizationInvitationOrmEntity {
-  [OptionalProps]?: 'id' | 'roleId' | 'status' | 'acceptedBy' | 'acceptedAt' | 'createdAt';
+  [OptionalProps]?: 'id' | 'status' | 'acceptedBy' | 'acceptedAt' | 'createdAt';
 
   @PrimaryKey({ type: 'uuid' })
   id: string = crypto.randomUUID();
@@ -17,17 +17,14 @@ export class OrganizationInvitationOrmEntity {
   @Property({ type: 'uuid' })
   invitedBy!: string;
 
-  @Property({ type: 'text', nullable: true })
-  email: string | null = null;
+  @Property({ type: 'text' })
+  email!: string;
 
   @Property({ type: 'text', unique: true })
   tokenHash!: string;
 
-  @Enum(() => OrganizationMemberRole)
-  role: OrganizationMemberRole = OrganizationMemberRole.MEMBER;
-
-  @Property({ type: 'uuid', nullable: true })
-  roleId: string | null = null;
+  @Property({ type: 'uuid' })
+  roleId!: string;
 
   @Enum(() => OrganizationInvitationStatus)
   status: OrganizationInvitationStatus = OrganizationInvitationStatus.PENDING;

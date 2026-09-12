@@ -22,11 +22,11 @@ describe('organization list response contract', () => {
         slug: 'personal-workspace',
         type: 'PERSONAL',
         role: {
-          id: null,
+          id: '00000000-0000-0000-0000-000000000001',
           name: 'เจ้าของ',
           permissions: ['organization.manage'],
           isOwner: true,
-          legacyRole: 'OWNER'
+          code: 'OWNER'
         },
         status: 'ACTIVE',
         createdAt: new Date().toISOString(),

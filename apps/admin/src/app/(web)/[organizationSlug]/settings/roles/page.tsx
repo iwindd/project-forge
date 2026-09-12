@@ -132,7 +132,7 @@ export default function OrganizationRolesPage() {
                 </thead>
                 <tbody>
                   {roles.map((role) => (
-                    <tr key={role.id ?? role.name}>
+                    <tr key={role.id}>
                       <td>
                         <Group gap="xs" wrap="nowrap">
                           {role.isOwner ? <IconLock size={16} /> : <IconShieldCheck size={16} />}
@@ -184,7 +184,7 @@ export default function OrganizationRolesPage() {
                                 leftSection={<IconTrash size={16} />}
                                 disabled={
                                   deletePending ||
-                                  role.legacyRole !== null ||
+                                  role.code !== null ||
                                   (role.memberCount ?? 0) > 0 ||
                                   (role.invitationCount ?? 0) > 0
                                 }

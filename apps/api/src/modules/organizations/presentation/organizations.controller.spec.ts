@@ -67,7 +67,7 @@ describe('OrganizationsController', () => {
           name: 'แอดมิน',
           permissions: ['organization.manage'],
           isOwner: false,
-          legacyRole: 'ADMIN',
+          code: 'ADMIN',
         },
       },
     ]);
@@ -84,7 +84,7 @@ describe('OrganizationsController', () => {
             name: 'แอดมิน',
             permissions: ['organization.manage'],
             isOwner: false,
-            legacyRole: 'ADMIN',
+            code: 'ADMIN',
           },
           status: 'ACTIVE',
           createdAt: '2026-01-01T00:00:00.000Z',
@@ -102,7 +102,7 @@ describe('OrganizationsController', () => {
         name: 'แอดมิน',
         permissions: ['organization.manage'],
         isOwner: false,
-        legacyRole: 'ADMIN',
+        code: 'ADMIN',
         memberCount: 1,
         invitationCount: 0,
       },
@@ -139,7 +139,7 @@ describe('OrganizationsController', () => {
           name: 'สมาชิก',
           permissions: [],
           isOwner: false,
-          legacyRole: 'MEMBER',
+          code: 'MEMBER',
         },
         status: 'ACTIVE',
         isActive: true,
@@ -195,7 +195,7 @@ describe('OrganizationsController', () => {
     ).rejects.toThrow();
   });
 
-  it('defaults an invitation to Member and returns the one-time token in the envelope', async () => {
+  it('passes a persisted role id and returns the one-time token in the envelope', async () => {
     const controller = createController();
     const createInvitation = vi.mocked(
       (controller as unknown as { organizations: { createInvitation: ReturnType<typeof vi.fn> } })
@@ -211,7 +211,7 @@ describe('OrganizationsController', () => {
           name: 'สมาชิก',
           permissions: [],
           isOwner: false,
-          legacyRole: 'MEMBER',
+          code: 'MEMBER',
         },
         status: 'PENDING',
         expiresAt: new Date('2026-01-08T00:00:00.000Z'),
@@ -222,13 +222,13 @@ describe('OrganizationsController', () => {
         name: 'สมาชิก',
         permissions: [],
         isOwner: false,
-        legacyRole: 'MEMBER',
+        code: 'MEMBER',
       },
       token: 'one-time-token',
     });
 
     await expect(
-      controller.invite(principal, { id: organizationId }, { email: 'person@example.com' }, request),
+      controller.invite(principal, { id: organizationId }, { email: 'person@example.com', roleId: organizationId }, request),
     ).resolves.toEqual({
       data: {
         invitation: {
@@ -240,7 +240,7 @@ describe('OrganizationsController', () => {
             name: 'สมาชิก',
             permissions: [],
             isOwner: false,
-            legacyRole: 'MEMBER',
+            code: 'MEMBER',
           },
           status: 'PENDING',
           expiresAt: '2026-01-08T00:00:00.000Z',
@@ -253,7 +253,7 @@ describe('OrganizationsController', () => {
       userId,
       organizationId,
       'person@example.com',
-      { roleId: undefined, role: 'MEMBER' },
+      { roleId: organizationId },
       { requestId: 'request-id' },
     );
   });

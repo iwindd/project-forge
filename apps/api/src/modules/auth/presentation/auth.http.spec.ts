@@ -47,7 +47,6 @@ const principal: AuthenticatedPrincipal = {
 
 const organization = {
   id: organizationId,
-  ownerId: userId,
   name: 'Organization A',
   slug: 'organization-a',
   type: OrganizationType.SHARED,
@@ -61,7 +60,7 @@ const organizationRole = {
   name: 'สมาชิก',
   permissions: [],
   isOwner: false,
-  legacyRole: OrganizationMemberRole.MEMBER,
+  code: OrganizationMemberRole.MEMBER,
 }
 
 describe('auth HTTP contracts', () => {

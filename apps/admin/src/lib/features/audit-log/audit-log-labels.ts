@@ -20,9 +20,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PROJECT_CREATED: "สร้าง Project",
   PROJECT_UPDATED: "แก้ไข Project",
   PROJECT_ARCHIVED: "เก็บ Project",
-  PROJECT_RESTORED: "กู้คืน Project",
-  ACCESS_APPROVED: "อนุมัติคำขอเข้าถึง",
-  ACCESS_REJECTED: "ปฏิเสธคำขอเข้าถึง"
+  PROJECT_RESTORED: "กู้คืน Project"
 };
 
 export const AUDIT_RESOURCE_TYPE_LABELS: Record<string, string> = {
@@ -30,7 +28,7 @@ export const AUDIT_RESOURCE_TYPE_LABELS: Record<string, string> = {
   ORGANIZATION: "Organization", ORGANIZATION_ROLE: "บทบาท Organization",
   ORGANIZATION_MEMBER: "สมาชิก Organization",
   ORGANIZATION_INVITATION: "คำเชิญสมาชิก",
-  PROJECT: "Project", ACCESS_REQUEST: "คำขอเข้าถึง"
+  PROJECT: "Project"
 };
 
 export function getAuditActionLabel(action: string) {

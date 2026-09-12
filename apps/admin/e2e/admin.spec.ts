@@ -12,7 +12,7 @@ const scopedMembers = [
       name: 'Admin',
       permissions: ['organization.manage'],
       isOwner: false,
-      legacyRole: 'ADMIN',
+      code: 'ADMIN',
     },
     status: 'ACTIVE',
     isActive: true,
@@ -29,7 +29,7 @@ const scopedMembers = [
       name: 'Member',
       permissions: [],
       isOwner: false,
-      legacyRole: 'MEMBER',
+      code: 'MEMBER',
     },
     status: 'ACTIVE',
     isActive: true,
@@ -49,9 +49,10 @@ test('anonymous organization requests return to the canonical login route', asyn
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test('the Organization app sends the legacy System Admin route to login', async ({ page }) => {
+test('the Organization app does not expose the removed System Admin route', async ({ page }) => {
   await page.goto('/admin/users');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This page could not be found.' })).toBeVisible();
 });
 
 test('organization members use the explicit organization scope', async ({ page }) => {

@@ -14,7 +14,8 @@
     "check": "biome check apps && pnpm check-types",
     "test": "pnpm --filter @project-forge/api test",
     "db:migrate": "pnpm --filter @project-forge/api db:migrate",
-    "db:generate": "pnpm --filter @project-forge/api db:generate"
+    "db:generate": "pnpm --filter @project-forge/api db:generate",
+    "db:verify": "pnpm --filter @project-forge/api db:verify"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.12"

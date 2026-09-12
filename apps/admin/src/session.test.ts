@@ -14,7 +14,7 @@ describe('scopeUserToOrganization', () => {
         name: 'แอดมิน',
         permissions: ['organization.manage'],
         isOwner: false,
-        legacyRole: 'ADMIN' as const
+        code: 'ADMIN' as const
       }
     }
 

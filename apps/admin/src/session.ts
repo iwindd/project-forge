@@ -12,7 +12,7 @@ export type AdminUser = {
     name: string
     permissions: string[]
     isOwner: boolean
-    legacyRole: 'OWNER' | 'ADMIN' | 'MEMBER' | null
+    code: 'OWNER' | 'ADMIN' | 'MEMBER' | null
   } | null
   organizationPermissions?: string[]
 }

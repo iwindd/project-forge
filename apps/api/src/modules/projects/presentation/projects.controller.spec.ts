@@ -4,11 +4,11 @@ import type { AuthenticatedPrincipal } from '../../../common/auth/auth.types.js'
 import { ConflictError } from '../../../common/errors/application-error.js';
 import { ProjectsController } from './projects.controller.js';
 
-const ownerId = '550e8400-e29b-41d4-a716-446655440000';
+const actorId = '550e8400-e29b-41d4-a716-446655440000';
 const projectId = '550e8400-e29b-41d4-a716-446655440001';
 const organizationId = '550e8400-e29b-41d4-a716-446655440002';
 const now = new Date('2026-01-01T00:00:00.000Z');
-const principal = { id: ownerId } as AuthenticatedPrincipal;
+const principal = { id: actorId } as AuthenticatedPrincipal;
 const project = {
   id: projectId,
   organizationId,
@@ -98,11 +98,11 @@ describe('ProjectsController', () => {
     await controller.archive(principal, { organizationId, id: projectId }, { reason: '  cleanup  ' }, httpRequest);
     await controller.restore(principal, { organizationId, id: projectId }, { reason: 'restore' }, httpRequest);
 
-    expect(archive).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+    expect(archive).toHaveBeenCalledWith(actorId, organizationId, projectId, {
       requestId: 'request-id',
       reason: 'cleanup',
     });
-    expect(restore).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+    expect(restore).toHaveBeenCalledWith(actorId, organizationId, projectId, {
       requestId: 'request-id',
       reason: 'restore',
     });
@@ -118,11 +118,11 @@ describe('ProjectsController', () => {
     await controller.archive(principal, { organizationId, id: projectId }, undefined, request('request-id'));
     await controller.restore(principal, { organizationId, id: projectId }, { reason: null }, request('request-id'));
 
-    expect(archive).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+    expect(archive).toHaveBeenCalledWith(actorId, organizationId, projectId, {
       requestId: 'request-id',
       reason: '',
     });
-    expect(restore).toHaveBeenCalledWith(ownerId, organizationId, projectId, {
+    expect(restore).toHaveBeenCalledWith(actorId, organizationId, projectId, {
       requestId: 'request-id',
       reason: '',
     });
@@ -149,10 +149,10 @@ describe('ProjectsController', () => {
     await controller.create(principal, { organizationId }, { githubUrl: project.githubUrl }, httpRequest);
     await controller.update(principal, { organizationId, id: projectId }, {}, httpRequest);
 
-    expect(create).toHaveBeenCalledWith(ownerId, organizationId, expect.anything(), {
+    expect(create).toHaveBeenCalledWith(actorId, organizationId, expect.anything(), {
       requestId: 'request-id',
     });
-    expect(update).toHaveBeenCalledWith(ownerId, organizationId, projectId, expect.anything(), {
+    expect(update).toHaveBeenCalledWith(actorId, organizationId, projectId, expect.anything(), {
       requestId: 'request-id',
     });
   });

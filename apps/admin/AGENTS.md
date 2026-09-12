@@ -10,18 +10,18 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Commands
 
-- This is one npm package; use `npm ci` with the committed `package-lock.json`.
+- This is the `@project-forge/admin` pnpm workspace package; use `pnpm install --frozen-lockfile` from the repository root.
 - Admin has no database or authentication implementation of its own. Configure `NEXT_PUBLIC_API_URL` to point at `apps/api`.
-- `npm run dev` and `npm start` use port `5051`.
-- Verification for admin work is `npm run lint`, `npm run typecheck`, `npm run check:admin-client-boundary`, `npm test -- --run`, and `npm run build` for route/configuration changes.
-- `npm run lint` checks the Organization app under `src/app/**/*.{ts,tsx}` together with shared components, servers, hooks, and libraries. Report API and repository-wide checks separately when they are run.
+- `pnpm --filter @project-forge/admin dev` and `pnpm --filter @project-forge/admin start` use port `5051`.
+- Verification for admin work is `pnpm --filter @project-forge/admin lint`, `pnpm --filter @project-forge/admin typecheck`, `pnpm --filter @project-forge/admin check:admin-client-boundary`, `pnpm --filter @project-forge/admin test`, and `pnpm --filter @project-forge/admin build` for route/configuration changes.
+- The admin lint script checks the Organization app under `src/app/**/*.{ts,tsx}` together with shared components, servers, hooks, and libraries. Report API and repository-wide checks separately when they are run.
 - Database migrations and seeds belong to `apps/api`; do not add an ORM, database access, or API routes to this package.
 
 ## Admin Verification
 
-- Every admin task must leave `npm run lint` passing.
-- Run `npm run check:admin-client-boundary` to scan exported function props in admin `"use client"` entry components. Function props must be named `action` or end with `Action`.
-- `npm run typecheck` remains a project-wide TypeScript check.
+- Every admin task must leave `pnpm --filter @project-forge/admin lint` passing.
+- Run `pnpm --filter @project-forge/admin check:admin-client-boundary` to scan exported function props in admin `"use client"` entry components. Function props must be named `action` or end with `Action`.
+- `pnpm --filter @project-forge/admin typecheck` is the Admin package TypeScript check.
 - Next.js client-boundary warnings about function props come from the Next TypeScript plugin, not ESLint or the `tsc --noEmit` script. In `"use client"` entry components, custom function props should use `action` or an `Action` suffix; this naming convention does not turn a function into a Server Action.
 
 ## API Boundary
@@ -43,6 +43,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Run API migrations from the workspace root with `pnpm db:migrate`; the API uses MikroORM migrations under `apps/api/src/database/migrations/`.
 - Run API seed data with `pnpm --filter @project-forge/api db:seed` only when the task explicitly requires seed changes.
+- Run the read-only canonical schema/seed checks with `pnpm db:verify` only after the schema and seed operation has been explicitly approved.
 - Inspect the configured `DATABASE_URL` and migration target before applying schema changes. Never reset or drop the database unless the task explicitly calls for it.
 
 ## Admin And Auth

@@ -11,6 +11,7 @@
     "test": "vitest run",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:generate": "mikro-orm migration:create",
+    "db:verify": "tsx src/database/verify-schema.ts",
     "db:seed": "tsx src/database/seed.ts"
   },
   "dependencies": {

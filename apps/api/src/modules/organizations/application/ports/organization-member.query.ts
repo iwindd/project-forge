@@ -12,11 +12,11 @@ export type OrganizationMemberQueryRecord = {
   name: string;
   email: string | null;
   role: {
-    id: string | null;
+    id: string;
     name: string;
     permissions: OrganizationPermission[];
     isOwner: boolean;
-    legacyRole: OrganizationMemberRole | null;
+    code: OrganizationMemberRole | null;
   };
   status: OrganizationMemberStatus;
   isActive: boolean;

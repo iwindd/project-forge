@@ -16,4 +16,10 @@ describe('audit log labels', () => {
     expect(getAuditActionLabel('FUTURE_ACTION')).toBe('FUTURE_ACTION')
     expect(getAuditResourceTypeLabel('FUTURE_RESOURCE')).toBe('FUTURE_RESOURCE')
   })
+
+  it('does not expose the removed access-request vocabulary as active labels', () => {
+    expect(getAuditActionLabel('ACCESS_APPROVED')).toBe('ACCESS_APPROVED')
+    expect(getAuditActionLabel('ACCESS_REJECTED')).toBe('ACCESS_REJECTED')
+    expect(getAuditResourceTypeLabel('ACCESS_REQUEST')).toBe('ACCESS_REQUEST')
+  })
 })

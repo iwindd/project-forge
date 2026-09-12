@@ -1,19 +1,10 @@
 import { z } from 'zod';
 import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
-import {
-  ORGANIZATION_PERMISSIONS,
-  OrganizationMemberRole,
-} from '../../domain/organization.js';
+import { ORGANIZATION_PERMISSIONS } from '../../domain/organization.js';
 
 export const updateOrganizationSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
 });
-const legacyMemberRoleSchema = z.enum([
-  OrganizationMemberRole.OWNER,
-  OrganizationMemberRole.ADMIN,
-  OrganizationMemberRole.MEMBER,
-]);
-
 const organizationRoleNameSchema = z
   .string()
   .trim()
@@ -29,14 +20,9 @@ const organizationRolePermissionsSchema = z
   )
   .max(2, 'ไม่สามารถเลือกสิทธิ์ซ้ำได้');
 
-export const updateMemberRoleSchema = z
-  .object({
-    roleId: databaseUuidSchema.optional(),
-    role: legacyMemberRoleSchema.optional(),
-  })
-  .refine((value) => Boolean(value.roleId || value.role), {
-    message: 'A roleId or legacy role is required',
-  });
+export const updateMemberRoleSchema = z.object({
+  roleId: databaseUuidSchema,
+}).strict();
 
 export const createOrganizationRoleSchema = z.object({
   name: organizationRoleNameSchema,
@@ -52,11 +38,8 @@ export const updateMemberStatusSchema = z.object({ active: z.boolean() });
 
 export const createInvitationSchema = z.object({
   email: z.string().trim().email(),
-  roleId: databaseUuidSchema.optional(),
-  role: z
-    .enum([OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER])
-    .default(OrganizationMemberRole.MEMBER),
-});
+  roleId: databaseUuidSchema,
+}).strict();
 
 export const organizationIdParamSchema = z.object({
   id: databaseUuidSchema,
@@ -79,14 +62,10 @@ export const invitationTokenParamSchema = z.object({
 
 export const organizationMembersQuerySchema = z.object({
   search: z.string().trim().max(200).optional(),
-  role: z
-    .enum(['all', 'EDITOR', OrganizationMemberRole.OWNER, OrganizationMemberRole.ADMIN, OrganizationMemberRole.MEMBER])
-    .optional()
-    .default('all'),
   roleId: z.union([z.literal('all'), databaseUuidSchema]).optional(),
   status: z.enum(['active', 'inactive']).optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   pageSize: z.coerce.number().int().min(5).max(100).optional().default(10),
   sortBy: z.enum(['name', 'role', 'createdAt']).optional().default('createdAt'),
   sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
-});
+}).strict();

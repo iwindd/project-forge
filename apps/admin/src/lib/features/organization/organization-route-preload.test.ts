@@ -14,7 +14,7 @@ const organizations = [
       name: 'แอดมิน',
       permissions: ['organization.manage'],
       isOwner: false,
-      legacyRole: 'ADMIN' as const
+      code: 'ADMIN' as const
     },
     status: 'ACTIVE' as const,
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -30,7 +30,7 @@ const organizations = [
       name: 'สมาชิก',
       permissions: [],
       isOwner: false,
-      legacyRole: 'MEMBER' as const
+      code: 'MEMBER' as const
     },
     status: 'ACTIVE' as const,
     createdAt: '2026-01-01T00:00:00.000Z',

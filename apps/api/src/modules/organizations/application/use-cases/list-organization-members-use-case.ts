@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { OrganizationMemberRole } from '../../domain/organization.js';
 import {
   ORGANIZATION_MEMBER_QUERY,
 } from '../ports/organization-member.query.js';
@@ -13,7 +12,6 @@ type OrganizationMember = OrganizationMemberQueryRecord;
 
 export type ListOrganizationMembersQuery = {
   search?: string;
-  role?: 'all' | 'EDITOR' | OrganizationMemberRole;
   roleId?: string;
   status?: 'active' | 'inactive';
   page: number;
@@ -53,20 +51,6 @@ export class ListOrganizationMembersUseCase {
 
     if (query.roleId && query.roleId !== 'all') {
       data = data.filter((member) => member.role.id === query.roleId);
-    } else if (query.role && query.role !== 'all') {
-      const roles: OrganizationMemberRole[] =
-        query.role === 'EDITOR'
-          ? [OrganizationMemberRole.MEMBER]
-          : query.role === 'ADMIN'
-            ? [OrganizationMemberRole.ADMIN, OrganizationMemberRole.OWNER]
-            : query.role === 'OWNER'
-              ? [OrganizationMemberRole.OWNER]
-              : [OrganizationMemberRole.MEMBER];
-      data = data.filter(
-        (member) =>
-          member.role.legacyRole !== null &&
-          roles.includes(member.role.legacyRole),
-      );
     }
 
     if (query.status === 'active') data = data.filter((member) => member.isActive);

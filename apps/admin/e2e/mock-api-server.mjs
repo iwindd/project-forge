@@ -23,7 +23,7 @@ const organization = {
     name: 'Admin',
     permissions: ['organization.manage'],
     isOwner: false,
-    legacyRole: 'ADMIN',
+    code: 'ADMIN',
   },
 };
 const members = [
@@ -48,7 +48,7 @@ const members = [
       name: 'Member',
       permissions: [],
       isOwner: false,
-      legacyRole: 'MEMBER',
+      code: 'MEMBER',
     },
     status: 'ACTIVE',
     isActive: true,

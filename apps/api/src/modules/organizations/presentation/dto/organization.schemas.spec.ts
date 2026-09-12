@@ -1,26 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { OrganizationMemberRole } from '../../domain/organization.js';
 import { createInvitationSchema } from './organization.schemas.js';
 
 describe('createInvitationSchema', () => {
-  it('defaults an omitted invitation role to Member', () => {
-    expect(createInvitationSchema.parse({ email: 'person@example.com' })).toEqual({
+  it('requires a persisted organization role id', () => {
+    expect(createInvitationSchema.parse({
       email: 'person@example.com',
-      role: OrganizationMemberRole.MEMBER,
+      roleId: '550e8400-e29b-41d4-a716-446655440000',
+    })).toEqual({
+      email: 'person@example.com',
+      roleId: '550e8400-e29b-41d4-a716-446655440000',
     });
+    expect(() => createInvitationSchema.parse({ email: 'person@example.com' })).toThrow();
   });
 
-  it('accepts only the assignable built-in invitation roles', () => {
-    expect(
-      createInvitationSchema.parse({
-        email: 'admin@example.com',
-        role: OrganizationMemberRole.ADMIN,
-      }).role,
-    ).toBe(OrganizationMemberRole.ADMIN);
+  it('does not accept the removed role-name compatibility field', () => {
     expect(() =>
       createInvitationSchema.parse({
         email: 'owner@example.com',
-        role: OrganizationMemberRole.OWNER,
+        role: 'OWNER',
+        roleId: '550e8400-e29b-41d4-a716-446655440000',
       }),
     ).toThrow();
   });

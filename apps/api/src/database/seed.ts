@@ -1,33 +1,33 @@
-import { MikroORM } from '@mikro-orm/postgresql'
-import 'dotenv/config'
-import 'reflect-metadata'
-import config from '../../mikro-orm.config.js'
-import { ConnectionOrmEntity } from '../modules/auth/infrastructure/persistence/connection.orm-entity.js'
+import { MikroORM } from '@mikro-orm/postgresql';
+import 'dotenv/config';
+import 'reflect-metadata';
+import config from '../../mikro-orm.config.js';
+import { ConnectionOrmEntity } from '../modules/auth/infrastructure/persistence/connection.orm-entity.js';
 import {
   createOrganizationRole,
   ORGANIZATION_PERMISSIONS,
   OrganizationMemberRole,
   OrganizationMemberStatus,
   OrganizationStatus,
-  OrganizationType
-} from '../modules/organizations/domain/organization.js'
-import { OrganizationMemberOrmEntity } from '../modules/organizations/infrastructure/persistence/organization-member.orm-entity.js'
-import { OrganizationRoleOrmEntity } from '../modules/organizations/infrastructure/persistence/organization-role.orm-entity.js'
-import { OrganizationOrmEntity } from '../modules/organizations/infrastructure/persistence/organization.orm-entity.js'
-import { AccessStatus, UserRole } from '../modules/users/domain/user.js'
-import { ProfileOrmEntity } from '../modules/users/infrastructure/persistence/profile.orm-entity.js'
-import { UserOrmEntity } from '../modules/users/infrastructure/persistence/user.orm-entity.js'
+  OrganizationType,
+} from '../modules/organizations/domain/organization.js';
+import { OrganizationMemberOrmEntity } from '../modules/organizations/infrastructure/persistence/organization-member.orm-entity.js';
+import { OrganizationRoleOrmEntity } from '../modules/organizations/infrastructure/persistence/organization-role.orm-entity.js';
+import { OrganizationOrmEntity } from '../modules/organizations/infrastructure/persistence/organization.orm-entity.js';
+import { AccessStatus, UserRole } from '../modules/users/domain/user.js';
+import { ProfileOrmEntity } from '../modules/users/infrastructure/persistence/profile.orm-entity.js';
+import { UserOrmEntity } from '../modules/users/infrastructure/persistence/user.orm-entity.js';
 
-const githubUserId = process.env.SEED_ADMIN_GITHUB_ID?.trim()
-if (!githubUserId) throw new Error('SEED_ADMIN_GITHUB_ID is required')
+const githubUserId = process.env.SEED_ADMIN_GITHUB_ID?.trim();
+if (!githubUserId) throw new Error('SEED_ADMIN_GITHUB_ID is required');
 
-const orm = await MikroORM.init(config)
-const em = orm.em.fork()
-let user = await em.findOne(UserOrmEntity, { githubUserId })
+const orm = await MikroORM.init(config);
+const em = orm.em.fork();
+let user = await em.findOne(UserOrmEntity, { githubUserId });
 if (user) {
-  user.role = UserRole.ADMIN
-  user.accessStatus = AccessStatus.APPROVED
-  user.isActive = true
+  user.role = UserRole.ADMIN;
+  user.accessStatus = AccessStatus.APPROVED;
+  user.isActive = true;
 } else {
   user = em.create(UserOrmEntity, {
     githubUserId,
@@ -35,67 +35,58 @@ if (user) {
     name: process.env.SEED_ADMIN_NAME?.trim() || 'Project Forge Admin',
     role: UserRole.ADMIN,
     accessStatus: AccessStatus.APPROVED,
-    isActive: true
-  })
-  em.persist(user)
+    isActive: true,
+  });
+  em.persist(user);
 }
-if (!user) throw new Error('Admin user could not be initialized')
-let profile = await em.findOne(ProfileOrmEntity, { userId: user.id })
+if (!user) throw new Error('Admin user could not be initialized');
+let profile = await em.findOne(ProfileOrmEntity, { userId: user.id });
 if (!profile) {
   profile = em.create(ProfileOrmEntity, {
     userId: user.id,
     displayName: user.name,
-    avatarUrl: user.avatarUrl
-  })
-  em.persist(profile)
+    avatarUrl: user.avatarUrl,
+  });
+  em.persist(profile);
 }
-const organizationName = process.env.SEED_ORGANIZATION_NAME?.trim() || 'Project Forge'
-const organizationSlug = process.env.SEED_ORGANIZATION_SLUG?.trim() || 'project-forge'
-let organization = await em.findOne(OrganizationOrmEntity, { slug: organizationSlug })
+const organizationName = process.env.SEED_ORGANIZATION_NAME?.trim() || 'Project Forge';
+const organizationSlug = process.env.SEED_ORGANIZATION_SLUG?.trim() || 'project-forge';
+let organization = await em.findOne(OrganizationOrmEntity, { slug: organizationSlug });
 if (!organization) {
   organization = em.create(OrganizationOrmEntity, {
-    ownerId: user.id,
     name: organizationName,
     slug: organizationSlug,
     type: OrganizationType.SHARED,
-    status: OrganizationStatus.ACTIVE
-  })
-  em.persist(organization)
-} else if (organization.ownerId !== user.id) {
-  throw new Error('Seed organization is owned by another user')
+    status: OrganizationStatus.ACTIVE,
+  });
+  em.persist(organization);
 }
 const builtInRoles = [
   {
     name: 'เจ้าของ',
-    permissions: [
-      ORGANIZATION_PERMISSIONS.MANAGE,
-      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
-    ],
+    permissions: [ORGANIZATION_PERMISSIONS.MANAGE, ORGANIZATION_PERMISSIONS.MANAGE_PROJECT],
     isOwner: true,
-    legacyRole: OrganizationMemberRole.OWNER
+    code: OrganizationMemberRole.OWNER,
   },
   {
     name: 'แอดมิน',
-    permissions: [
-      ORGANIZATION_PERMISSIONS.MANAGE,
-      ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
-    ],
+    permissions: [ORGANIZATION_PERMISSIONS.MANAGE, ORGANIZATION_PERMISSIONS.MANAGE_PROJECT],
     isOwner: false,
-    legacyRole: OrganizationMemberRole.ADMIN
+    code: OrganizationMemberRole.ADMIN,
   },
   {
     name: 'สมาชิก',
     permissions: [],
     isOwner: false,
-    legacyRole: OrganizationMemberRole.MEMBER
-  }
-] as const
-const roles: OrganizationRoleOrmEntity[] = []
+    code: OrganizationMemberRole.MEMBER,
+  },
+] as const;
+const roles: OrganizationRoleOrmEntity[] = [];
 for (const definition of builtInRoles) {
   let role = await em.findOne(OrganizationRoleOrmEntity, {
     organizationId: organization.id,
-    legacyRole: definition.legacyRole
-  })
+    code: definition.code,
+  });
   if (!role) {
     role = em.create(
       OrganizationRoleOrmEntity,
@@ -104,48 +95,55 @@ for (const definition of builtInRoles) {
         name: definition.name,
         permissions: [...definition.permissions],
         isOwner: definition.isOwner,
-        legacyRole: definition.legacyRole
-      })
-    )
-    em.persist(role)
+        code: definition.code,
+      }),
+    );
+    em.persist(role);
   }
-  roles.push(role)
+  roles.push(role);
 }
-const ownerRole = roles.find(role => role.legacyRole === OrganizationMemberRole.OWNER)
-if (!ownerRole) throw new Error('Seed Owner role could not be initialized')
+const ownerRole = roles.find((role) => role.code === OrganizationMemberRole.OWNER);
+if (!ownerRole) throw new Error('Seed Owner role could not be initialized');
+const existingOwner = await em.findOne(OrganizationMemberOrmEntity, {
+  organizationId: organization.id,
+  roleId: ownerRole.id,
+  status: OrganizationMemberStatus.ACTIVE,
+});
+if (existingOwner && existingOwner.userId !== user.id) {
+  throw new Error('Seed organization already has a different Owner');
+}
 const member = await em.findOne(OrganizationMemberOrmEntity, {
   organizationId: organization.id,
-  userId: user.id
-})
+  userId: user.id,
+});
 if (!member) {
   em.persist(
     em.create(OrganizationMemberOrmEntity, {
       organizationId: organization.id,
       userId: user.id,
-      role: OrganizationMemberRole.OWNER,
       roleId: ownerRole.id,
-      status: OrganizationMemberStatus.ACTIVE
-    })
-  )
-} else if (!member.roleId) {
-  member.roleId = ownerRole.id
-  member.role = OrganizationMemberRole.OWNER
-  em.persist(member)
+      status: OrganizationMemberStatus.ACTIVE,
+    }),
+  );
+} else if (member.roleId !== ownerRole.id || member.status !== OrganizationMemberStatus.ACTIVE) {
+  member.roleId = ownerRole.id;
+  member.status = OrganizationMemberStatus.ACTIVE;
+  em.persist(member);
 }
 const connection = await em.findOne(ConnectionOrmEntity, {
   provider: 'GITHUB',
-  providerAccountId: githubUserId
-})
+  providerAccountId: githubUserId,
+});
 if (!connection) {
   em.persist(
     em.create(ConnectionOrmEntity, {
       userId: user.id,
       provider: 'GITHUB',
       providerAccountId: githubUserId,
-      providerUsername: user.githubLogin
-    })
-  )
+      providerUsername: user.githubLogin,
+    }),
+  );
 }
-await em.flush()
-await orm.close(true)
-console.log(`Admin ready for GitHub user ${githubUserId}`)
+await em.flush();
+await orm.close(true);
+console.log(`Admin ready for GitHub user ${githubUserId}`);

@@ -281,7 +281,7 @@ export class OrganizationsController {
       principal.id,
       organizationId,
       input.email,
-      { roleId: input.roleId, role: input.role },
+      { roleId: input.roleId },
       { requestId: getRequestId(request) },
     );
     return apiSuccess(organizationInvitationResponseSchema.parse({

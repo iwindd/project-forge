@@ -1,6 +1,5 @@
 'use client';
 
-import { useAdminCacheInvalidation } from '@/hooks/use-admin-cache-invalidation';
 import { getBrowserApiErrorMessage } from '@/lib/api/api';
 import { useUpdateProfileMutation } from '@/lib/features/profile/profile-api';
 import { Alert, Button, Group, Stack, TextInput } from '@mantine/core';
@@ -18,7 +17,6 @@ type ProfileNameFormValues = z.infer<typeof profileNameFormSchema>;
 
 export function ProfileNameForm() {
   const { profile, updateProfile } = useProfile();
-  const { invalidateAdminCaches } = useAdminCacheInvalidation();
   const [updateProfileRequest, { isLoading: pending }] = useUpdateProfileMutation();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -44,7 +42,6 @@ export function ProfileNameForm() {
       form.setValues({ name: nextName });
       form.setInitialValues({ name: nextName });
       form.resetDirty();
-      invalidateAdminCaches({ resources: ['users'], organizationId: null });
       setSuccess('บันทึกชื่อสำเร็จ');
     } catch (saveError) {
       setError(getBrowserApiErrorMessage(saveError, 'ไม่สามารถบันทึกชื่อได้'));

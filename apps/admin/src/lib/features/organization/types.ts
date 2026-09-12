@@ -1,11 +1,11 @@
 export type OrganizationMemberRole = 'OWNER' | 'ADMIN' | 'MEMBER'
 
 export type OrganizationRole = {
-  id: string | null
+  id: string
   name: string
   permissions: string[]
   isOwner: boolean
-  legacyRole: OrganizationMemberRole | null
+  code: OrganizationMemberRole | null
 }
 
 export type Organization = {
