@@ -90,23 +90,80 @@ const projects = [
     archivedAt: null,
   },
 ];
-let controlledInvitationAccepted = false;
+const pendingInvitation = {
+  id: '00000000-0000-0000-0000-000000000031',
+  organizationId: organization.id,
+  email: 'invitee@example.test',
+  role: {
+    id: '00000000-0000-0000-0000-000000000003',
+    name: 'Member',
+    permissions: [],
+    isOwner: false,
+    code: 'MEMBER',
+  },
+  status: 'PENDING',
+  expiresAt: '2026-01-08T00:00:00.000Z',
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+const invitationScenarios = new Map();
+const acceptedInvitationTokens = new Set();
+const requestLog = [];
+const auditRecord = {
+  id: '00000000-0000-0000-0000-000000000041',
+  createdAt: '2026-01-03T00:00:00.000Z',
+  action: 'PROJECT_CREATED',
+  resourceType: 'PROJECT',
+  resourceId: projects[0].id,
+  actorRole: 'ADMIN',
+  actor: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.test' },
+  target: null,
+  reason: 'Acceptance fixture',
+  hasBefore: false,
+  hasAfter: true,
+};
 let nextProjectId = 22;
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) });
+const errorEnvelope = (code, message, requestId) =>
+  JSON.stringify({ error: { code, message, details: {}, requestId } });
+const readJson = (req, callback) => {
+  let body = '';
+  req.on('data', (chunk) => {
+    body += chunk;
+  });
+  req.on('end', () => callback(body ? JSON.parse(body) : {}));
+};
+const requestScenario = (req) =>
+  typeof req.headers['x-e2e-scenario'] === 'string' ? req.headers['x-e2e-scenario'] : 'default';
+const invitationScenario = (scenario) => {
+  if (!invitationScenarios.has(scenario)) {
+    invitationScenarios.set(scenario, {
+      invitation: { ...pendingInvitation },
+      token: `initial-${scenario}-token`,
+    });
+  }
+  return invitationScenarios.get(scenario);
+};
 const send = (req, res, status, body) => {
   res.writeHead(status, {
     'content-type': 'application/json',
     'access-control-allow-origin': req.headers.origin ?? '*',
     'access-control-allow-credentials': 'true',
-    'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
-    'access-control-allow-headers': 'content-type',
+    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'access-control-allow-headers': 'content-type,x-e2e-scenario',
   });
   res.end(body);
 };
 
 const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') return send(req, res, 204, '');
-  const path = new URL(req.url, 'http://127.0.0.1').pathname.replace('/api/v1/', '');
+  const requestUrl = new URL(req.url, 'http://127.0.0.1');
+  const path = requestUrl.pathname.replace('/api/v1/', '');
+  const scenario = requestScenario(req);
+  if (requestUrl.pathname === '/__e2e/requests' && req.method === 'GET') {
+    const requestedScenario = requestUrl.searchParams.get('scenario') ?? scenario;
+    return send(req, res, 200, JSON.stringify(requestLog.filter((request) => request.scenario === requestedScenario)));
+  }
+  requestLog.push({ scenario, method: req.method, path: requestUrl.pathname });
   if (path === 'auth/me')
     return send(
       req,
@@ -180,8 +237,11 @@ const server = http.createServer((req, res) => {
     );
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/projects' && req.method === 'GET')
     return send(req, res, 200, envelope(projects.filter((project) => project.organizationId === organization.id)));
-  if (path === 'organizations/00000000-0000-0000-0000-000000000002/projects' && req.method === 'GET')
+  if (path === 'organizations/00000000-0000-0000-0000-000000000002/projects' && req.method === 'GET') {
+    if (scenario === 'project-access-denied')
+      return send(req, res, 403, errorEnvelope('FORBIDDEN', 'Project access is forbidden', 'e2e-project-forbidden'));
     return send(req, res, 200, envelope([]));
+  }
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/projects' && req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => {
@@ -245,47 +305,86 @@ const server = http.createServer((req, res) => {
       );
     return send(req, res, 200, envelope({ project }));
   }
-  if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001')
-    return send(req, res, 200, envelope([], { total: 0, page: 1, pageSize: 25, totalPages: 0 }));
-  if (path === 'organizations/invitations/controlled-no-invitation/accept')
+  if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001') {
+    const records = scenario === 'audit-record' ? [auditRecord] : [];
     return send(
       req,
       res,
-      403,
-      JSON.stringify({
-        error: {
-          code: 'FORBIDDEN',
-          message: 'ผู้ใช้ยังไม่ได้รับคำเชิญเข้า Organization นี้',
-          details: {},
-          requestId: 'e2e-no-invitation',
-        },
-      }),
+      200,
+      envelope(records, { total: records.length, page: 1, pageSize: 25, totalPages: records.length ? 1 : 0 }),
     );
-  if (path === 'organizations/invitations/controlled-one-time-token/accept') {
-    if (controlledInvitationAccepted)
+  }
+  const invitationCollection = path.match(/^organizations\/00000000-0000-0000-0000-000000000001\/invitations$/);
+  if (invitationCollection && req.method === 'GET') {
+    const state = scenario === 'default' ? undefined : invitationScenario(scenario);
+    return send(req, res, 200, envelope(state?.invitation ? [state.invitation] : []));
+  }
+  if (invitationCollection && req.method === 'POST') {
+    return readJson(req, (input) => {
+      const state = invitationScenario(scenario);
+      const previous = state.invitation ?? pendingInvitation;
+      state.invitation = {
+        ...previous,
+        email: input.email ?? previous.email,
+        role: { ...previous.role, id: input.roleId ?? previous.role.id },
+        createdAt: '2026-01-03T00:00:00.000Z',
+        expiresAt: '2026-01-10T00:00:00.000Z',
+        status: 'PENDING',
+      };
+      state.token = `rotated-${scenario}-token`;
+      send(req, res, 200, envelope({ invitation: state.invitation, token: state.token }));
+    });
+  }
+  const invitationResource = path.match(/^organizations\/00000000-0000-0000-0000-000000000001\/invitations\/([^/]+)$/);
+  if (invitationResource && req.method === 'DELETE') {
+    const state = invitationScenarios.get(scenario);
+    if (!state?.invitation || state.invitation.id !== invitationResource[1])
+      return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Invitation was not found', 'e2e-invitation-not-found'));
+    state.invitation = null;
+    return send(req, res, 200, envelope(null));
+  }
+  const invitationAccept = path.match(/^organizations\/invitations\/([^/]+)\/accept$/);
+  if (invitationAccept && req.method === 'POST') {
+    const token = decodeURIComponent(invitationAccept[1]);
+    if (token === 'controlled-no-invitation')
+      return send(req, res, 403, errorEnvelope('FORBIDDEN', 'ผู้ใช้ยังไม่ได้รับคำเชิญเข้า Organization นี้', 'e2e-no-invitation'));
+    if (token === 'controlled-unverified-email')
       return send(
         req,
         res,
         403,
-        JSON.stringify({
-          error: {
-            code: 'FORBIDDEN',
-            message: 'คำเชิญนี้ไม่สามารถใช้ได้',
-            details: {},
-            requestId: 'e2e-one-time-used',
-          },
-        }),
+        errorEnvelope(
+          'FORBIDDEN',
+          'This invitation requires a matching verified GitHub email address',
+          'e2e-controlled-unverified-email',
+        ),
       );
-    controlledInvitationAccepted = true;
-    return send(req, res, 200, envelope({ organization }));
+    if (token === 'controlled-expired-invitation')
+      return send(
+        req,
+        res,
+        409,
+        errorEnvelope('CONFLICT', 'Invitation has expired', 'e2e-controlled-expired-invitation'),
+      );
+    if (token === 'controlled-cancelled-invitation')
+      return send(
+        req,
+        res,
+        404,
+        errorEnvelope(
+          'NOT_FOUND',
+          'Invitation was not found or has already been used',
+          'e2e-controlled-cancelled-invitation',
+        ),
+      );
+    if (token === 'controlled-one-time-token' || token === 'controlled-single-use-invitation') {
+      if (acceptedInvitationTokens.has(token))
+        return send(req, res, 403, errorEnvelope('FORBIDDEN', 'คำเชิญนี้ไม่สามารถใช้ได้', 'e2e-one-time-used'));
+      acceptedInvitationTokens.add(token);
+      return send(req, res, 200, envelope({ organization }));
+    }
+    return send(req, res, 403, errorEnvelope('FORBIDDEN', 'คำเชิญนี้ไม่สามารถใช้ได้', 'e2e'));
   }
-  if (path.startsWith('organizations/invitations/') && path.endsWith('/accept'))
-    return send(
-      req,
-      res,
-      403,
-      JSON.stringify({ error: { code: 'FORBIDDEN', message: 'คำเชิญนี้ไม่สามารถใช้ได้', details: {}, requestId: 'e2e' } }),
-    );
   return send(
     req,
     res,

@@ -6,23 +6,6 @@ const organizationId = '00000000-0000-0000-0000-000000000001';
 const projectsPath = `${apiPrefix}/organizations/${organizationId}/projects`;
 const invitationsPath = `${apiPrefix}/organizations/${organizationId}/invitations`;
 
-const organization = {
-  id: organizationId,
-  slug: 'acme',
-  name: 'Acme Organization',
-  type: 'SHARED',
-  status: 'ACTIVE',
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-02T00:00:00.000Z',
-  role: {
-    id: '00000000-0000-0000-0000-000000000002',
-    name: 'Admin',
-    permissions: ['organization.manage', 'project.manage'],
-    isOwner: false,
-    code: 'ADMIN',
-  },
-};
-
 const demoProject = {
   id: '00000000-0000-0000-0000-000000000021',
   organizationId,
@@ -80,7 +63,10 @@ async function dismissNotification(page: Page, message: string) {
   await expect(notification).toBeHidden();
 }
 
-async function signedIn(page: Page) {
+async function signedIn(page: Page, scenario = 'default') {
+  if (scenario !== 'default') {
+    await page.setExtraHTTPHeaders({ 'x-e2e-scenario': scenario });
+  }
   await page.context().addCookies([
     {
       name: 'pf_session',
@@ -93,7 +79,6 @@ async function signedIn(page: Page) {
 
 async function expectInvitationFailure(page: Page, token: string, status: number, code: string, message: string) {
   const path = `${apiPrefix}/organizations/invitations/${token}/accept`;
-  await page.route(`**${path}`, (route) => fulfillJson(route, errorEnvelope(code, message, `e2e-${token}`), status));
   await page.goto(`/invitations/${token}`);
 
   const join = page.getByRole('button', { name: 'เข้าร่วม' });
@@ -104,6 +89,7 @@ async function expectInvitationFailure(page: Page, token: string, status: number
   await join.click();
   const response = await responsePromise;
   expect(response.status()).toBe(status);
+  expect(await response.json()).toMatchObject({ error: { code, message } });
   await expect(page.getByText('ไม่สามารถเข้าร่วม Organization ได้')).toBeVisible();
   await expect(page.getByText(message)).toBeVisible();
 }
@@ -132,13 +118,7 @@ test('organization navigation preserves the current section when switching organ
 });
 
 test('project creation and archive lifecycle have no agent or repository side effects', async ({ page }) => {
-  await signedIn(page);
-  const apiRequests: string[] = [];
-  page.on('request', (request) => {
-    if (!request.url().includes('/api/v1/')) return;
-    const url = new URL(request.url());
-    apiRequests.push(`${request.method()} ${url.pathname}`);
-  });
+  await signedIn(page, 'project-side-effects');
 
   await page.goto('/acme/projects');
   await expect(page.getByText('Demo Project')).toBeVisible();
@@ -155,8 +135,11 @@ test('project creation and archive lifecycle have no agent or repository side ef
   await expect(page.getByText('Agent-ready project')).toBeVisible();
   await dismissNotification(page, 'สร้างโปรเจกต์แล้ว');
 
+  const diagnostics = await page.request.get(`${apiOrigin}/__e2e/requests`);
+  expect(diagnostics.ok()).toBe(true);
+  const apiRequests = (await diagnostics.json()) as Array<{ method: string; path: string }>;
   const sideEffectRequests = apiRequests.filter((request) =>
-    /\/(?:clone|clones|sandbox|hermes|ai|issues|pulls|pull-requests)(?:\/|$)/i.test(request),
+    /\/(?:clone|clones|sandbox|hermes|ai|issues|pulls|pull-requests)(?:\/|$)/i.test(request.path),
   );
   expect(sideEffectRequests).toEqual([]);
 
@@ -196,6 +179,19 @@ test('project list recovers from a live API failure through the UI retry state',
   expect(calls).toBe(2);
 });
 
+test('project access denial is surfaced for a member outside the organization boundary', async ({ page }) => {
+  await signedIn(page, 'project-access-denied');
+  await page.goto('/beta/projects');
+  await expect(page.getByText('ไม่สามารถโหลดรายการโปรเจกต์ได้')).toBeVisible();
+});
+
+test('organization audit UI renders an actual controlled audit record', async ({ page }) => {
+  await signedIn(page, 'audit-record');
+  await page.goto('/acme/audit-logs');
+  await expect(page.getByText('สร้าง Project')).toBeVisible();
+  await expect(page.getByText('Acceptance fixture')).toBeVisible();
+});
+
 test('verified-email mismatch is rejected before an invitation can be accepted', async ({ page }) => {
   await signedIn(page);
   await expectInvitationFailure(
@@ -224,26 +220,7 @@ test('cancelled invitations are no longer accepted', async ({ page }) => {
 });
 
 test('resending an invitation rotates its token and expiry in the Organization UI', async ({ page }) => {
-  await signedIn(page);
-  let currentInvitation: typeof pendingInvitation | null = { ...pendingInvitation };
-  let requestBody: unknown;
-  await page.route('**/api/v1/**', async (route) => {
-    const request = route.request();
-    const pathname = new URL(request.url()).pathname;
-    if (pathname !== invitationsPath) return route.continue();
-
-    if (request.method() === 'GET') {
-      return fulfillJson(route, envelope(currentInvitation ? [currentInvitation] : []));
-    }
-
-    requestBody = request.postDataJSON();
-    currentInvitation = {
-      ...pendingInvitation,
-      createdAt: '2026-01-03T00:00:00.000Z',
-      expiresAt: '2026-01-10T00:00:00.000Z',
-    };
-    return fulfillJson(route, envelope({ invitation: currentInvitation, token: 'rotated-invitation-token' }));
-  });
+  await signedIn(page, 'invitation-resend');
 
   await page.goto('/acme/settings/members');
   await page.getByRole('tab', { name: 'คำเชิญที่รอดำเนินการ' }).click();
@@ -253,13 +230,13 @@ test('resending an invitation rotates its token and expiry in the Organization U
   );
   await page.getByRole('button', { name: 'ส่งอีกครั้ง' }).click();
   const response = await responsePromise;
-  expect(requestBody).toEqual({
+  expect(response.request().postDataJSON()).toEqual({
     email: pendingInvitation.email,
     roleId: pendingInvitation.role.id,
   });
   expect(await response.json()).toMatchObject({
     data: {
-      token: 'rotated-invitation-token',
+      token: 'rotated-invitation-resend-token',
       invitation: { createdAt: '2026-01-03T00:00:00.000Z', expiresAt: '2026-01-10T00:00:00.000Z' },
     },
   });
@@ -267,20 +244,7 @@ test('resending an invitation rotates its token and expiry in the Organization U
 });
 
 test('cancelling a pending invitation removes it from the Organization UI', async ({ page }) => {
-  await signedIn(page);
-  let currentInvitation: typeof pendingInvitation | null = { ...pendingInvitation };
-  await page.route('**/api/v1/**', async (route) => {
-    const request = route.request();
-    const pathname = new URL(request.url()).pathname;
-    if (pathname === invitationsPath && request.method() === 'GET') {
-      return fulfillJson(route, envelope(currentInvitation ? [currentInvitation] : []));
-    }
-    if (pathname === `${invitationsPath}/${pendingInvitation.id}` && request.method() === 'DELETE') {
-      currentInvitation = null;
-      return fulfillJson(route, envelope(null));
-    }
-    return route.continue();
-  });
+  await signedIn(page, 'invitation-cancel');
   page.on('dialog', (dialog) => dialog.accept());
 
   await page.goto('/acme/settings/members');
@@ -293,17 +257,9 @@ test('cancelling a pending invitation removes it from the Organization UI', asyn
 });
 
 test('an accepted invitation cannot be used a second time', async ({ page }) => {
-  await signedIn(page);
+  await signedIn(page, 'invitation-single-use');
   const token = 'controlled-single-use-invitation';
   const path = `${apiPrefix}/organizations/invitations/${token}/accept`;
-  let uses = 0;
-  await page.route(`**${path}`, async (route) => {
-    uses += 1;
-    if (uses === 1) {
-      return fulfillJson(route, envelope({ organization }));
-    }
-    return fulfillJson(route, errorEnvelope('FORBIDDEN', 'คำเชิญนี้ไม่สามารถใช้ได้', 'e2e-single-use'), 403);
-  });
 
   await page.goto(`/invitations/${token}`);
   const firstResponsePromise = page.waitForResponse(
@@ -318,6 +274,10 @@ test('an accepted invitation cannot be used a second time', async ({ page }) => 
     (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === path,
   );
   await page.getByRole('button', { name: 'เข้าร่วม' }).click();
-  expect((await secondResponsePromise).status()).toBe(403);
+  const secondResponse = await secondResponsePromise;
+  expect(secondResponse.status()).toBe(403);
+  expect(await secondResponse.json()).toMatchObject({
+    error: { code: 'FORBIDDEN', message: 'คำเชิญนี้ไม่สามารถใช้ได้' },
+  });
   await expect(page.getByText('คำเชิญนี้ไม่สามารถใช้ได้')).toBeVisible();
 });
