@@ -9,8 +9,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@mantine/core', () => {
   const element = (tag: string) => {
-    const Component = (props: Record<string, unknown>) =>
-      createElement(tag, props, props.children as never);
+    const Component = (props: Record<string, unknown>) => createElement(tag, props, props.children as never);
     Component.displayName = tag;
     return Component;
   };
@@ -53,8 +52,7 @@ vi.mock('@tabler/icons-react', () => {
 vi.mock('next/link', () => ({ default: 'a' }));
 vi.mock('next/navigation', () => ({ useParams: () => ({ organizationSlug: 'acme' }) }));
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) =>
-    ({ loadFailed: 'Unable to load roles', retry: 'Retry' })[key] ?? key,
+  useTranslations: () => (key: string) => ({ loadFailed: 'Unable to load roles', retry: 'Retry' })[key] ?? key,
 }));
 vi.mock('@/components/page-header', () => ({ PageHeader: () => createElement('header') }));
 vi.mock('@/routes', () => ({ getPath: () => '/roles' }));
