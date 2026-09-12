@@ -40,16 +40,9 @@ export function AppBreadcrumbs({
         const label =
           isCurrent && currentLabel !== undefined
             ? currentLabel
-            : route.name === 'profile'
-              ? nav('profile')
-              : route.name.endsWith('.logging') ||
-                  route.name === 'system.auditLogs'
-                ? nav('auditLogs')
-                : route.name === 'dashboard'
-                  ? nav('dashboard')
-                  : route.name === 'system.users'
-                    ? nav('users')
-                    : route.label
+            : route.name === 'auditLogs'
+              ? nav('auditLogs')
+              : route.label
         // A hidden root has no page of its own, so it never becomes a link.
         const href =
           route.disabled ||

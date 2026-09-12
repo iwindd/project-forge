@@ -109,7 +109,7 @@ export function OrganizationSwitcher() {
         roleId: values.roleId
       }).unwrap()
       setInviteLink(
-        `${window.location.origin}/admin/invitations/${result.token}`
+        `${window.location.origin}/invitations/${result.token}`
       )
       setCopiedInviteLink(false)
       inviteForm.setFieldValue('email', '')

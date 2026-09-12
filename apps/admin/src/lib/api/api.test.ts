@@ -42,7 +42,7 @@ describe('browser API root', () => {
     const replace = vi.fn()
     vi.stubGlobal('window', {
       location: {
-        pathname: '/admin/invitations/invite-token',
+        pathname: '/invitations/invite-token',
         search: '',
         replace
       }
@@ -68,7 +68,7 @@ describe('browser API root', () => {
     expect(dispatch).toHaveBeenCalledWith(setUser(null))
     expect(dispatch).toHaveBeenCalledWith(api.util.resetApiState())
     expect(replace).toHaveBeenCalledWith(
-      '/admin/login?returnTo=%2Fadmin%2Finvitations%2Finvite-token'
+      '/login?returnTo=%2Finvitations%2Finvite-token'
     )
   })
 

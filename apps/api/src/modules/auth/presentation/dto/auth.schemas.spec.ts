@@ -59,8 +59,8 @@ describe('authMeDataSchema', () => {
 
   it('accepts only same-origin paths for OAuth continuation', () => {
     expect(
-      githubStartQuerySchema.parse({ returnTo: '/admin/invitations/token' }),
-    ).toEqual({ returnTo: '/admin/invitations/token' })
+      githubStartQuerySchema.parse({ returnTo: '/invitations/token' }),
+    ).toEqual({ returnTo: '/invitations/token' })
     expect(() => githubStartQuerySchema.parse({ returnTo: 'https://evil.test' })).toThrow()
     expect(() => githubStartQuerySchema.parse({ returnTo: '//evil.test' })).toThrow()
   })

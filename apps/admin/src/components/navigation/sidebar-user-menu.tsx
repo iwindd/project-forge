@@ -30,7 +30,7 @@ export function SidebarUserMenu({ user }: { user: AdminUser }) {
     } finally {
       dispatch(setUser(null))
       resetAllAdminApiCaches()
-      router.push('/admin/login')
+      router.push('/login')
     }
   }
 

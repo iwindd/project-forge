@@ -72,7 +72,7 @@ function routeItem(
   }
 }
 
-export const adminNavigation: AdminNavigationGroup[] = [
+export const organizationNavigation: AdminNavigationGroup[] = [
   {
     id: 'overview',
     label: 'ภาพรวม',
@@ -97,12 +97,13 @@ export const adminNavigation: AdminNavigationGroup[] = [
     ]
   },
   {
-    id: 'system',
-    label: 'ระบบ',
-    labelKey: 'system',
+    id: 'audit',
+    label: 'ประวัติการทำรายการ',
+    labelKey: 'auditLogs',
+    hideHeading: true,
     permissionKey: 'manageOrganization',
     items: [
-      routeItem('system.auditLogs', {
+      routeItem('auditLogs', {
         icon: IconHistory,
         labelKey: 'auditLogs',
         permissionKey: 'manageOrganization'

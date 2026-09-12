@@ -1,18 +1,65 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const expectedAcmeMembersPath = '/api/v1/organizations/00000000-0000-0000-0000-000000000001/members';
+const scopedMembers = [
+  {
+    id: '00000000-0000-0000-0000-000000000011',
+    membershipId: '00000000-0000-0000-0000-000000000111',
+    name: 'Scoped Admin',
+    email: 'admin@example.test',
+    role: {
+      id: '00000000-0000-0000-0000-000000000002',
+      name: 'Admin',
+      permissions: ['organization.manage'],
+      isOwner: false,
+      legacyRole: 'ADMIN',
+    },
+    status: 'ACTIVE',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000012',
+    membershipId: '00000000-0000-0000-0000-000000000112',
+    name: 'Scoped Editor',
+    email: 'editor@example.test',
+    role: {
+      id: '00000000-0000-0000-0000-000000000003',
+      name: 'Member',
+      permissions: [],
+      isOwner: false,
+      legacyRole: 'MEMBER',
+    },
+    status: 'ACTIVE',
+    isActive: true,
+    createdAt: '2026-01-02T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+  },
+];
 
 async function signedIn(page: Page) {
   await page
     .context()
     .addCookies([{ name: 'pf_session', value: 'controlled-e2e-session', domain: '127.0.0.1', path: '/' }]);
 }
-test('organization users shows loading, scoped users, and retry recovery', async ({ page }) => {
+
+test('anonymous organization requests return to the canonical login route', async ({ page }) => {
+  await page.goto('/acme');
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test('the Organization app sends the legacy System Admin route to login', async ({ page }) => {
+  await page.goto('/admin/users');
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test('organization members use the explicit organization scope', async ({ page }) => {
   await signedIn(page);
   let calls = 0;
   await page.route('**/api/v1/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
-    if (!pathname.endsWith('/members') && !pathname.endsWith('/admin/users')) {
+    if (!pathname.endsWith('/members')) {
       return route.continue();
     }
     calls += 1;
@@ -23,25 +70,8 @@ test('organization users shows loading, scoped users, and retry recovery', async
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        data: [
-          {
-            id: 'user-1',
-            name: 'Scoped Admin',
-            email: 'admin@example.test',
-            role: 'ADMIN',
-            isActive: true,
-            createdAt: '2026-01-01T00:00:00.000Z',
-          },
-          {
-            id: 'user-2',
-            name: 'Scoped Editor',
-            email: 'editor@example.test',
-            role: 'EDITOR',
-            isActive: true,
-            createdAt: '2026-01-02T00:00:00.000Z',
-          },
-        ],
-        meta: { total: 2 },
+        data: scopedMembers,
+        meta: { page: 1, pageSize: 100, total: scopedMembers.length, totalPages: 1 },
       }),
     });
   });
@@ -50,18 +80,18 @@ test('organization users shows loading, scoped users, and retry recovery', async
     if (request.method() === 'GET' && request.url().includes('/api/v1/') && request.url().includes('/members'))
       membersRequestPath = new URL(request.url()).pathname;
   });
-  await page.goto('/acme/users');
+  await page.goto('/acme/settings/members');
   await expect.poll(() => membersRequestPath, { timeout: 30_000 }).toBe(expectedAcmeMembersPath);
-  await expect(page.getByText('กำลังโหลดรายการผู้ใช้งาน...')).toBeVisible();
   await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByText('Scoped Admin')).toBeVisible();
 });
 
-test('organization users recovers after a forced request failure', async ({ page }) => {
+test('organization members recover after a forced request failure', async ({ page }) => {
   await signedIn(page);
   let calls = 0;
   await page.route('**/api/v1/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
-    if (!pathname.endsWith('/members') && !pathname.endsWith('/admin/users')) {
+    if (!pathname.endsWith('/members')) {
       return route.continue();
     }
     calls += 1;
@@ -76,25 +106,8 @@ test('organization users recovers after a forced request failure', async ({ page
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        data: [
-          {
-            id: 'user-1',
-            name: 'Scoped Admin',
-            email: 'admin@example.test',
-            role: 'ADMIN',
-            isActive: true,
-            createdAt: '2026-01-01T00:00:00.000Z',
-          },
-          {
-            id: 'user-2',
-            name: 'Scoped Editor',
-            email: 'editor@example.test',
-            role: 'EDITOR',
-            isActive: true,
-            createdAt: '2026-01-02T00:00:00.000Z',
-          },
-        ],
-        meta: { total: 2 },
+        data: scopedMembers,
+        meta: { page: 1, pageSize: 100, total: scopedMembers.length, totalPages: 1 },
       }),
     });
   });
@@ -103,10 +116,10 @@ test('organization users recovers after a forced request failure', async ({ page
     if (request.method() === 'GET' && request.url().includes('/api/v1/') && request.url().includes('/members'))
       membersRequestPath = new URL(request.url()).pathname;
   });
-  await page.goto('/acme/users');
+  await page.goto('/acme/settings/members');
   await expect.poll(() => membersRequestPath, { timeout: 30_000 }).toBe(expectedAcmeMembersPath);
   await expect.poll(() => calls, { timeout: 30_000 }).toBe(1);
-  await expect(page.getByText('ไม่สามารถโหลดรายการผู้ใช้งานได้')).toBeVisible();
+  await expect(page.getByText('ไม่สามารถโหลดข้อมูลสมาชิกได้')).toBeVisible();
   const retry = page.getByRole('button', { name: 'ลองใหม่' });
   await expect(retry).toBeVisible();
   await retry.click();
@@ -145,7 +158,7 @@ test('controlled audit state and rejected invitation boundary are visible', asyn
       }),
     });
   });
-  await page.goto('/admin/invitations/controlled-invalid-token');
+  await page.goto('/invitations/controlled-invalid-token');
   const join = page.getByRole('button', { name: 'เข้าร่วม' });
   await expect(join).toBeEnabled();
   let rejectedResponseSeen = false;
@@ -165,7 +178,7 @@ test('controlled audit state and rejected invitation boundary are visible', asyn
 
 test('authenticated user without an invitation sees a controlled access denial', async ({ page }) => {
   await signedIn(page);
-  await page.goto('/admin/invitations/controlled-no-invitation');
+  await page.goto('/invitations/controlled-no-invitation');
   const join = page.getByRole('button', { name: 'เข้าร่วม' });
   await expect(join).toBeEnabled();
   let deniedResponse: { status: number; requestId?: string } | undefined;
@@ -187,7 +200,7 @@ test('authenticated user without an invitation sees a controlled access denial',
 
 test('invited user accepts a controlled one-time invitation and enters the organization', async ({ page }) => {
   await signedIn(page);
-  await page.goto('/admin/invitations/controlled-one-time-token');
+  await page.goto('/invitations/controlled-one-time-token');
   const join = page.getByRole('button', { name: 'เข้าร่วม' });
   await expect(join).toBeEnabled();
   let acceptedResponseStatus: number | undefined;

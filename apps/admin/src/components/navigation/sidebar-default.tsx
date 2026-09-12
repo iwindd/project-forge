@@ -23,8 +23,7 @@ export default function SidebarDefault({
   navigationMode?: SidebarNavigationMode
   onNavigateAction?: () => void
 }) {
-  const showBackButton =
-    navigationMode === 'account' || navigationMode === 'admin'
+  const showBackButton = navigationMode === 'account'
   const viewportRef = useRef<HTMLDivElement>(null)
   const scrollbar = useScrollbarVisibility()
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ''}`

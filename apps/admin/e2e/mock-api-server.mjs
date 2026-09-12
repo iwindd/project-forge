@@ -26,22 +26,34 @@ const organization = {
     legacyRole: 'ADMIN',
   },
 };
-const users = [
+const members = [
   {
-    id: 'user-1',
+    id: '00000000-0000-0000-0000-000000000011',
+    membershipId: '00000000-0000-0000-0000-000000000111',
     name: 'Scoped Admin',
     email: 'admin@example.test',
-    role: 'ADMIN',
+    role: organization.role,
+    status: 'ACTIVE',
     isActive: true,
     createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
   },
   {
-    id: 'user-2',
+    id: '00000000-0000-0000-0000-000000000012',
+    membershipId: '00000000-0000-0000-0000-000000000112',
     name: 'Scoped Editor',
     email: 'editor@example.test',
-    role: 'EDITOR',
+    role: {
+      id: '00000000-0000-0000-0000-000000000003',
+      name: 'Member',
+      permissions: [],
+      isOwner: false,
+      legacyRole: 'MEMBER',
+    },
+    status: 'ACTIVE',
     isActive: true,
     createdAt: '2026-01-02T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
   },
 ];
 let controlledInvitationAccepted = false;
@@ -114,7 +126,12 @@ const server = http.createServer((req, res) => {
     });
   }
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/members')
-    return send(req, res, 200, envelope(users, { total: users.length }));
+    return send(
+      req,
+      res,
+      200,
+      envelope(members, { page: 1, pageSize: 100, total: members.length, totalPages: 1 }),
+    );
   if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001')
     return send(req, res, 200, envelope([], { total: 0, page: 1, pageSize: 25, totalPages: 0 }));
   if (path === 'organizations/invitations/controlled-no-invitation/accept')

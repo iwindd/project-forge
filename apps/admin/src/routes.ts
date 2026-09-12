@@ -1,6 +1,6 @@
 import { buildRouteUtility, ROUTER } from './lib/routing'
 
-const adminRoutes = ROUTER({
+const organizationAppRoutes = ROUTER({
   overview: {
     path: '/:organizationSlug',
     label: 'ภาพรวม',
@@ -29,40 +29,15 @@ const adminRoutes = ROUTER({
       }
     }
   },
-  profile: {
-    path: '/:organizationSlug/profile',
-    label: 'โปรไฟล์',
-    navigationLabelKey: 'profile',
-    children: {
-      logging: {
-        path: '/:organizationSlug/profile/logging',
-        label: 'ประวัติการทำรายการ',
-        navigationLabelKey: 'auditLogs'
-      }
-    }
-  },
   login: {
-    path: '/admin/login',
+    path: '/login',
     label: 'เข้าสู่ระบบ'
   },
-  system: {
-    path: '/:organizationSlug/system',
-    label: 'ระบบ',
-    hiddenBreadcrumb: true,
-    children: {
-      users: {
-        path: '/:organizationSlug/users',
-        label: 'ผู้ใช้งาน',
-        navigationLabelKey: 'users',
-        permission: 'manageUsers'
-      },
-      auditLogs: {
-        path: '/:organizationSlug/audit-logs',
-        label: 'ประวัติการทำรายการ',
-        navigationLabelKey: 'auditLogs',
-        permission: 'manageOrganization'
-      }
-    }
+  auditLogs: {
+    path: '/:organizationSlug/audit-logs',
+    label: 'ประวัติการทำรายการ',
+    navigationLabelKey: 'auditLogs',
+    permission: 'manageOrganization'
   },
   settings: {
     path: '/:organizationSlug/settings',
@@ -99,4 +74,4 @@ const adminRoutes = ROUTER({
 })
 
 export const { getRoute, getPath, findRouteTrail } =
-  buildRouteUtility(adminRoutes)
+  buildRouteUtility(organizationAppRoutes)
