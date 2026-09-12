@@ -24,7 +24,7 @@ export default defineConfig({
       timeout: 120_000,
       env: {
         NEXT_PUBLIC_API_URL: 'http://127.0.0.1:5052',
-        HOSTNAME: '127.0.0.1',
+        HOSTNAME: '0.0.0.0',
         PORT: '5051',
       },
     },
