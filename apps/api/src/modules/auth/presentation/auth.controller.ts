@@ -58,7 +58,7 @@ export class AuthController {
     @Inject(SECURITY_LOGGER) private readonly security: SecurityLogPort
   ) {}
 
-  private adminRedirect(path: string) {
+  private appRedirect(path: string) {
     return new URL(path, this.config.adminOrigin).toString()
   }
 
@@ -103,7 +103,7 @@ export class AuthController {
         code: 'INVALID_OAUTH_STATE',
       })
       return response.redirect(
-        this.adminRedirect('/admin/login?error=invalid_oauth_state')
+        this.appRedirect('/login?error=invalid_oauth_state')
       )
     }
     const returnToResult = githubReturnToSchema.safeParse(
@@ -128,7 +128,7 @@ export class AuthController {
       const destination = returnTo ?? (result.organizationSlug
         ? `/${encodeURIComponent(result.organizationSlug)}`
         : '/account')
-      return response.redirect(this.adminRedirect(destination))
+      return response.redirect(this.appRedirect(destination))
     } catch (error) {
       await recordSecurityFailure(this.security, {
         request,
@@ -139,8 +139,8 @@ export class AuthController {
       const message =
         error instanceof Error ? error.message : 'github_login_failed'
       return response.redirect(
-        this.adminRedirect(
-          `/admin/login?error=${encodeURIComponent(message.slice(0, 120))}`
+        this.appRedirect(
+          `/login?error=${encodeURIComponent(message.slice(0, 120))}`
         )
       )
     }

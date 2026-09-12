@@ -5,7 +5,7 @@ import {
 } from '@/hooks'
 import {
   accountNavigation,
-  adminNavigation,
+  organizationNavigation,
   type AdminNavigationGroup,
   type AdminNavigationItem
 } from '@/lib/navigation'
@@ -16,7 +16,7 @@ import type { RouteParams } from '@/lib/routing'
 export type NavItem = AdminNavigationItem
 export type NavGroup = AdminNavigationGroup
 export type NavLinkHref = string
-export type SidebarNavigationMode = 'app' | 'admin' | 'account'
+export type SidebarNavigationMode = 'app' | 'account'
 
 type PermissionCheck = (
   keys: PermissionKey | readonly PermissionKey[],
@@ -57,7 +57,7 @@ function filterNavGroups(
 function useFilteredNavGroups(): NavGroup[] {
   const { can } = usePermissions()
 
-  return filterNavGroups(adminNavigation, can)
+  return filterNavGroups(organizationNavigation, can)
 }
 
 export function useNavigationGroups(
@@ -69,7 +69,7 @@ export function useNavigationGroups(
     return accountNavigation
   }
 
-  return mode === 'admin' ? [] : adminGroups
+  return adminGroups
 }
 
 export function getNavItems(groups: NavGroup[]) {

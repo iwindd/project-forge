@@ -19,7 +19,7 @@ export default defineConfig({
     },
     {
       command: 'pnpm build && node e2e/prepare-standalone.mjs && node .next/standalone/apps/admin/server.js',
-      url: 'http://127.0.0.1:5051/admin/login',
+      url: 'http://127.0.0.1:5051/login',
       reuseExistingServer: false,
       timeout: 120_000,
       env: {

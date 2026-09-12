@@ -29,13 +29,13 @@ describe('AuthController', () => {
     )
 
     controller.start(
-      { returnTo: '/admin/invitations/invite-token' },
+      { returnTo: '/invitations/invite-token' },
       response as never
     )
 
     expect(response.cookie).toHaveBeenCalledWith(
       'pf_oauth_return_to',
-      '/admin/invitations/invite-token',
+      '/invitations/invite-token',
       expect.objectContaining({ httpOnly: true })
     )
   })
@@ -70,14 +70,14 @@ describe('AuthController', () => {
       {
         headers: {
           cookie:
-            'pf_oauth_state=expected-state; pf_oauth_return_to=%2Fadmin%2Finvitations%2Finvite-token'
+            'pf_oauth_state=expected-state; pf_oauth_return_to=%2Finvitations%2Finvite-token'
         }
       } as never,
       response as never
     )
 
     expect(response.redirect).toHaveBeenCalledWith(
-      'http://localhost:5051/admin/invitations/invite-token'
+      'http://localhost:5051/invitations/invite-token'
     )
     expect(response.cookie).toHaveBeenCalledWith(
       'pf_session',
@@ -112,7 +112,7 @@ describe('AuthController', () => {
     )
 
     expect(response.redirect).toHaveBeenCalledWith(
-      'http://localhost:5051/admin/login?error=invalid_oauth_state'
+      'http://localhost:5051/login?error=invalid_oauth_state'
     )
     expect(security.record).toHaveBeenCalledWith({
       organizationId: null,
@@ -155,7 +155,7 @@ describe('AuthController', () => {
     )
 
     expect(response.redirect).toHaveBeenCalledWith(
-      'http://localhost:5051/admin/login?error=provider%20failure%20oauth-secret'
+      'http://localhost:5051/login?error=provider%20failure%20oauth-secret'
     )
     expect(security.record).toHaveBeenCalledWith({
       organizationId: null,
