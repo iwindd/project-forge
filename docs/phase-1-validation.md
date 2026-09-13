@@ -21,6 +21,7 @@ pnpm --filter @project-forge/admin check:admin-client-boundary
 pnpm --filter @project-forge/admin check:ui-i18n
 pnpm --filter @project-forge/admin build
 git diff --check
+git diff --check main...HEAD
 ```
 
 The pull-request workflow runs the same API and Admin gates, installs Chromium, and runs the
@@ -38,8 +39,8 @@ The final local run for Issue #8 on 2026-09-13 produced these results:
 | API typecheck and build | Passed |
 | Admin typecheck, build, client-boundary, and UI i18n checks | Passed |
 | API and Admin lint | Passed; API reported 52 pre-existing Biome warnings and no errors |
-| Browser acceptance | 20 tests passed with the standalone Next.js server and controlled HTTP fixture |
-| Whitespace check | `git diff --check` passed |
+| Browser acceptance | 19 tests passed with the standalone Next.js server and controlled HTTP fixture |
+| Whitespace check | Working tree and `main...HEAD` review range passed |
 | Database migration/seed/verification | Not run; no explicit database approval was provided |
 
 The browser result is controlled fixture evidence. It does not assert production OAuth, GitHub,
@@ -71,9 +72,13 @@ fixture. The suite covers:
 - Organization route navigation and organization switching.
 - Organization member loading, retry/error states, audit empty state, and profile feedback.
 - Project list, create, archive, restore, retry state, explicit organization scope, and the
-  absence of clone, sandbox, Hermes, AI, Issue, or Pull Request requests.
+  absence of clone, sandbox, Hermes, AI, Issue, or Pull Request requests. The controlled fixture
+  records request paths from both browser and server-side fetches for this assertion.
 - Invitation denial without an invitation, invalid or mismatched verified email, expiry,
-  cancellation, resend token/expiry rotation, acceptance, and single-use rejection.
+  cancellation, resend token/expiry rotation, acceptance, membership creation, and single-use
+  rejection. Resend and cancellation checks assert the fixture's persisted invitation state.
+- Cross-organization project resource denial based on project ownership, plus audit rows generated
+  by the project create/archive/restore mutations.
 
 Run it locally with:
 
