@@ -40,6 +40,7 @@ if (user) {
   em.persist(user);
 }
 if (!user) throw new Error('Admin user could not be initialized');
+await em.flush();
 let profile = await em.findOne(ProfileOrmEntity, { userId: user.id });
 if (!profile) {
   profile = em.create(ProfileOrmEntity, {
@@ -61,6 +62,7 @@ if (!organization) {
   });
   em.persist(organization);
 }
+await em.flush();
 const builtInRoles = [
   {
     name: 'เจ้าของ',

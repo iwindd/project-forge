@@ -1,5 +1,6 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../../common/database/database.module.js';
 import { SecurityModule } from '../../common/security/security.module.js';
 import { AuditModule } from '../../common/audit/audit.module.js';
 import { AuthModule } from '../auth/auth.module.js';
@@ -9,7 +10,7 @@ import { UserOrmEntity } from '../users/infrastructure/persistence/user.orm-enti
 import { ProfileController } from './presentation/profile.controller.js';
 
 @Module({
-  imports: [AuthModule, AuditModule, MikroOrmModule.forFeature([UserOrmEntity, ConnectionOrmEntity]), SecurityModule],
+  imports: [AuthModule, AuditModule, DatabaseModule, MikroOrmModule.forFeature([UserOrmEntity, ConnectionOrmEntity]), SecurityModule],
   controllers: [ProfileController],
   providers: [ProfileConnectionRepository],
 })

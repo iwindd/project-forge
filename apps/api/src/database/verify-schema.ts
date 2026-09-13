@@ -291,7 +291,7 @@ async function verifySchema() {
       connection,
       `select id
        from users
-       where github_user_id = $1
+       where github_user_id = ?
          and role = 'ADMIN'
          and access_status = 'APPROVED'
          and is_active = true;`,
@@ -308,7 +308,7 @@ async function verifySchema() {
       `select r.code
        from organization_roles r
        join organizations o on o.id = r.organization_id
-       where o.slug = $1 and r.code in ('OWNER', 'ADMIN', 'MEMBER');`,
+       where o.slug = ? and r.code in ('OWNER', 'ADMIN', 'MEMBER');`,
       [seedOrganizationSlug],
     );
     const seededRoleCodes = new Set(seededRoleRows.map((row) => row.code));
@@ -332,10 +332,10 @@ async function verifySchema() {
       `select o.id
        from organizations o
        join organization_members m
-         on m.organization_id = o.id and m.user_id = $1 and m.status = 'ACTIVE'
+         on m.organization_id = o.id and m.user_id = ? and m.status = 'ACTIVE'
        join organization_roles r
          on r.organization_id = m.organization_id and r.id = m.role_id and r.code = 'OWNER'
-       where o.slug = $2;`,
+       where o.slug = ?;`,
       [seedUserId, seedOrganizationSlug],
     );
     if (seededOwners.length !== 1) {
@@ -348,7 +348,7 @@ async function verifySchema() {
       connection,
       `select id
        from connections
-       where user_id = $1 and provider = 'GITHUB' and provider_account_id = $2;`,
+       where user_id = ? and provider = 'GITHUB' and provider_account_id = ?;`,
       [seedUserId, seedGithubUserId],
     );
     if (seededConnections.length !== 1) {

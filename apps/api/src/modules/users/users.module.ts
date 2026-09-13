@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../common/audit/audit.module.js';
 import { DatabaseModule } from '../../common/database/database.module.js';
+import { SecurityModule } from '../../common/security/security.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ChangeUserNameUseCase } from './application/use-cases/change-user-name-use-case.js';
 import { ChangeUserRoleUseCase } from './application/use-cases/change-user-role-use-case.js';
@@ -11,7 +12,7 @@ import { RevokeUserSessionsUseCase } from './application/use-cases/revoke-user-s
 import { UsersController } from './presentation/users.controller.js';
 
 @Module({
-  imports: [AuthModule, DatabaseModule, AuditModule],
+  imports: [AuthModule, DatabaseModule, AuditModule, SecurityModule],
   controllers: [UsersController],
   providers: [
     ListUsersUseCase,

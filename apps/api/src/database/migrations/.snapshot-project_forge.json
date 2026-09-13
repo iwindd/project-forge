@@ -258,7 +258,47 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "audit_logs_actor_id_fk": {
+          "columnNames": [
+            "actor_id"
+          ],
+          "constraintName": "audit_logs_actor_id_fk",
+          "localTableName": "public.audit_logs",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        },
+        "audit_logs_organization_id_fk": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "audit_logs_organization_id_fk",
+          "localTableName": "public.audit_logs",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organizations",
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        },
+        "audit_logs_target_user_id_fk": {
+          "columnNames": [
+            "target_user_id"
+          ],
+          "constraintName": "audit_logs_target_user_id_fk",
+          "localTableName": "public.audit_logs",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        }
+      },
       "comment": null
     },
     {
@@ -516,7 +556,21 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "connections_user_id_users_fk": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "connections_user_id_users_fk",
+          "localTableName": "public.connections",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -649,7 +703,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "unique": false,
+          "unique": true,
           "length": null,
           "precision": null,
           "scale": null,
@@ -730,22 +784,24 @@
         },
         {
           "columnNames": [
+            "organization_id",
+            "lower(email)"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "organization_invitations_pending_organization_email_unique",
+          "primary": false,
+          "unique": true,
+          "expression": "CREATE UNIQUE INDEX organization_invitations_pending_organization_email_unique ON public.organization_invitations USING btree (organization_id, lower(email)) WHERE (status = 'PENDING'::text)"
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
           "constraint": true,
           "keyName": "organization_invitations_pkey",
           "primary": true,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "token_hash"
-          ],
-          "composite": false,
-          "constraint": true,
-          "keyName": "organization_invitations_token_hash_unique",
-          "primary": false,
           "unique": true
         },
         {
@@ -767,8 +823,74 @@
           "columnName": "status"
         }
       ],
-      "triggers": [],
-      "foreignKeys": {},
+      "triggers": [
+        {
+          "name": "organization_invitations_role_guard",
+          "timing": "before",
+          "events": [
+            "insert",
+            "update"
+          ],
+          "forEach": "row",
+          "body": ""
+        }
+      ],
+      "foreignKeys": {
+        "organization_invitations_accepted_by_fk": {
+          "columnNames": [
+            "accepted_by"
+          ],
+          "constraintName": "organization_invitations_accepted_by_fk",
+          "localTableName": "public.organization_invitations",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        },
+        "organization_invitations_invited_by_fk": {
+          "columnNames": [
+            "invited_by"
+          ],
+          "constraintName": "organization_invitations_invited_by_fk",
+          "localTableName": "public.organization_invitations",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        },
+        "organization_invitations_organization_id_fk": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "organization_invitations_organization_id_fk",
+          "localTableName": "public.organization_invitations",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organizations",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        },
+        "organization_invitations_organization_role_fk": {
+          "columnNames": [
+            "organization_id",
+            "role_id"
+          ],
+          "constraintName": "organization_invitations_organization_role_fk",
+          "localTableName": "public.organization_invitations",
+          "referencedColumnNames": [
+            "organization_id",
+            "id"
+          ],
+          "referencedTableName": "public.organization_roles",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        }
+      },
       "comment": null
     },
     {
@@ -953,8 +1075,62 @@
           "columnName": "status"
         }
       ],
-      "triggers": [],
-      "foreignKeys": {},
+      "triggers": [
+        {
+          "name": "organization_members_owner_guard",
+          "timing": "before",
+          "events": [
+            "delete",
+            "insert",
+            "update"
+          ],
+          "forEach": "row",
+          "body": ""
+        }
+      ],
+      "foreignKeys": {
+        "organization_members_organization_id_fk": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "organization_members_organization_id_fk",
+          "localTableName": "public.organization_members",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organizations",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        },
+        "organization_members_organization_role_fk": {
+          "columnNames": [
+            "organization_id",
+            "role_id"
+          ],
+          "constraintName": "organization_members_organization_role_fk",
+          "localTableName": "public.organization_members",
+          "referencedColumnNames": [
+            "organization_id",
+            "id"
+          ],
+          "referencedTableName": "public.organization_roles",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        },
+        "organization_members_user_id_fk": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "organization_members_user_id_fk",
+          "localTableName": "public.organization_members",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -1112,6 +1288,17 @@
         },
         {
           "columnNames": [
+            "organization_id",
+            "id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "organization_roles_organization_id_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
             "organization_id"
           ],
           "composite": false,
@@ -1142,9 +1329,47 @@
           "unique": true
         }
       ],
-      "checks": [],
-      "triggers": [],
-      "foreignKeys": {},
+      "checks": [
+        {
+          "name": "organization_roles_code_check",
+          "expression": "(code IS NULL) OR (code = ANY (ARRAY['OWNER'::text, 'ADMIN'::text, 'MEMBER'::text]))",
+          "definition": "CHECK (((code IS NULL) OR (code = ANY (ARRAY['OWNER'::text, 'ADMIN'::text, 'MEMBER'::text]))))",
+          "columnName": "code"
+        },
+        {
+          "name": "organization_roles_owner_code_check",
+          "expression": "(is_owner AND (code = 'OWNER'::text)) OR ((NOT is_owner) AND (code IS DISTINCT FROM 'OWNER'::text))",
+          "definition": "CHECK (((is_owner AND (code = 'OWNER'::text)) OR ((NOT is_owner) AND (code IS DISTINCT FROM 'OWNER'::text))))",
+          "columnName": "code"
+        }
+      ],
+      "triggers": [
+        {
+          "name": "organization_roles_ownership_guard",
+          "timing": "before",
+          "events": [
+            "insert",
+            "update"
+          ],
+          "forEach": "row",
+          "body": ""
+        }
+      ],
+      "foreignKeys": {
+        "organization_roles_organization_id_fk": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "organization_roles_organization_id_fk",
+          "localTableName": "public.organization_roles",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organizations",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        }
+      },
       "comment": null
     },
     {
@@ -1287,16 +1512,6 @@
           "constraint": true,
           "keyName": "organizations_pkey",
           "primary": true,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "slug"
-          ],
-          "composite": false,
-          "constraint": true,
-          "keyName": "organizations_slug_unique",
-          "primary": false,
           "unique": true
         },
         {
@@ -1499,21 +1714,25 @@
           "keyName": "profiles_user_id_unique",
           "primary": false,
           "unique": true
-        },
-        {
-          "columnNames": [
-            "user_id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "keyName": "profiles_user_id_unique",
-          "primary": false,
-          "unique": true
         }
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "profiles_user_id_users_fk": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "profiles_user_id_users_fk",
+          "localTableName": "public.profiles",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -1805,7 +2024,21 @@
         }
       ],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "projects_organization_id_fk": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "projects_organization_id_fk",
+          "localTableName": "public.projects",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organizations",
+          "updateRule": "cascade",
+          "deleteRule": "restrict"
+        }
+      },
       "comment": null
     },
     {
@@ -1966,7 +2199,21 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "sessions_user_id_users_fk": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "sessions_user_id_users_fk",
+          "localTableName": "public.sessions",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
       "comment": null
     },
     {
@@ -2163,7 +2410,34 @@
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "user_security_logs_organization_id_fk": {
+          "columnNames": [
+            "organization_id"
+          ],
+          "constraintName": "user_security_logs_organization_id_fk",
+          "localTableName": "public.user_security_logs",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organizations",
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        },
+        "user_security_logs_user_id_fk": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "user_security_logs_user_id_fk",
+          "localTableName": "public.user_security_logs",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.users",
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        }
+      },
       "comment": null
     },
     {
