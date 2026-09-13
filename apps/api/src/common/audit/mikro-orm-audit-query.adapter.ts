@@ -1,4 +1,4 @@
-import type { EntityManager, FilterQuery } from '@mikro-orm/core';
+import { EntityManager, type FilterQuery } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { AuditLogOrmEntity } from './audit-log.orm-entity.js';
 import type {

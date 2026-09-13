@@ -1,18 +1,18 @@
-import { z } from 'zod'
-import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js'
+import { z } from 'zod';
+import { databaseUuidSchema } from '../../../../common/http/database-uuid.schema.js';
 
 const auditLogUserSummarySchema = z.object({
   id: databaseUuidSchema,
   name: z.string(),
-  email: z.string()
-})
+  email: z.string(),
+});
 
 const auditLogPaginationMetaSchema = z.object({
   total: z.number().int().nonnegative(),
   page: z.number().int().positive(),
   pageSize: z.number().int().positive(),
-  totalPages: z.number().int().nonnegative()
-})
+  totalPages: z.number().int().nonnegative(),
+});
 
 export const auditLogListItemResponseSchema = z.object({
   id: databaseUuidSchema,
@@ -25,13 +25,13 @@ export const auditLogListItemResponseSchema = z.object({
   target: auditLogUserSummarySchema.nullable(),
   reason: z.string().nullable(),
   hasBefore: z.boolean(),
-  hasAfter: z.boolean()
-})
+  hasAfter: z.boolean(),
+});
 
 export const auditLogListResponseSchema = z.object({
   data: z.array(auditLogListItemResponseSchema),
-  meta: auditLogPaginationMetaSchema
-})
+  meta: auditLogPaginationMetaSchema,
+});
 
 const securityLogResponseSchema = z.object({
   id: databaseUuidSchema,
@@ -42,13 +42,13 @@ const securityLogResponseSchema = z.object({
   ipAddress: z.string().nullable(),
   userAgent: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
-  createdAt: z.string().min(1)
-})
+  createdAt: z.string().min(1),
+});
 
 export const securityLogListResponseSchema = z.object({
   data: z.array(securityLogResponseSchema),
-  meta: auditLogPaginationMetaSchema
-})
+  meta: auditLogPaginationMetaSchema,
+});
 
 const auditLogExportDataSchema = z.object({
   id: databaseUuidSchema,
@@ -62,9 +62,9 @@ const auditLogExportDataSchema = z.object({
   afterJson: z.record(z.string(), z.unknown()).nullable(),
   reason: z.string().nullable(),
   requestId: z.string().nullable(),
-  createdAt: z.string().min(1)
-})
+  createdAt: z.string().min(1),
+});
 
 export const auditLogExportResponseSchema = z.object({
-  data: auditLogExportDataSchema
-})
+  data: auditLogExportDataSchema,
+});

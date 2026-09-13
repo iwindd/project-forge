@@ -33,10 +33,6 @@ import { USER_REPOSITORY } from '../../modules/users/application/ports/user.repo
     { provide: SESSION_REPOSITORY, useClass: MikroOrmSessionRepository },
     { provide: PROJECT_REPOSITORY, useClass: MikroOrmProjectRepository },
   ],
-  exports: [
-    USER_REPOSITORY,
-    SESSION_REPOSITORY,
-    PROJECT_REPOSITORY,
-  ],
+  exports: [USER_REPOSITORY, SESSION_REPOSITORY, PROJECT_REPOSITORY],
 })
 export class PersistenceModule {}

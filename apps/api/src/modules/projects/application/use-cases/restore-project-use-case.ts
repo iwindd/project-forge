@@ -18,12 +18,7 @@ export class RestoreProjectUseCase {
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
   ) {}
 
-  execute(
-    actorId: string,
-    organizationId: string,
-    id: string,
-    options: { requestId?: string; reason?: string } = {},
-  ) {
+  execute(actorId: string, organizationId: string, id: string, options: { requestId?: string; reason?: string } = {}) {
     return this.unitOfWork.run(async () => {
       await this.organizations.requireProjectManager(actorId, organizationId);
       const now = new Date();

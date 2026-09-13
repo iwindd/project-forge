@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
-import type { ReactNode, RefObject } from "react";
-import { useCallback, useEffect, useState } from "react";
-import classes from "./navigation-scroll-controls.module.css";
+import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import type { ReactNode, RefObject } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import classes from './navigation-scroll-controls.module.css';
 
 const SCROLL_TOLERANCE = 2;
 const FALLBACK_STEP = 64;
 
 type NavigationScrollControlsProps = {
   children: ReactNode;
-  orientation: "vertical";
+  orientation: 'vertical';
   viewportRef: RefObject<HTMLDivElement | null>;
 };
 
@@ -49,7 +49,7 @@ export default function NavigationScrollControls({
   }, [viewportRef]);
 
   const getMenuScrollTarget = useCallback(
-    (direction: "backward" | "forward") => {
+    (direction: 'backward' | 'forward') => {
       const viewport = viewportRef.current;
 
       if (!viewport) return 0;
@@ -59,9 +59,7 @@ export default function NavigationScrollControls({
       const viewportSize = viewport.clientHeight;
       const scrollSize = viewport.scrollHeight;
       const maxScroll = Math.max(scrollSize - viewportSize, 0);
-      const candidates = Array.from(
-        viewport.querySelectorAll<HTMLElement>("a, button"),
-      )
+      const candidates = Array.from(viewport.querySelectorAll<HTMLElement>('a, button'))
         .filter((element) => {
           const rect = element.getBoundingClientRect();
 
@@ -74,20 +72,16 @@ export default function NavigationScrollControls({
         })
         .sort((a, b) => a - b);
 
-      if (direction === "forward") {
+      if (direction === 'forward') {
         return (
-          candidates.find(
-            (position) => position > currentPosition + SCROLL_TOLERANCE,
-          ) ?? Math.min(currentPosition + FALLBACK_STEP, maxScroll)
+          candidates.find((position) => position > currentPosition + SCROLL_TOLERANCE) ??
+          Math.min(currentPosition + FALLBACK_STEP, maxScroll)
         );
       }
 
       for (let index = candidates.length - 1; index >= 0; index -= 1) {
         const candidate = candidates[index];
-        if (
-          candidate !== undefined &&
-          candidate < currentPosition - SCROLL_TOLERANCE
-        ) {
+        if (candidate !== undefined && candidate < currentPosition - SCROLL_TOLERANCE) {
           return candidate;
         }
       }
@@ -98,7 +92,7 @@ export default function NavigationScrollControls({
   );
 
   const scrollToMenu = useCallback(
-    (direction: "backward" | "forward") => {
+    (direction: 'backward' | 'forward') => {
       const viewport = viewportRef.current;
 
       if (!viewport) return;
@@ -108,7 +102,7 @@ export default function NavigationScrollControls({
       viewport.scrollTo({
         left: viewport.scrollLeft,
         top: target,
-        behavior: "smooth",
+        behavior: 'smooth',
       });
     },
     [getMenuScrollTarget, viewportRef],
@@ -123,7 +117,7 @@ export default function NavigationScrollControls({
     const resizeObserver = new ResizeObserver(updateScrollState);
 
     updateScrollState();
-    viewport.addEventListener("scroll", updateScrollState, { passive: true });
+    viewport.addEventListener('scroll', updateScrollState, { passive: true });
     resizeObserver.observe(viewport);
 
     if (content) {
@@ -131,7 +125,7 @@ export default function NavigationScrollControls({
     }
 
     return () => {
-      viewport.removeEventListener("scroll", updateScrollState);
+      viewport.removeEventListener('scroll', updateScrollState);
       resizeObserver.disconnect();
     };
   }, [updateScrollState, viewportRef]);
@@ -143,24 +137,24 @@ export default function NavigationScrollControls({
     <div className={classes.scrollControlsRoot} data-orientation={orientation}>
       {children}
       <button
-        type="button"
-        aria-label="Scroll menu up"
+        type='button'
+        aria-label='Scroll menu up'
         className={`${classes.control} ${classes.controlStart}`}
         data-hidden={hideStart}
         data-orientation={orientation}
         disabled={hideStart}
-        onClick={() => scrollToMenu("backward")}
+        onClick={() => scrollToMenu('backward')}
       >
         <IconChevronUp size={18} stroke={2.4} />
       </button>
       <button
-        type="button"
-        aria-label="Scroll menu down"
+        type='button'
+        aria-label='Scroll menu down'
         className={`${classes.control} ${classes.controlEnd}`}
         data-hidden={hideEnd}
         data-orientation={orientation}
         disabled={hideEnd}
-        onClick={() => scrollToMenu("forward")}
+        onClick={() => scrollToMenu('forward')}
       >
         <IconChevronDown size={18} stroke={2.4} />
       </button>

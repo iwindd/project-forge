@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import type { AuditLogListQuery } from '@/servers/audit-log/types'
+import type { AuditLogListQuery } from '@/servers/audit-log/types';
 import {
   Accordion,
   Badge,
@@ -12,91 +12,78 @@ import {
   ScrollArea,
   Stack,
   Text,
-  TextInput
-} from '@mantine/core'
-import { DatePickerInput } from '@mantine/dates'
+  TextInput,
+} from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import {
   IconArrowsLeftRight,
   IconCalendar,
   IconDatabase,
   IconListDetails,
   IconSearch,
-  IconShield
-} from '@tabler/icons-react'
-import { useState, type MouseEvent } from 'react'
-import {
-  AUDIT_ACTION_GROUPS,
-  AUDIT_ACTOR_ROLE_LABELS,
-  AUDIT_RESOURCE_TYPE_OPTIONS
-} from './audit-log-labels'
-import classes from './audit-logs-filter-drawer.module.css'
+  IconShield,
+} from '@tabler/icons-react';
+import { useState, type MouseEvent } from 'react';
+import { AUDIT_ACTION_GROUPS, AUDIT_ACTOR_ROLE_LABELS, AUDIT_RESOURCE_TYPE_OPTIONS } from './audit-log-labels';
+import classes from './audit-logs-filter-drawer.module.css';
 
 export const RELATIONSHIP_LABELS = {
   all: 'ทั้งหมด',
   actor: 'เป็นผู้กระทำ',
-  target: 'ถูกกระทำ'
-} as const
+  target: 'ถูกกระทำ',
+} as const;
 
 const ACTOR_ROLE_OPTIONS = [
   { value: 'all', label: 'ทั้งหมด' },
   { value: 'ADMIN', label: AUDIT_ACTOR_ROLE_LABELS.ADMIN },
-  { value: 'EDITOR', label: AUDIT_ACTOR_ROLE_LABELS.EDITOR }
-] as const
+  { value: 'EDITOR', label: AUDIT_ACTOR_ROLE_LABELS.EDITOR },
+] as const;
 
-const RELATIONSHIP_OPTIONS = Object.entries(RELATIONSHIP_LABELS).map(
-  ([value, label]) => ({ value, label })
-)
+const RELATIONSHIP_OPTIONS = Object.entries(RELATIONSHIP_LABELS).map(([value, label]) => ({ value, label }));
 
 type MultiFilterGroup = {
-  group?: string
-  items: { value: string; label: string }[]
-}
+  group?: string;
+  items: { value: string; label: string }[];
+};
 
-type FilterQueryUpdates = Record<
-  string,
-  string | number | readonly string[] | undefined
->
+type FilterQueryUpdates = Record<string, string | number | readonly string[] | undefined>;
 
 type AuditLogsFilterDrawerProps = {
-  opened: boolean
-  onCloseAction: () => void
-  query: AuditLogListQuery
-  isPersonalTimeline: boolean
-  activeFilterCount: number
-  updateQueryAction: (updates: FilterQueryUpdates) => void
-  clearFiltersAction: () => void
-}
+  opened: boolean;
+  onCloseAction: () => void;
+  query: AuditLogListQuery;
+  isPersonalTimeline: boolean;
+  activeFilterCount: number;
+  updateQueryAction: (updates: FilterQueryUpdates) => void;
+  clearFiltersAction: () => void;
+};
 
 function activateOptionOnRowClick(event: MouseEvent<HTMLDivElement>) {
-  const target = event.target
+  const target = event.target;
 
   if (target instanceof Element && target.closest('input, label')) {
-    return
+    return;
   }
 
-  event.currentTarget.querySelector<HTMLInputElement>('input')?.click()
+  event.currentTarget.querySelector<HTMLInputElement>('input')?.click();
 }
 
 function MultiFilterList({
   groups,
   selected,
-  onChangeAction
+  onChangeAction,
 }: {
-  groups: MultiFilterGroup[]
-  selected: string[]
-  onChangeAction: (values: string[]) => void
+  groups: MultiFilterGroup[];
+  selected: string[];
+  onChangeAction: (values: string[]) => void;
 }) {
   const toggleValue = (value: string) => {
-    onChangeAction(
-      selected.includes(value)
-        ? selected.filter(item => item !== value)
-        : [...selected, value]
-    )
-  }
+    onChangeAction(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
+  };
 
   return (
     <Stack gap='md'>
-      {groups.map(group => (
+      {groups.map((group) => (
         <Stack key={group.group ?? 'options'} gap={4}>
           {group.group ? (
             <Text size='xs' fw={700} c='dimmed' tt='uppercase'>
@@ -104,7 +91,7 @@ function MultiFilterList({
             </Text>
           ) : null}
           <Stack gap={2}>
-            {group.items.map(item => (
+            {group.items.map((item) => (
               <Checkbox
                 key={item.value}
                 size='sm'
@@ -119,45 +106,39 @@ function MultiFilterList({
         </Stack>
       ))}
     </Stack>
-  )
+  );
 }
 
 function ActionFilterList({
   groups,
   selected,
-  onChangeAction
+  onChangeAction,
 }: {
-  groups: MultiFilterGroup[]
-  selected: string[]
-  onChangeAction: (values: string[]) => void
+  groups: MultiFilterGroup[];
+  selected: string[];
+  onChangeAction: (values: string[]) => void;
 }) {
-  const [search, setSearch] = useState('')
-  const keyword = search.trim().toLowerCase()
+  const [search, setSearch] = useState('');
+  const keyword = search.trim().toLowerCase();
   const visibleGroups = groups
-    .map(group => ({
+    .map((group) => ({
       ...group,
-      items: group.items.filter(item =>
-        item.label.toLowerCase().includes(keyword)
-      )
+      items: group.items.filter((item) => item.label.toLowerCase().includes(keyword)),
     }))
-    .filter(group => group.items.length > 0)
+    .filter((group) => group.items.length > 0);
 
   return (
     <Stack gap='sm'>
       <TextInput
         value={search}
-        onChange={event => setSearch(event.currentTarget.value)}
+        onChange={(event) => setSearch(event.currentTarget.value)}
         placeholder='ค้นหาเหตุการณ์'
         aria-label='ค้นหาเหตุการณ์'
         leftSection={<IconSearch size={16} />}
       />
       <ScrollArea.Autosize mah={360} type='scroll'>
         {visibleGroups.length > 0 ? (
-          <MultiFilterList
-            groups={visibleGroups}
-            selected={selected}
-            onChangeAction={onChangeAction}
-          />
+          <MultiFilterList groups={visibleGroups} selected={selected} onChangeAction={onChangeAction} />
         ) : (
           <Text size='sm' c='dimmed' ta='center' py='md'>
             ไม่พบเหตุการณ์
@@ -165,22 +146,22 @@ function ActionFilterList({
         )}
       </ScrollArea.Autosize>
     </Stack>
-  )
+  );
 }
 
 function SingleFilterList({
   value,
   options,
-  onChangeAction
+  onChangeAction,
 }: {
-  value: string
-  options: readonly { value: string; label: string }[]
-  onChangeAction: (value: string) => void
+  value: string;
+  options: readonly { value: string; label: string }[];
+  onChangeAction: (value: string) => void;
 }) {
   return (
     <Radio.Group value={value} onChange={onChangeAction}>
       <Stack gap={2}>
-        {options.map(option => (
+        {options.map((option) => (
           <Radio
             key={option.value}
             value={option.value}
@@ -192,16 +173,10 @@ function SingleFilterList({
         ))}
       </Stack>
     </Radio.Group>
-  )
+  );
 }
 
-function FilterSectionLabel({
-  label,
-  count
-}: {
-  label: string
-  count: number
-}) {
+function FilterSectionLabel({ label, count }: { label: string; count: number }) {
   return (
     <Group component='span' gap='xs' wrap='nowrap'>
       <Text component='span' size='sm' fw={600}>
@@ -213,7 +188,7 @@ function FilterSectionLabel({
         </Badge>
       ) : null}
     </Group>
-  )
+  );
 }
 
 export function AuditLogsFilterDrawer({
@@ -223,10 +198,10 @@ export function AuditLogsFilterDrawer({
   isPersonalTimeline,
   activeFilterCount,
   updateQueryAction,
-  clearFiltersAction
+  clearFiltersAction,
 }: AuditLogsFilterDrawerProps) {
-  const selectedActions = query.actions ?? []
-  const selectedResourceTypes = query.resourceTypes ?? []
+  const selectedActions = query.actions ?? [];
+  const selectedResourceTypes = query.resourceTypes ?? [];
 
   return (
     <Drawer
@@ -247,24 +222,21 @@ export function AuditLogsFilterDrawer({
               item: classes.filterAccordionItem,
               control: classes.filterAccordionControl,
               panel: classes.filterAccordionPanel,
-              content: classes.filterAccordionContent
+              content: classes.filterAccordionContent,
             }}
           >
             <Accordion.Item value='actions'>
               <Accordion.Control icon={<IconListDetails size={18} />}>
-                <FilterSectionLabel
-                  label='เหตุการณ์'
-                  count={selectedActions.length}
-                />
+                <FilterSectionLabel label='เหตุการณ์' count={selectedActions.length} />
               </Accordion.Control>
               <Accordion.Panel>
                 <ActionFilterList
                   groups={AUDIT_ACTION_GROUPS}
                   selected={selectedActions}
-                  onChangeAction={values =>
+                  onChangeAction={(values) =>
                     updateQueryAction({
                       actions: values.length ? values.join(',') : undefined,
-                      page: 1
+                      page: 1,
                     })
                   }
                 />
@@ -273,22 +245,17 @@ export function AuditLogsFilterDrawer({
 
             <Accordion.Item value='resourceTypes'>
               <Accordion.Control icon={<IconDatabase size={18} />}>
-                <FilterSectionLabel
-                  label='ประเภทข้อมูล'
-                  count={selectedResourceTypes.length}
-                />
+                <FilterSectionLabel label='ประเภทข้อมูล' count={selectedResourceTypes.length} />
               </Accordion.Control>
               <Accordion.Panel>
                 <ScrollArea.Autosize mah={320} type='scroll'>
                   <MultiFilterList
                     groups={[{ items: AUDIT_RESOURCE_TYPE_OPTIONS }]}
                     selected={selectedResourceTypes}
-                    onChangeAction={values =>
+                    onChangeAction={(values) =>
                       updateQueryAction({
-                        resourceTypes: values.length
-                          ? values.join(',')
-                          : undefined,
-                        page: 1
+                        resourceTypes: values.length ? values.join(',') : undefined,
+                        page: 1,
                       })
                     }
                   />
@@ -298,19 +265,16 @@ export function AuditLogsFilterDrawer({
 
             <Accordion.Item value='actorRole'>
               <Accordion.Control icon={<IconShield size={18} />}>
-                <FilterSectionLabel
-                  label='บทบาทผู้กระทำ'
-                  count={query.actorRole ? 1 : 0}
-                />
+                <FilterSectionLabel label='บทบาทผู้กระทำ' count={query.actorRole ? 1 : 0} />
               </Accordion.Control>
               <Accordion.Panel>
                 <SingleFilterList
                   value={query.actorRole ?? 'all'}
                   options={ACTOR_ROLE_OPTIONS}
-                  onChangeAction={value =>
+                  onChangeAction={(value) =>
                     updateQueryAction({
                       actorRole: value === 'all' ? undefined : value,
-                      page: 1
+                      page: 1,
                     })
                   }
                 />
@@ -320,18 +284,13 @@ export function AuditLogsFilterDrawer({
             {isPersonalTimeline ? (
               <Accordion.Item value='relationship'>
                 <Accordion.Control icon={<IconArrowsLeftRight size={18} />}>
-                  <FilterSectionLabel
-                    label='ความเกี่ยวข้อง'
-                    count={query.relationship !== 'all' ? 1 : 0}
-                  />
+                  <FilterSectionLabel label='ความเกี่ยวข้อง' count={query.relationship !== 'all' ? 1 : 0} />
                 </Accordion.Control>
                 <Accordion.Panel>
                   <SingleFilterList
                     value={query.relationship}
                     options={RELATIONSHIP_OPTIONS}
-                    onChangeAction={value =>
-                      updateQueryAction({ relationship: value, page: 1 })
-                    }
+                    onChangeAction={(value) => updateQueryAction({ relationship: value, page: 1 })}
                   />
                 </Accordion.Panel>
               </Accordion.Item>
@@ -339,10 +298,7 @@ export function AuditLogsFilterDrawer({
 
             <Accordion.Item value='period'>
               <Accordion.Control icon={<IconCalendar size={18} />}>
-                <FilterSectionLabel
-                  label='ช่วงวันที่'
-                  count={query.from || query.to ? 1 : 0}
-                />
+                <FilterSectionLabel label='ช่วงวันที่' count={query.from || query.to ? 1 : 0} />
               </Accordion.Control>
               <Accordion.Panel>
                 <Stack gap='sm'>
@@ -361,10 +317,10 @@ export function AuditLogsFilterDrawer({
                     value={query.from ?? null}
                     placeholder='เลือกวันเริ่มต้น'
                     aria-label='วันเริ่มต้น'
-                    onChange={value =>
+                    onChange={(value) =>
                       updateQueryAction({
                         from: value ?? undefined,
-                        page: 1
+                        page: 1,
                       })
                     }
                   />
@@ -383,10 +339,10 @@ export function AuditLogsFilterDrawer({
                     value={query.to ?? null}
                     placeholder='เลือกวันสิ้นสุด'
                     aria-label='วันสิ้นสุด'
-                    onChange={value =>
+                    onChange={(value) =>
                       updateQueryAction({
                         to: value ?? undefined,
-                        page: 1
+                        page: 1,
                       })
                     }
                   />
@@ -400,12 +356,7 @@ export function AuditLogsFilterDrawer({
             variant='subtle'
             color='red'
             mt='md'
-            disabled={
-              activeFilterCount === 0 &&
-              !query.search &&
-              !query.from &&
-              !query.to
-            }
+            disabled={activeFilterCount === 0 && !query.search && !query.from && !query.to}
             onClick={clearFiltersAction}
           >
             ล้างตัวกรองทั้งหมด
@@ -413,5 +364,5 @@ export function AuditLogsFilterDrawer({
         </Stack>
       </ScrollArea>
     </Drawer>
-  )
+  );
 }

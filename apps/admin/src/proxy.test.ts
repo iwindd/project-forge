@@ -1,11 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 
-vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock('@/auth', () => ({ auth: vi.fn() }));
 
-import { config } from "./proxy";
+import { config } from './proxy';
 
-describe("admin proxy", () => {
-  it("covers every organization-scoped route", () => {
-    expect(config).toEqual({ matcher: ["/:organizationSlug/:path*"] });
+describe('admin proxy', () => {
+  it('covers every organization-scoped route', () => {
+    expect(config).toEqual({ matcher: ['/:organizationSlug/:path*'] });
   });
 });

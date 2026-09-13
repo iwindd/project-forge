@@ -28,14 +28,8 @@ export type ProjectStatusTransitionResult = {
 
 export interface ProjectRepository {
   findByOrganizationId(organizationId: string): Promise<ProjectRecord[]>;
-  findByOrganizationAndId(
-    organizationId: string,
-    id: string,
-  ): Promise<ProjectRecord | null>;
-  findByOrganizationAndGithubUrl(
-    organizationId: string,
-    githubUrl: string,
-  ): Promise<ProjectRecord | null>;
+  findByOrganizationAndId(organizationId: string, id: string): Promise<ProjectRecord | null>;
+  findByOrganizationAndGithubUrl(organizationId: string, githubUrl: string): Promise<ProjectRecord | null>;
   /**
    * Persist the record and flush it, so the write joins the surrounding UnitOfWork transaction
    * instead of waiting for an unrelated later flush.
@@ -59,7 +53,5 @@ export interface ProjectRepository {
    * the audit event only when `applied` is true — that is what makes repeated archive/restore
    * idempotent server-side rather than only sequentially.
    */
-  transitionStatus(
-    transition: ProjectStatusTransition,
-  ): Promise<ProjectStatusTransitionResult | null>;
+  transitionStatus(transition: ProjectStatusTransition): Promise<ProjectStatusTransitionResult | null>;
 }

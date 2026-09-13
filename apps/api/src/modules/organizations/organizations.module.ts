@@ -20,7 +20,18 @@ import { MikroOrmOrganizationMemberQuery } from './infrastructure/persistence/mi
 import { OrganizationsController } from './presentation/organizations.controller.js';
 
 @Module({
-  imports: [AuthModule, AuditModule, DatabaseModule, SecurityModule, MikroOrmModule.forFeature([OrganizationOrmEntity, OrganizationMemberOrmEntity, OrganizationInvitationOrmEntity, OrganizationRoleOrmEntity])],
+  imports: [
+    AuthModule,
+    AuditModule,
+    DatabaseModule,
+    SecurityModule,
+    MikroOrmModule.forFeature([
+      OrganizationOrmEntity,
+      OrganizationMemberOrmEntity,
+      OrganizationInvitationOrmEntity,
+      OrganizationRoleOrmEntity,
+    ]),
+  ],
   controllers: [OrganizationsController],
   providers: [
     OrganizationService,

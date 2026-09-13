@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 import {
   organizationInvitationResponseSchema,
   organizationListSchema,
@@ -6,11 +6,11 @@ import {
   organizationMemberUserResponseSchema,
   organizationRoleResponseSchema,
   okResponseSchema,
-} from './organization-response.schemas.js'
+} from './organization-response.schemas.js';
 
 describe('organizationListSchema', () => {
   it('accepts canonical PostgreSQL UUIDs without RFC version bits', () => {
-    const organizationId = '00000000-0000-0000-0000-000000000000'
+    const organizationId = '00000000-0000-0000-0000-000000000000';
 
     const result = organizationListSchema.parse([
       {
@@ -29,10 +29,10 @@ describe('organizationListSchema', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
-    ])
+    ]);
 
-    expect(result[0]?.id).toBe(organizationId)
-  })
+    expect(result[0]?.id).toBe(organizationId);
+  });
 
   it('requires canonical UUIDs and complete mutation response fields', () => {
     expect(() =>
@@ -45,8 +45,8 @@ describe('organizationListSchema', () => {
           code: 'ADMIN',
         },
       }),
-    ).not.toThrow()
-  })
+    ).not.toThrow();
+  });
 
   it('validates member, invitation, and acknowledgement mutation payloads', () => {
     const role = {
@@ -55,7 +55,7 @@ describe('organizationListSchema', () => {
       permissions: [],
       isOwner: false,
       code: 'MEMBER' as const,
-    }
+    };
     const user = {
       id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'User',
@@ -64,12 +64,12 @@ describe('organizationListSchema', () => {
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
-    }
+    };
 
-    expect(organizationMemberUserResponseSchema.parse({ user })).toEqual({ user })
+    expect(organizationMemberUserResponseSchema.parse({ user })).toEqual({ user });
     expect(organizationMemberRoleResponseSchema.parse({ membership: user })).toEqual({
       membership: user,
-    })
+    });
     expect(
       organizationInvitationResponseSchema.parse({
         invitation: {
@@ -83,7 +83,7 @@ describe('organizationListSchema', () => {
         },
         token: 'invite-token',
       }),
-    ).toBeTruthy()
-    expect(okResponseSchema.parse({ ok: true })).toEqual({ ok: true })
-  })
-})
+    ).toBeTruthy();
+    expect(okResponseSchema.parse({ ok: true })).toEqual({ ok: true });
+  });
+});

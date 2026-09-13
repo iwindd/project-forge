@@ -66,11 +66,13 @@ export class GithubOAuthAdapter implements GithubOAuthPort {
     if (emailsResponse.ok) {
       const emails = (await emailsResponse.json()) as Array<{ email?: string; primary?: boolean; verified?: boolean }>;
       const verifiedEmails = emails
-        .filter(email => email.verified && email.email)
-        .map(email => email.email!.trim().toLowerCase());
-      const verifiedEmail = emails.find((email) => email.primary && email.verified)?.email
-        ?? emails.find((email) => email.verified)?.email
-        ?? null;
+        .filter((email) => email.verified && email.email)
+        .map((email) => email.email?.trim().toLowerCase())
+        .filter((email): email is string => Boolean(email));
+      const verifiedEmail =
+        emails.find((email) => email.primary && email.verified)?.email ??
+        emails.find((email) => email.verified)?.email ??
+        null;
       profile.email = verifiedEmail;
       profile.emailVerified = Boolean(verifiedEmail);
       profile.verifiedEmails = verifiedEmails;

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NotFoundError } from '../../../../common/errors/application-error.js';
-import { UserRecord } from '../../domain/user.js';
+import type { UserRecord } from '../../domain/user.js';
 import { USER_REPOSITORY } from '../ports/user.repository.js';
 import type { UserRepository } from '../ports/user.repository.js';
 

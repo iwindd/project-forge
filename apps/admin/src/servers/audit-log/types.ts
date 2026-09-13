@@ -1,5 +1,5 @@
-import type { infer as ZodInfer } from "zod";
-import type { listAuditLogsSchema } from "./queries/get-audit-log-list-schema";
+import type { infer as ZodInfer } from 'zod';
+import type { listAuditLogsSchema } from './queries/get-audit-log-list-schema';
 
 export type AuditLogListQuery = ZodInfer<typeof listAuditLogsSchema>;
 
@@ -15,7 +15,7 @@ export type AuditLogListItem = {
   action: string;
   resourceType: string;
   resourceId: string | null;
-  actorRole: "ADMIN" | "USER" | "EDITOR" | null;
+  actorRole: 'ADMIN' | 'USER' | 'EDITOR' | null;
   actor: AuditLogUserSummary | null;
   target: AuditLogUserSummary | null;
   reason: string | null;
@@ -32,7 +32,7 @@ export type AuditLogExportUser = {
   id: string;
   email: string;
   name: string;
-  role: "ADMIN" | "EDITOR";
+  role: 'ADMIN' | 'EDITOR';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -41,7 +41,7 @@ export type AuditLogExportUser = {
 type AuditLogExportRow = {
   id: string;
   actorUserId: string | null;
-  actorRole: "ADMIN" | "USER" | "EDITOR" | null;
+  actorRole: 'ADMIN' | 'USER' | 'EDITOR' | null;
   action: string;
   resourceType: string;
   resourceId: string | null;

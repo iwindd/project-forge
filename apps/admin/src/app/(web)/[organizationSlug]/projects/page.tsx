@@ -1,16 +1,16 @@
-'use client'
+'use client';
 
-import { PageHeader } from '@/components/page-header'
+import { PageHeader } from '@/components/page-header';
 import {
   useArchiveProjectMutation,
   useCreateProjectMutation,
   useGetProjectsQuery,
   useRestoreProjectMutation,
-  useUpdateProjectMutation
-} from '@/lib/features/project/project-api'
-import { canManageProjects } from '@/lib/features/project/project-permissions'
-import type { Project } from '@/lib/features/project/types'
-import { useOrganizationContext } from '@/lib/features/organization/organization-provider'
+  useUpdateProjectMutation,
+} from '@/lib/features/project/project-api';
+import { canManageProjects } from '@/lib/features/project/project-permissions';
+import type { Project } from '@/lib/features/project/types';
+import { useOrganizationContext } from '@/lib/features/organization/organization-provider';
 import {
   ActionIcon,
   Alert,
@@ -27,10 +27,10 @@ import {
   Table,
   Text,
   Textarea,
-  TextInput
-} from '@mantine/core'
-import { schemaResolver, useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
+  TextInput,
+} from '@mantine/core';
+import { schemaResolver, useForm } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
 import {
   IconAlertCircle,
   IconArchive,
@@ -39,36 +39,35 @@ import {
   IconPencil,
   IconPlus,
   IconRefresh,
-  IconRestore
-} from '@tabler/icons-react'
-import { useFormatter, useTranslations } from 'next-intl'
-import { useMemo, useState } from 'react'
+  IconRestore,
+} from '@tabler/icons-react';
+import { useFormatter, useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 import {
   EMPTY_PROJECT_FORM_VALUES,
   createProjectFormSchema,
   toProjectFormValues,
   toProjectRequestBody,
-  type ProjectFormValues
-} from './project-form-schema'
-import { failureMessageFor, getProjectsViewState } from './projects-view-state'
-import classes from './projects-page.module.css'
+  type ProjectFormValues,
+} from './project-form-schema';
+import { failureMessageFor, getProjectsViewState } from './projects-view-state';
+import classes from './projects-page.module.css';
 
 export default function ProjectsPage() {
-  const t = useTranslations('Projects')
-  const format = useFormatter()
-  const { activeOrganization, pending: organizationPending } =
-    useOrganizationContext()
-  const organizationId = activeOrganization?.id ?? ''
-  const organizationLoading = organizationPending && !activeOrganization
-  const canManage = canManageProjects(activeOrganization?.role)
-  const [editingProject, setEditingProject] = useState<Project | null>(null)
-  const [archiveTarget, setArchiveTarget] = useState<Project | null>(null)
+  const t = useTranslations('Projects');
+  const format = useFormatter();
+  const { activeOrganization, pending: organizationPending } = useOrganizationContext();
+  const organizationId = activeOrganization?.id ?? '';
+  const organizationLoading = organizationPending && !activeOrganization;
+  const canManage = canManageProjects(activeOrganization?.role);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Project | null>(null);
 
   const formatDate = (value: string) => {
-    const date = new Date(value)
+    const date = new Date(value);
 
-    return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'date')
-  }
+    return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'date');
+  };
 
   const projectFormSchema = useMemo(
     () =>
@@ -79,151 +78,133 @@ export default function ProjectsPage() {
         sourceBranchRequired: t('sourceBranchRequired'),
         targetBranchRequired: t('targetBranchRequired'),
         branchMax: t('branchMax'),
-        nodeVersionMax: t('nodeVersionMax')
+        nodeVersionMax: t('nodeVersionMax'),
       }),
-    [t]
-  )
+    [t],
+  );
 
   const projectForm = useForm<ProjectFormValues>({
     initialValues: EMPTY_PROJECT_FORM_VALUES,
     validate: schemaResolver(projectFormSchema),
-    validateInputOnBlur: true
-  })
+    validateInputOnBlur: true,
+  });
 
   const {
     data: projects = [],
     isFetching: projectsFetching,
     isError: projectsError,
-    refetch: refetchProjects
-  } = useGetProjectsQuery({ organizationId }, { skip: !organizationId })
+    refetch: refetchProjects,
+  } = useGetProjectsQuery({ organizationId }, { skip: !organizationId });
 
-  const [createProject, { isLoading: createPending }] =
-    useCreateProjectMutation()
-  const [updateProject, { isLoading: updatePending }] =
-    useUpdateProjectMutation()
-  const [archiveProject, { isLoading: archivePending }] =
-    useArchiveProjectMutation()
-  const [restoreProject, { isLoading: restorePending }] =
-    useRestoreProjectMutation()
-  const savePending = createPending || updatePending
-  const rowActionPending = archivePending || restorePending
+  const [createProject, { isLoading: createPending }] = useCreateProjectMutation();
+  const [updateProject, { isLoading: updatePending }] = useUpdateProjectMutation();
+  const [archiveProject, { isLoading: archivePending }] = useArchiveProjectMutation();
+  const [restoreProject, { isLoading: restorePending }] = useRestoreProjectMutation();
+  const savePending = createPending || updatePending;
+  const rowActionPending = archivePending || restorePending;
   const viewState = getProjectsViewState({
     organizationLoading,
     projectsError,
     projectsFetching,
-    projectCount: projects.length
-  })
+    projectCount: projects.length,
+  });
 
   const resetProjectForm = () => {
-    setEditingProject(null)
-    projectForm.setValues(EMPTY_PROJECT_FORM_VALUES)
-    projectForm.setInitialValues(EMPTY_PROJECT_FORM_VALUES)
-    projectForm.resetDirty()
-  }
+    setEditingProject(null);
+    projectForm.setValues(EMPTY_PROJECT_FORM_VALUES);
+    projectForm.setInitialValues(EMPTY_PROJECT_FORM_VALUES);
+    projectForm.resetDirty();
+  };
 
   const startEditing = (project: Project) => {
-    const values = toProjectFormValues(project)
-    setEditingProject(project)
-    projectForm.setValues(values)
-    projectForm.setInitialValues(values)
-    projectForm.resetDirty()
-  }
+    const values = toProjectFormValues(project);
+    setEditingProject(project);
+    projectForm.setValues(values);
+    projectForm.setInitialValues(values);
+    projectForm.resetDirty();
+  };
 
-  const runProjectAction = async (
-    action: () => Promise<unknown>,
-    feedback: { success: string; failure: string }
-  ) => {
+  const runProjectAction = async (action: () => Promise<unknown>, feedback: { success: string; failure: string }) => {
     try {
-      await action()
-      notifications.show({ message: feedback.success, color: 'teal' })
-      return true
+      await action();
+      notifications.show({ message: feedback.success, color: 'teal' });
+      return true;
     } catch (error) {
       notifications.show({
         message: failureMessageFor(error, feedback.failure, {
           conflict: t('conflictFailed'),
           forbidden: t('forbiddenFailed'),
-          notFound: t('notFoundFailed')
+          notFound: t('notFoundFailed'),
         }),
-        color: 'red'
-      })
-      return false
+        color: 'red',
+      });
+      return false;
     }
-  }
+  };
 
   const submitProject = async (values: ProjectFormValues) => {
-    if (!organizationId || !canManage) return
+    if (!organizationId || !canManage) return;
 
-    const body = toProjectRequestBody(values)
-    const current = editingProject
+    const body = toProjectRequestBody(values);
+    const current = editingProject;
     const succeeded = await runProjectAction(
       () =>
         current
           ? updateProject({
               organizationId,
               projectId: current.id,
-              ...body
+              ...body,
             }).unwrap()
           : createProject({ organizationId, ...body }).unwrap(),
       {
         success: current ? t('updateSuccess') : t('createSuccess'),
-        failure: current ? t('updateFailed') : t('createFailed')
-      }
-    )
+        failure: current ? t('updateFailed') : t('createFailed'),
+      },
+    );
 
-    if (succeeded) resetProjectForm()
-  }
+    if (succeeded) resetProjectForm();
+  };
 
   const confirmArchive = async () => {
-    if (!organizationId || !archiveTarget) return
+    if (!organizationId || !archiveTarget) return;
 
-    const target = archiveTarget
-    const succeeded = await runProjectAction(
-      () => archiveProject({ organizationId, projectId: target.id }).unwrap(),
-      { success: t('archiveSuccess'), failure: t('archiveFailed') }
-    )
+    const target = archiveTarget;
+    const succeeded = await runProjectAction(() => archiveProject({ organizationId, projectId: target.id }).unwrap(), {
+      success: t('archiveSuccess'),
+      failure: t('archiveFailed'),
+    });
 
-    if (!succeeded) return
+    if (!succeeded) return;
 
-    setArchiveTarget(null)
-    if (editingProject?.id === target.id) resetProjectForm()
-  }
+    setArchiveTarget(null);
+    if (editingProject?.id === target.id) resetProjectForm();
+  };
 
   const restore = async (project: Project) => {
-    if (!organizationId) return
+    if (!organizationId) return;
 
-    await runProjectAction(
-      () => restoreProject({ organizationId, projectId: project.id }).unwrap(),
-      { success: t('restoreSuccess'), failure: t('restoreFailed') }
-    )
-  }
+    await runProjectAction(() => restoreProject({ organizationId, projectId: project.id }).unwrap(), {
+      success: t('restoreSuccess'),
+      failure: t('restoreFailed'),
+    });
+  };
 
   return (
     <Box className={classes.page}>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       {organizationLoading ? null : canManage ? (
-        <Paper
-          className={`${classes.card} ${classes.formCard}`}
-          withBorder
-          radius='md'
-          p='lg'
-        >
+        <Paper className={`${classes.card} ${classes.formCard}`} withBorder radius='md' p='lg'>
           <form onSubmit={projectForm.onSubmit(submitProject)}>
             <Stack gap='md'>
               <Stack gap={4}>
-                <Text fw={700}>
-                  {editingProject ? t('editTitle') : t('createTitle')}
-                </Text>
+                <Text fw={700}>{editingProject ? t('editTitle') : t('createTitle')}</Text>
                 <Text size='sm' c='dimmed'>
                   {editingProject ? t('editSubtitle') : t('createSubtitle')}
                 </Text>
               </Stack>
 
-              <TextInput
-                label={t('name')}
-                placeholder={t('namePlaceholder')}
-                {...projectForm.getInputProps('name')}
-              />
+              <TextInput label={t('name')} placeholder={t('namePlaceholder')} {...projectForm.getInputProps('name')} />
               <TextInput
                 label={t('githubUrl')}
                 placeholder={t('githubUrlPlaceholder')}
@@ -260,19 +241,11 @@ export default function ProjectsPage() {
 
               <Group justify='flex-end'>
                 {editingProject ? (
-                  <Button
-                    type='button'
-                    variant='default'
-                    onClick={resetProjectForm}
-                  >
+                  <Button type='button' variant='default' onClick={resetProjectForm}>
                     {t('cancelEdit')}
                   </Button>
                 ) : null}
-                <Button
-                  type='submit'
-                  loading={savePending}
-                  leftSection={<IconPlus size={16} />}
-                >
+                <Button type='submit' loading={savePending} leftSection={<IconPlus size={16} />}>
                   {editingProject ? t('saveChanges') : t('createSubmit')}
                 </Button>
               </Group>
@@ -321,7 +294,7 @@ export default function ProjectsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {projects.map(project => (
+                  {projects.map((project) => (
                     <tr key={project.id}>
                       <td>
                         <Stack className={classes.projectIdentity} gap={0}>
@@ -338,13 +311,8 @@ export default function ProjectsPage() {
                       </td>
                       <td>{project.nodeVersion ?? '-'}</td>
                       <td>
-                        <Badge
-                          color={project.status === 'ACTIVE' ? 'teal' : 'gray'}
-                          variant='light'
-                        >
-                          {project.status === 'ACTIVE'
-                            ? t('active')
-                            : t('archived')}
+                        <Badge color={project.status === 'ACTIVE' ? 'teal' : 'gray'} variant='light'>
+                          {project.status === 'ACTIVE' ? t('active') : t('archived')}
                         </Badge>
                       </td>
                       <td>{formatDate(project.updatedAt)}</td>
@@ -395,12 +363,7 @@ export default function ProjectsPage() {
               </Table>
             </Box>
           ) : (
-            <Stack
-              className={classes.emptyState}
-              align='center'
-              justify='center'
-              gap='xs'
-            >
+            <Stack className={classes.emptyState} align='center' justify='center' gap='xs'>
               <IconFolders size={28} stroke={1.5} />
               <Text c='dimmed'>{t('noProjects')}</Text>
             </Stack>
@@ -408,30 +371,19 @@ export default function ProjectsPage() {
         </Paper>
       )}
 
-      <Modal
-        opened={archiveTarget !== null}
-        onClose={() => setArchiveTarget(null)}
-        title={t('archiveTitle')}
-        centered
-      >
+      <Modal opened={archiveTarget !== null} onClose={() => setArchiveTarget(null)} title={t('archiveTitle')} centered>
         <Stack gap='md'>
-          <Text size='sm'>
-            {t('archiveConfirm', { name: archiveTarget?.name ?? '' })}
-          </Text>
+          <Text size='sm'>{t('archiveConfirm', { name: archiveTarget?.name ?? '' })}</Text>
           <Group justify='flex-end'>
             <Button variant='default' onClick={() => setArchiveTarget(null)}>
               {t('cancel')}
             </Button>
-            <Button
-              color='red'
-              loading={archivePending}
-              onClick={() => void confirmArchive()}
-            >
+            <Button color='red' loading={archivePending} onClick={() => void confirmArchive()}>
               {t('archive')}
             </Button>
           </Group>
         </Stack>
       </Modal>
     </Box>
-  )
+  );
 }

@@ -151,8 +151,6 @@ describe('updateProjectSchema partial bodies', () => {
 
   it('still validates the shared field rules and the environment key pattern', () => {
     expect(() => updateProjectSchema.parse({ sourceBranch: '' })).toThrow();
-    expect(() =>
-      updateProjectSchema.parse({ environmentMetadata: { 'API_KEY=value': 'configured' } }),
-    ).toThrow();
+    expect(() => updateProjectSchema.parse({ environmentMetadata: { 'API_KEY=value': 'configured' } })).toThrow();
   });
 });

@@ -1,7 +1,7 @@
-import { Center, Stack, Text, UnstyledButton } from "@mantine/core";
-import { IconRotate } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import classes from "./setting-group.module.css";
+import { Center, Stack, Text, UnstyledButton } from '@mantine/core';
+import { IconRotate } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
+import classes from './setting-group.module.css';
 
 export default function SettingGroup({
   title,
@@ -15,16 +15,16 @@ export default function SettingGroup({
   children: ReactNode;
 }) {
   return (
-    <Stack gap="xs">
+    <Stack gap='xs'>
       <UnstyledButton
-        type="button"
+        type='button'
         disabled={!isDirty}
         onClick={onReset}
         aria-label={`รีเซ็ต ${title}`}
-        className={`${classes.button} ${isDirty ? classes.dirty : ""}`}
+        className={`${classes.button} ${isDirty ? classes.dirty : ''}`}
       >
         <Center>{isDirty && <IconRotate size={14} aria-hidden />}</Center>
-        <Text fw={600} size="xs" className={classes.title}>
+        <Text fw={600} size='xs' className={classes.title}>
           {title}
         </Text>
       </UnstyledButton>

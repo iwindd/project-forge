@@ -28,28 +28,17 @@ function createController() {
 
 describe('OrganizationsController', () => {
   it('does not expose public organization creation', () => {
-    expect(
-      Object.prototype.hasOwnProperty.call(
-        OrganizationsController.prototype,
-        'create',
-      ),
-    ).toBe(false);
+    expect(Object.hasOwn(OrganizationsController.prototype, 'create')).toBe(false);
   });
 
   it('does not expose organization member profile mutation', () => {
-    expect(
-      Object.prototype.hasOwnProperty.call(
-        OrganizationsController.prototype,
-        'memberName',
-      ),
-    ).toBe(false);
+    expect(Object.hasOwn(OrganizationsController.prototype, 'memberName')).toBe(false);
   });
 
   it('returns the authenticated organization list in the standard envelope', async () => {
     const controller = createController();
     const listForUser = vi.mocked(
-      (controller as unknown as { organizations: { listForUser: ReturnType<typeof vi.fn> } })
-        .organizations.listForUser,
+      (controller as unknown as { organizations: { listForUser: ReturnType<typeof vi.fn> } }).organizations.listForUser,
     );
     listForUser.mockResolvedValue([
       {
@@ -108,20 +97,15 @@ describe('OrganizationsController', () => {
       },
     ];
     const execute = vi.mocked(
-      (controller as unknown as { listOrganizationRoles: { execute: ReturnType<typeof vi.fn> } })
-        .listOrganizationRoles.execute,
+      (controller as unknown as { listOrganizationRoles: { execute: ReturnType<typeof vi.fn> } }).listOrganizationRoles
+        .execute,
     );
     execute.mockResolvedValue(roles);
 
-    await expect(
-      controller.roles(principal, { id: organizationId }),
-    ).resolves.toEqual({
+    await expect(controller.roles(principal, { id: organizationId })).resolves.toEqual({
       data: roles,
       meta: {
-        availablePermissions: [
-          { key: 'organization.manage' },
-          { key: 'project.manage' },
-        ],
+        availablePermissions: [{ key: 'organization.manage' }, { key: 'project.manage' }],
       },
     });
   });
@@ -174,9 +158,7 @@ describe('OrganizationsController', () => {
   it('rejects an invalid organization route parameter at the boundary', async () => {
     const controller = createController();
 
-    await expect(
-      controller.roles(principal, { id: 'not-an-organization-id' }),
-    ).rejects.toThrow();
+    await expect(controller.roles(principal, { id: 'not-an-organization-id' })).rejects.toThrow();
   });
 
   it('rejects a role mutation result that violates the response contract', async () => {
@@ -188,18 +170,23 @@ describe('OrganizationsController', () => {
     execute.mockResolvedValue({ id: 'not-an-id' });
 
     await expect(
-      controller.createRole(principal, { id: organizationId }, {
-        name: 'แอดมิน',
-        permissions: ['organization.manage'],
-      }, request),
+      controller.createRole(
+        principal,
+        { id: organizationId },
+        {
+          name: 'แอดมิน',
+          permissions: ['organization.manage'],
+        },
+        request,
+      ),
     ).rejects.toThrow();
   });
 
   it('passes a persisted role id and returns the one-time token in the envelope', async () => {
     const controller = createController();
     const createInvitation = vi.mocked(
-      (controller as unknown as { organizations: { createInvitation: ReturnType<typeof vi.fn> } })
-        .organizations.createInvitation,
+      (controller as unknown as { organizations: { createInvitation: ReturnType<typeof vi.fn> } }).organizations
+        .createInvitation,
     );
     createInvitation.mockResolvedValue({
       invitation: {
@@ -228,7 +215,12 @@ describe('OrganizationsController', () => {
     });
 
     await expect(
-      controller.invite(principal, { id: organizationId }, { email: 'person@example.com', roleId: organizationId }, request),
+      controller.invite(
+        principal,
+        { id: organizationId },
+        { email: 'person@example.com', roleId: organizationId },
+        request,
+      ),
     ).resolves.toEqual({
       data: {
         invitation: {
@@ -267,11 +259,7 @@ describe('OrganizationsController', () => {
     cancelInvitation.mockResolvedValue({ ok: true });
 
     await expect(
-      controller.cancelInvitation(
-        principal,
-        { id: organizationId, invitationId: userId },
-        request,
-      ),
+      controller.cancelInvitation(principal, { id: organizationId, invitationId: userId }, request),
     ).resolves.toEqual({ data: null });
     expect(cancelInvitation).toHaveBeenCalledWith(userId, organizationId, userId, { requestId: 'request-id' });
   });

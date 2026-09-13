@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 /**
  * Authentication is validated by the API-backed server layouts. The proxy
@@ -10,5 +10,5 @@ export function proxy() {
 }
 
 export const config = {
-  matcher: ["/:organizationSlug/:path*"],
+  matcher: ['/:organizationSlug/:path*'],
 };

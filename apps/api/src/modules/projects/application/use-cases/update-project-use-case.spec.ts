@@ -55,10 +55,7 @@ describe('UpdateProjectUseCase', () => {
 
     expect(result.name).toBe('New name');
     expect(projects.save).toHaveBeenCalledOnce();
-    expect(organizations.requireProjectManager).toHaveBeenCalledWith(
-      'actor-id',
-      'organization-id',
-    );
+    expect(organizations.requireProjectManager).toHaveBeenCalledWith('actor-id', 'organization-id');
     expect(audit.record).toHaveBeenCalledOnce();
   });
 

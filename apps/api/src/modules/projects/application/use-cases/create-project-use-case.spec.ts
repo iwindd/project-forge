@@ -49,10 +49,7 @@ describe('CreateProjectUseCase', () => {
       'organization-id',
       'https://github.com/acme/demo',
     );
-    expect(organizations.requireProjectManager).toHaveBeenCalledWith(
-      'actor-id',
-      'organization-id',
-    );
+    expect(organizations.requireProjectManager).toHaveBeenCalledWith('actor-id', 'organization-id');
     expect(audit.record).toHaveBeenCalledOnce();
   });
 
@@ -79,11 +76,7 @@ describe('CreateProjectUseCase', () => {
   it('applies the schema branch and runtime defaults when the request omits them', async () => {
     const { useCase, projects } = setup();
 
-    await useCase.execute(
-      'actor-id',
-      'organization-id',
-      createProjectSchema.parse({ githubUrl: input.githubUrl }),
-    );
+    await useCase.execute('actor-id', 'organization-id', createProjectSchema.parse({ githubUrl: input.githubUrl }));
 
     expect(projects.save).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -99,9 +92,7 @@ describe('CreateProjectUseCase', () => {
 
     await useCase.execute('actor-id', 'organization-id', input, { requestId: 'request-id' });
 
-    expect(audit.record).toHaveBeenCalledWith(
-      expect.objectContaining({ requestId: 'request-id' }),
-    );
+    expect(audit.record).toHaveBeenCalledWith(expect.objectContaining({ requestId: 'request-id' }));
   });
 
   it('rejects unsupported and credential-bearing repository URLs', async () => {
@@ -111,7 +102,10 @@ describe('CreateProjectUseCase', () => {
       useCase.execute('owner-id', 'organization-id', { ...input, githubUrl: 'https://git.example.com/acme/demo' }),
     ).rejects.toThrow('Only GitHub HTTPS repository URLs are supported');
     await expect(
-      useCase.execute('owner-id', 'organization-id', { ...input, githubUrl: 'https://user:secret@github.com/acme/demo' }),
+      useCase.execute('owner-id', 'organization-id', {
+        ...input,
+        githubUrl: 'https://user:secret@github.com/acme/demo',
+      }),
     ).rejects.toThrow('Only GitHub HTTPS repository URLs are supported');
     expect(projects.save).not.toHaveBeenCalled();
   });
@@ -175,8 +169,6 @@ describe('CreateProjectUseCase', () => {
     const { useCase, projects } = setup();
     projects.save.mockRejectedValueOnce(new Error('connection lost'));
 
-    await expect(useCase.execute('actor-id', 'organization-id', input)).rejects.toThrow(
-      'connection lost',
-    );
+    await expect(useCase.execute('actor-id', 'organization-id', input)).rejects.toThrow('connection lost');
   });
 });

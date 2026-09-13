@@ -1,43 +1,32 @@
-'use client'
+'use client';
 
-import {
-  ActionIcon,
-  Box,
-  Burger,
-  Group,
-  Text,
-  Tooltip
-} from '@mantine/core'
-import { IconSettings } from '@tabler/icons-react'
-import { useTranslations } from 'next-intl'
-import { useActiveRouteTrail } from '@/hooks'
-import { AdminBrand } from './admin-brand'
-import classes from './admin-header.module.css'
+import { ActionIcon, Box, Burger, Group, Text, Tooltip } from '@mantine/core';
+import { IconSettings } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import { useActiveRouteTrail } from '@/hooks';
+import { AdminBrand } from './admin-brand';
+import classes from './admin-header.module.css';
 
 export function AdminHeader({
   mobileOpened,
   onToggleMobileAction,
   onOpenSettingsAction,
 }: {
-  mobileOpened: boolean
-  onToggleMobileAction: () => void
-  onOpenSettingsAction: () => void
+  mobileOpened: boolean;
+  onToggleMobileAction: () => void;
+  onOpenSettingsAction: () => void;
 }) {
-  const t = useTranslations('Navigation')
-  const routeTrail = useActiveRouteTrail()
-  const currentRoute = routeTrail[routeTrail.length - 1]
+  const t = useTranslations('Navigation');
+  const routeTrail = useActiveRouteTrail();
+  const currentRoute = routeTrail[routeTrail.length - 1];
   const pageTitle = currentRoute
     ? currentRoute.navigationLabelKey
       ? t(currentRoute.navigationLabelKey)
-      : currentRoute.navigationLabel ?? currentRoute.label
-    : ''
+      : (currentRoute.navigationLabel ?? currentRoute.label)
+    : '';
 
   return (
-    <Group
-      className={classes.headerInner}
-      justify='space-between'
-      wrap='nowrap'
-    >
+    <Group className={classes.headerInner} justify='space-between' wrap='nowrap'>
       <Group gap='sm' wrap='nowrap'>
         <Burger
           opened={mobileOpened}
@@ -65,13 +54,10 @@ export function AdminHeader({
             aria-label={t('openSettings')}
             onClick={onOpenSettingsAction}
           >
-            <IconSettings
-              style={{ width: '70%', height: '70%' }}
-              stroke={1.5}
-            />
+            <IconSettings style={{ width: '70%', height: '70%' }} stroke={1.5} />
           </ActionIcon>
         </Tooltip>
       </Group>
     </Group>
-  )
+  );
 }

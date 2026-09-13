@@ -12,6 +12,12 @@ describe('ListUsersUseCase', () => {
       page: 1,
       limit: 100,
     });
-    expect(users.list).toHaveBeenCalledWith({ page: 1, limit: 100, search: undefined, status: undefined, role: undefined });
+    expect(users.list).toHaveBeenCalledWith({
+      page: 1,
+      limit: 100,
+      search: undefined,
+      status: undefined,
+      role: undefined,
+    });
   });
 });

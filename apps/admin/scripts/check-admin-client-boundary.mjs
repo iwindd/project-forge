@@ -1,18 +1,14 @@
-import path from "node:path";
-import process from "node:process";
-import ts from "typescript";
+import path from 'node:path';
+import process from 'node:process';
+import ts from 'typescript';
 
 const projectRoot = process.cwd();
-const scanRoots = ["src/"].map((root) => path.resolve(projectRoot, root));
+const scanRoots = ['src/'].map((root) => path.resolve(projectRoot, root));
 
 function isInScanRoot(fileName) {
   const absoluteFileName = path.resolve(fileName);
 
-  return scanRoots.some(
-    (root) =>
-      absoluteFileName === root ||
-      absoluteFileName.startsWith(`${root}${path.sep}`),
-  );
+  return scanRoots.some((root) => absoluteFileName === root || absoluteFileName.startsWith(`${root}${path.sep}`));
 }
 
 /*
@@ -20,12 +16,10 @@ function isInScanRoot(fileName) {
  * (`error`, `retry`, `reset`). Those names are fixed by the framework and are not
  * callbacks we hand across a client boundary, so the naming rule does not apply.
  */
-const FRAMEWORK_ERROR_BOUNDARIES = new Set(["error", "global-error"]);
+const FRAMEWORK_ERROR_BOUNDARIES = new Set(['error', 'global-error']);
 
 function isFrameworkErrorBoundary(fileName) {
-  return FRAMEWORK_ERROR_BOUNDARIES.has(
-    path.basename(fileName, path.extname(fileName)),
-  );
+  return FRAMEWORK_ERROR_BOUNDARIES.has(path.basename(fileName, path.extname(fileName)));
 }
 
 function isUseClientEntry(sourceFile) {
@@ -33,16 +27,14 @@ function isUseClientEntry(sourceFile) {
 
   return Boolean(
     firstStatement &&
-    ts.isExpressionStatement(firstStatement) &&
-    ts.isStringLiteral(firstStatement.expression) &&
-    firstStatement.expression.text === "use client",
+      ts.isExpressionStatement(firstStatement) &&
+      ts.isStringLiteral(firstStatement.expression) &&
+      firstStatement.expression.text === 'use client',
   );
 }
 
 function isExported(node) {
-  return node.modifiers?.some(
-    (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
-  );
+  return node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
 }
 
 function getExportedComponentFunctions(sourceFile) {
@@ -61,8 +53,7 @@ function getExportedComponentFunctions(sourceFile) {
     for (const declaration of statement.declarationList.declarations) {
       if (
         declaration.initializer &&
-        (ts.isArrowFunction(declaration.initializer) ||
-          ts.isFunctionExpression(declaration.initializer))
+        (ts.isArrowFunction(declaration.initializer) || ts.isFunctionExpression(declaration.initializer))
       ) {
         functions.push(declaration.initializer);
       }
@@ -77,9 +68,7 @@ function isFunctionType(type, checker) {
 }
 
 function getDeclarationName(declaration) {
-  return "name" in declaration && declaration.name
-    ? declaration.name
-    : declaration;
+  return 'name' in declaration && declaration.name ? declaration.name : declaration;
 }
 
 function findInvalidProps(sourceFile, component, checker) {
@@ -99,28 +88,17 @@ function findInvalidProps(sourceFile, component, checker) {
       continue;
     }
 
-    const propertyType = checker.getTypeOfSymbolAtLocation(
-      property,
-      declaration,
-    );
+    const propertyType = checker.getTypeOfSymbolAtLocation(property, declaration);
 
-    if (
-      !isFunctionType(propertyType, checker) ||
-      property.name === "action" ||
-      property.name.endsWith("Action")
-    ) {
+    if (!isFunctionType(propertyType, checker) || property.name === 'action' || property.name.endsWith('Action')) {
       continue;
     }
 
     const name = getDeclarationName(declaration);
-    const position = sourceFile.getLineAndCharacterOfPosition(
-      name.getStart(sourceFile),
-    );
+    const position = sourceFile.getLineAndCharacterOfPosition(name.getStart(sourceFile));
 
     findings.push({
-      file: path
-        .relative(projectRoot, sourceFile.fileName)
-        .replaceAll(path.sep, "/"),
+      file: path.relative(projectRoot, sourceFile.fileName).replaceAll(path.sep, '/'),
       line: position.line + 1,
       column: position.character + 1,
       propName: property.name,
@@ -130,31 +108,21 @@ function findInvalidProps(sourceFile, component, checker) {
   return findings;
 }
 
-const configPath = ts.findConfigFile(
-  projectRoot,
-  ts.sys.fileExists,
-  "tsconfig.json",
-);
+const configPath = ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json');
 
 if (!configPath) {
-  console.error("Could not find tsconfig.json.");
+  console.error('Could not find tsconfig.json.');
   process.exit(2);
 }
 
 const config = ts.readConfigFile(configPath, ts.sys.readFile);
 
 if (config.error) {
-  console.error(
-    ts.flattenDiagnosticMessageText(config.error.messageText, "\n"),
-  );
+  console.error(ts.flattenDiagnosticMessageText(config.error.messageText, '\n'));
   process.exit(2);
 }
 
-const parsedConfig = ts.parseJsonConfigFileContent(
-  config.config,
-  ts.sys,
-  path.dirname(configPath),
-);
+const parsedConfig = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configPath));
 const program = ts.createProgram({
   rootNames: parsedConfig.fileNames,
   options: parsedConfig.options,
@@ -177,13 +145,11 @@ for (const sourceFile of program.getSourceFiles()) {
 }
 
 if (findings.length === 0) {
-  console.log("Admin client-boundary prop scan passed.");
+  console.log('Admin client-boundary prop scan passed.');
   process.exit(0);
 }
 
-console.error(
-  "Invalid function props found in admin client-boundary components:",
-);
+console.error('Invalid function props found in admin client-boundary components:');
 
 for (const finding of findings) {
   console.error(

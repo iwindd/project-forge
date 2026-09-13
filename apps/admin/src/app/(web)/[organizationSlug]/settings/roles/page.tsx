@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from '@/components/page-header';
 import {
   useDeleteRoleMutation,
   useGetRolesQuery,
   type OrganizationRoleSummary,
-} from "@/lib/features/organization/organization-members-api";
-import { useOrganizationContext } from "@/lib/features/organization/organization-provider";
-import { getPath } from "@/routes";
+} from '@/lib/features/organization/organization-members-api';
+import { useOrganizationContext } from '@/lib/features/organization/organization-provider';
+import { getPath } from '@/routes';
 import {
   ActionIcon,
   Alert,
@@ -22,8 +22,8 @@ import {
   Stack,
   Table,
   Text,
-} from "@mantine/core";
-import { notifications } from "@mantine/notifications";
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconAlertCircle,
   IconDots,
@@ -33,134 +33,131 @@ import {
   IconRefresh,
   IconShieldCheck,
   IconTrash,
-} from "@tabler/icons-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import {
-  ORGANIZATION_MANAGE_PERMISSION,
-  ORGANIZATION_MANAGE_PROJECT_PERMISSION,
-} from "./role-form-schema";
-import classes from "./roles-page.module.css";
+} from '@tabler/icons-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { ORGANIZATION_MANAGE_PERMISSION, ORGANIZATION_MANAGE_PROJECT_PERMISSION } from './role-form-schema';
+import classes from './roles-page.module.css';
 
 export default function OrganizationRolesPage() {
-  const t = useTranslations("OrganizationRoles");
+  const t = useTranslations('OrganizationRoles');
   const { organizationSlug } = useParams<{ organizationSlug?: string }>();
   const { activeOrganization } = useOrganizationContext();
-  const organizationId = activeOrganization?.id ?? "";
-  const newRolePath = organizationSlug
-    ? getPath("settings.roles.new", { organizationSlug })
-    : "#";
+  const organizationId = activeOrganization?.id ?? '';
+  const newRolePath = organizationSlug ? getPath('settings.roles.new', { organizationSlug }) : '#';
   const canManage = Boolean(
-    activeOrganization?.type === "SHARED" &&
-      (activeOrganization.role.isOwner ||
-        activeOrganization.role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)),
+    activeOrganization?.type === 'SHARED' &&
+      (activeOrganization.role.isOwner || activeOrganization.role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)),
   );
-  const { data, isFetching, isError, refetch: refetchRoles } = useGetRolesQuery(
-    { organizationId },
-    { skip: !organizationId || !canManage },
-  );
+  const {
+    data,
+    isFetching,
+    isError,
+    refetch: refetchRoles,
+  } = useGetRolesQuery({ organizationId }, { skip: !organizationId || !canManage });
   const [deleteRole, { isLoading: deletePending }] = useDeleteRoleMutation();
 
   const roles = data?.data ?? [];
 
   const remove = async (role: OrganizationRoleSummary) => {
     if (!organizationId || !role.id || role.isOwner) return;
-    if (!window.confirm(t("deleteConfirm", { name: role.name }))) return;
+    if (!window.confirm(t('deleteConfirm', { name: role.name }))) return;
     try {
       await deleteRole({ organizationId, roleId: role.id }).unwrap();
-      notifications.show({ message: t("deleteSuccess"), color: "teal" });
+      notifications.show({ message: t('deleteSuccess'), color: 'teal' });
     } catch {
-      notifications.show({ message: t("deleteFailed"), color: "red" });
+      notifications.show({ message: t('deleteFailed'), color: 'red' });
     }
   };
 
   return (
     <Box className={classes.page}>
       <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
+        title={t('title')}
+        subtitle={t('subtitle')}
         rightSection={
-          <Button
-            component={Link}
-            href={newRolePath}
-            leftSection={<IconPlus size={16} />}
-            disabled={!canManage}
-          >
-            {t("create")}
+          <Button component={Link} href={newRolePath} leftSection={<IconPlus size={16} />} disabled={!canManage}>
+            {t('create')}
           </Button>
         }
       />
 
       {!canManage ? (
-        <Alert color="gray" icon={<IconAlertCircle size={18} />}>
-          {activeOrganization?.type === "PERSONAL" ? t("personalNotice") : t("permissionNotice")}
+        <Alert color='gray' icon={<IconAlertCircle size={18} />}>
+          {activeOrganization?.type === 'PERSONAL' ? t('personalNotice') : t('permissionNotice')}
         </Alert>
       ) : isError ? (
-        <Alert color="red" icon={<IconAlertCircle size={18} />}>
-          <Group justify="space-between" gap="sm" wrap="nowrap">
-            <Text size="sm">{t("loadFailed")}</Text>
+        <Alert color='red' icon={<IconAlertCircle size={18} />}>
+          <Group justify='space-between' gap='sm' wrap='nowrap'>
+            <Text size='sm'>{t('loadFailed')}</Text>
             <Button
-              size="compact-sm"
-              variant="light"
-              color="red"
+              size='compact-sm'
+              variant='light'
+              color='red'
               leftSection={<IconRefresh size={14} />}
               loading={isFetching}
               onClick={() => void refetchRoles()}
             >
-              {t("retry")}
+              {t('retry')}
             </Button>
           </Group>
         </Alert>
       ) : (
-        <Paper className={classes.card} withBorder radius="md">
+        <Paper className={classes.card} withBorder radius='md'>
           {isFetching ? (
             <Center className={classes.emptyState}>
-              <Loader size="sm" />
+              <Loader size='sm' />
             </Center>
           ) : roles.length ? (
             <Box className={classes.tableScroll}>
-              <Table className={classes.table} verticalSpacing="sm">
+              <Table className={classes.table} verticalSpacing='sm'>
                 <thead>
                   <tr>
-                    <th>{t("role")}</th>
-                    <th>{t("permissions")}</th>
-                    <th>{t("members")}</th>
-                    <th>{t("invitations")}</th>
-                    <th aria-label={t("actions")} />
+                    <th>{t('role')}</th>
+                    <th>{t('permissions')}</th>
+                    <th>{t('members')}</th>
+                    <th>{t('invitations')}</th>
+                    <th aria-label={t('actions')} />
                   </tr>
                 </thead>
                 <tbody>
                   {roles.map((role) => (
                     <tr key={role.id}>
                       <td>
-                        <Group gap="xs" wrap="nowrap">
+                        <Group gap='xs' wrap='nowrap'>
                           {role.isOwner ? <IconLock size={16} /> : <IconShieldCheck size={16} />}
                           <Stack gap={0}>
                             <Text fw={600}>{role.name}</Text>
-                            {role.isOwner ? <Text size="xs" c="dimmed">{t("systemRole")}</Text> : null}
+                            {role.isOwner ? (
+                              <Text size='xs' c='dimmed'>
+                                {t('systemRole')}
+                              </Text>
+                            ) : null}
                           </Stack>
                         </Group>
                       </td>
                       <td>
                         {role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION) ? (
-                          <Badge variant="light">{t("manageOrganization")}</Badge>
+                          <Badge variant='light'>{t('manageOrganization')}</Badge>
                         ) : null}
                         {role.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION) ? (
-                          <Badge variant="light">{t("manageProject")}</Badge>
+                          <Badge variant='light'>{t('manageProject')}</Badge>
                         ) : null}
                         {!role.permissions.includes(ORGANIZATION_MANAGE_PERMISSION) &&
                         !role.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION) ? (
-                          <Text size="sm" c="dimmed">{t("noPermissions")}</Text>
+                          <Text size='sm' c='dimmed'>
+                            {t('noPermissions')}
+                          </Text>
                         ) : null}
                       </td>
                       <td>{role.memberCount ?? 0}</td>
                       <td>{role.invitationCount ?? 0}</td>
                       <td>
                         {!role.isOwner && role.id ? (
-                          <Menu shadow="md" position="bottom-end">
+                          <Menu shadow='md' position='bottom-end'>
                             <Menu.Target>
-                              <ActionIcon variant="subtle" aria-label={`${t("actions")}: ${role.name}`}>
+                              <ActionIcon variant='subtle' aria-label={`${t('actions')}: ${role.name}`}>
                                 <IconDots size={18} />
                               </ActionIcon>
                             </Menu.Target>
@@ -169,18 +166,18 @@ export default function OrganizationRolesPage() {
                                 component={Link}
                                 href={
                                   organizationSlug
-                                    ? getPath("settings.roles.edit", {
+                                    ? getPath('settings.roles.edit', {
                                         organizationSlug,
                                         roleId: role.id,
                                       })
-                                    : "#"
+                                    : '#'
                                 }
                                 leftSection={<IconPencil size={16} />}
                               >
-                                {t("edit")}
+                                {t('edit')}
                               </Menu.Item>
                               <Menu.Item
-                                color="red"
+                                color='red'
                                 leftSection={<IconTrash size={16} />}
                                 disabled={
                                   deletePending ||
@@ -190,7 +187,7 @@ export default function OrganizationRolesPage() {
                                 }
                                 onClick={() => void remove(role)}
                               >
-                                {t("delete")}
+                                {t('delete')}
                               </Menu.Item>
                             </Menu.Dropdown>
                           </Menu>
@@ -202,9 +199,9 @@ export default function OrganizationRolesPage() {
               </Table>
             </Box>
           ) : (
-            <Stack className={classes.emptyState} align="center" justify="center" gap="xs">
+            <Stack className={classes.emptyState} align='center' justify='center' gap='xs'>
               <IconShieldCheck size={28} stroke={1.5} />
-              <Text c="dimmed">{t("noRoles")}</Text>
+              <Text c='dimmed'>{t('noRoles')}</Text>
             </Stack>
           )}
         </Paper>

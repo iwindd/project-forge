@@ -22,8 +22,7 @@ export const ORGANIZATION_PERMISSIONS = {
   MANAGE_PROJECT: 'project.manage',
 } as const;
 
-export type OrganizationPermission =
-  (typeof ORGANIZATION_PERMISSIONS)[keyof typeof ORGANIZATION_PERMISSIONS];
+export type OrganizationPermission = (typeof ORGANIZATION_PERMISSIONS)[keyof typeof ORGANIZATION_PERMISSIONS];
 
 export enum OrganizationMemberStatus {
   ACTIVE = 'ACTIVE',
@@ -84,11 +83,7 @@ export type OrganizationInvitationRecord = {
   createdAt: Date;
 };
 
-export function createOrganization(input: {
-  name: string;
-  slug: string;
-  type: OrganizationType;
-}): OrganizationRecord {
+export function createOrganization(input: { name: string; slug: string; type: OrganizationType }): OrganizationRecord {
   const now = new Date();
   return {
     id: randomUUID(),

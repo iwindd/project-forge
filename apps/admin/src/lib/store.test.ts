@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { createPreloadedState } from './store'
+import { describe, expect, it } from 'vitest';
+import { createPreloadedState } from './store';
 
 describe('store preload boundary', () => {
   it('hydrates the organization query through the existing Redux preload state', async () => {
@@ -20,16 +20,13 @@ describe('store preload boundary', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
-    ]
+    ];
 
-    const state = await createPreloadedState(
-      { user: { id: 'user-id', role: 'EDITOR' } },
-      organizations,
-    )
+    const state = await createPreloadedState({ user: { id: 'user-id', role: 'EDITOR' } }, organizations);
 
     expect(state.api?.queries['getOrganizations(undefined)']).toMatchObject({
       status: 'fulfilled',
       data: organizations,
-    })
-  })
-})
+    });
+  });
+});

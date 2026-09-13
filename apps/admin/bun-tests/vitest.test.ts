@@ -1,10 +1,10 @@
-import { test } from "bun:test";
+import { test } from 'bun:test';
 
-test("runs the Vitest suite", () => {
-  const result = Bun.spawnSync([process.execPath, "x", "vitest", "run"], {
+test('runs the Vitest suite', () => {
+  const result = Bun.spawnSync([process.execPath, 'x', 'vitest', 'run'], {
     cwd: process.cwd(),
-    stderr: "inherit",
-    stdout: "inherit",
+    stderr: 'inherit',
+    stdout: 'inherit',
   });
 
   if (result.exitCode !== 0) {

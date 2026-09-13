@@ -28,9 +28,26 @@ The pull-request workflow runs the same API and Admin gates, installs Chromium, 
 browser acceptance suite. Any pre-existing lint or formatting warning must remain visible in the
 command output and must be reported separately from failures introduced by the change.
 
+## Biome baseline and intentional exceptions
+
+The repository-wide `pnpm run check` baseline is enforced by `biome check apps` and must finish
+without errors, warnings, or informational diagnostics. The following exceptions are explicit and
+scoped in `biome.json`:
+
+- `apps/api/src/**/*.ts` disables `style/useImportType`. NestJS uses emitted decorator metadata to
+  resolve concrete constructor dependencies, so converting those imports to type-only imports can
+  break application bootstrap and HTTP tests. Runtime imports remain in the files that participate
+  in dependency injection.
+- `apps/admin/src/themes/shadcn/**/*.css` disables the CSS diagnostics for Mantine's `alpha()`
+  PostCSS function and the intentional nested selector ordering in the theme stylesheet.
+- `apps/admin/src/components/StatusScreen.tsx` disables `performance/noImgElement` because the
+  standalone status screen intentionally keeps the existing raw logo asset; the existing ESLint
+  suppression remains next to the element as well.
+- Generated Next.js route types and database migration sources remain outside the check scope.
+
 ## Latest local validation
 
-The final local run for Issue #8 on 2026-09-13 produced these results:
+The final local run for Issue #15 on 2026-09-13 produced these results:
 
 | Boundary | Result |
 | --- | --- |
@@ -38,7 +55,7 @@ The final local run for Issue #8 on 2026-09-13 produced these results:
 | Admin tests | 34 test files, 151 tests passed |
 | API typecheck and build | Passed |
 | Admin typecheck, build, client-boundary, and UI i18n checks | Passed |
-| API and Admin lint | Passed; API reported 52 pre-existing Biome warnings and no errors |
+| API and Admin lint | Passed with no Biome diagnostics |
 | Browser acceptance | 19 tests passed with the standalone Next.js server and controlled HTTP fixture |
 | Whitespace check | Working tree and `main...HEAD` review range passed |
 | Database migration/seed/verification | Not run; no explicit database approval was provided |

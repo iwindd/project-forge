@@ -1,4 +1,4 @@
-import { type EntityManager, LockMode } from '@mikro-orm/core';
+import { EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { AUDIT_LOGGER } from '../../../common/audit/audit.port.js';
@@ -89,11 +89,15 @@ export class OrganizationService {
           role: this.roleView(roleMap.get(membership.roleId)),
         };
       })
-      .filter((value): value is {
-        organization: OrganizationOrmEntity;
-        membership: OrganizationMemberOrmEntity;
-        role: OrganizationRoleView;
-      } => value !== null);
+      .filter(
+        (
+          value,
+        ): value is {
+          organization: OrganizationOrmEntity;
+          membership: OrganizationMemberOrmEntity;
+          role: OrganizationRoleView;
+        } => value !== null,
+      );
   }
 
   async createShared(ownerUserId: string, name: string, requestedSlug?: string) {
@@ -172,10 +176,7 @@ export class OrganizationService {
 
   async requireProjectManager(userId: string, organizationId: string) {
     const result = await this.requireMembership(userId, organizationId);
-    if (
-      !result.role.isOwner &&
-      !result.role.permissions.includes(ORGANIZATION_PERMISSIONS.MANAGE_PROJECT)
-    ) {
+    if (!result.role.isOwner && !result.role.permissions.includes(ORGANIZATION_PERMISSIONS.MANAGE_PROJECT)) {
       throw new ForbiddenError('Project management access is required');
     }
     return result;
@@ -289,14 +290,27 @@ export class OrganizationService {
     return this.unitOfWork.run(() => this.deleteRoleInTransaction(actorId, organizationId, roleId, options));
   }
 
-  private async deleteRoleInTransaction(actorId: string, organizationId: string, roleId: string, options: MutationOptions) {
+  private async deleteRoleInTransaction(
+    actorId: string,
+    organizationId: string,
+    roleId: string,
+    options: MutationOptions,
+  ) {
     await this.requireManager(actorId, organizationId);
     const role = await this.requireRoleEntity(organizationId, roleId);
     if (role.isOwner) throw new ForbiddenError('The organization owner role cannot be deleted');
     if (role.code) throw new ConflictError('Default organization roles cannot be deleted');
     const [memberCount, invitationCount] = await Promise.all([
-      this.em.count(OrganizationMemberOrmEntity, { organizationId, roleId: role.id, status: { $ne: OrganizationMemberStatus.REMOVED } }),
-      this.em.count(OrganizationInvitationOrmEntity, { organizationId, roleId: role.id, status: OrganizationInvitationStatus.PENDING }),
+      this.em.count(OrganizationMemberOrmEntity, {
+        organizationId,
+        roleId: role.id,
+        status: { $ne: OrganizationMemberStatus.REMOVED },
+      }),
+      this.em.count(OrganizationInvitationOrmEntity, {
+        organizationId,
+        roleId: role.id,
+        status: OrganizationInvitationStatus.PENDING,
+      }),
     ]);
     if (memberCount > 0 || invitationCount > 0) {
       throw new ConflictError('Reassign members and invitations before deleting this role');
@@ -344,7 +358,12 @@ export class OrganizationService {
     return this.unitOfWork.run(() => this.updateOrganizationInTransaction(actorId, organizationId, name, options));
   }
 
-  private async updateOrganizationInTransaction(actorId: string, organizationId: string, name: string, options: MutationOptions) {
+  private async updateOrganizationInTransaction(
+    actorId: string,
+    organizationId: string,
+    name: string,
+    options: MutationOptions,
+  ) {
     const { organization } = await this.requireManager(actorId, organizationId);
     const normalizedName = name.trim();
     if (!normalizedName) throw new InvalidInputError('Organization name is required');
@@ -365,11 +384,25 @@ export class OrganizationService {
     return organization;
   }
 
-  async updateMemberStatus(actorId: string, organizationId: string, targetUserId: string, active: boolean, options: MutationOptions = {}) {
-    return this.unitOfWork.run(() => this.updateMemberStatusInTransaction(actorId, organizationId, targetUserId, active, options));
+  async updateMemberStatus(
+    actorId: string,
+    organizationId: string,
+    targetUserId: string,
+    active: boolean,
+    options: MutationOptions = {},
+  ) {
+    return this.unitOfWork.run(() =>
+      this.updateMemberStatusInTransaction(actorId, organizationId, targetUserId, active, options),
+    );
   }
 
-  private async updateMemberStatusInTransaction(actorId: string, organizationId: string, targetUserId: string, active: boolean, options: MutationOptions) {
+  private async updateMemberStatusInTransaction(
+    actorId: string,
+    organizationId: string,
+    targetUserId: string,
+    active: boolean,
+    options: MutationOptions,
+  ) {
     await this.requireManager(actorId, organizationId);
     const membership = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
@@ -398,11 +431,25 @@ export class OrganizationService {
     return this.getMember(actorId, organizationId, targetUserId);
   }
 
-  async updateMemberRole(actorId: string, organizationId: string, targetUserId: string, input: RoleInput, options: MutationOptions = {}) {
-    return this.unitOfWork.run(() => this.updateMemberRoleInTransaction(actorId, organizationId, targetUserId, input, options));
+  async updateMemberRole(
+    actorId: string,
+    organizationId: string,
+    targetUserId: string,
+    input: RoleInput,
+    options: MutationOptions = {},
+  ) {
+    return this.unitOfWork.run(() =>
+      this.updateMemberRoleInTransaction(actorId, organizationId, targetUserId, input, options),
+    );
   }
 
-  private async updateMemberRoleInTransaction(actorId: string, organizationId: string, targetUserId: string, input: RoleInput, options: MutationOptions) {
+  private async updateMemberRoleInTransaction(
+    actorId: string,
+    organizationId: string,
+    targetUserId: string,
+    input: RoleInput,
+    options: MutationOptions,
+  ) {
     await this.requireManager(actorId, organizationId);
     const nextRole = await this.resolveRequestedRole(organizationId, input);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
@@ -436,7 +483,12 @@ export class OrganizationService {
     return this.unitOfWork.run(() => this.removeMemberInTransaction(actorId, organizationId, targetUserId, options));
   }
 
-  private async removeMemberInTransaction(actorId: string, organizationId: string, targetUserId: string, options: MutationOptions) {
+  private async removeMemberInTransaction(
+    actorId: string,
+    organizationId: string,
+    targetUserId: string,
+    options: MutationOptions,
+  ) {
     await this.requireManager(actorId, organizationId);
     const target = await this.em.findOne(OrganizationMemberOrmEntity, {
       organizationId,
@@ -463,7 +515,13 @@ export class OrganizationService {
     return target;
   }
 
-  async createInvitation(actorId: string, organizationId: string, email: string, input: RoleInput, options: MutationOptions = {}) {
+  async createInvitation(
+    actorId: string,
+    organizationId: string,
+    email: string,
+    input: RoleInput,
+    options: MutationOptions = {},
+  ) {
     return this.unitOfWork.run(() =>
       this.createInvitationInTransaction(actorId, organizationId, email, input, options),
     );
@@ -477,10 +535,7 @@ export class OrganizationService {
     options: MutationOptions,
   ) {
     await this.requireManager(actorId, organizationId);
-    const role = await this.resolveRequestedRole(
-      organizationId,
-      input,
-    );
+    const role = await this.resolveRequestedRole(organizationId, input);
     if (role.code !== OrganizationMemberRole.ADMIN && role.code !== OrganizationMemberRole.MEMBER) {
       throw new InvalidInputError('Invitations can only assign Admin or Member roles');
     }
@@ -489,19 +544,25 @@ export class OrganizationService {
     if (!normalizedEmail) throw new InvalidInputError('Invitation email is required');
     const token = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const existingInvitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
-      organizationId,
-      email: normalizedEmail,
-      status: OrganizationInvitationStatus.PENDING,
-    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
-    const invitation = existingInvitation ?? createOrganizationInvitation({
-      organizationId,
-      invitedBy: actorId,
-      email: normalizedEmail,
-      tokenHash: this.hashToken(token),
-      roleId: role.id,
-      expiresAt,
-    });
+    const existingInvitation = await this.em.findOne(
+      OrganizationInvitationOrmEntity,
+      {
+        organizationId,
+        email: normalizedEmail,
+        status: OrganizationInvitationStatus.PENDING,
+      },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+    const invitation =
+      existingInvitation ??
+      createOrganizationInvitation({
+        organizationId,
+        invitedBy: actorId,
+        email: normalizedEmail,
+        tokenHash: this.hashToken(token),
+        roleId: role.id,
+        expiresAt,
+      });
     if (existingInvitation) {
       invitation.invitedBy = actorId;
       invitation.email = normalizedEmail;
@@ -518,9 +579,7 @@ export class OrganizationService {
     await this.audit.record({
       organizationId,
       actorId,
-      action: existingInvitation
-        ? 'ORGANIZATION_INVITATION_RESENT'
-        : 'ORGANIZATION_INVITATION_CREATED',
+      action: existingInvitation ? 'ORGANIZATION_INVITATION_RESENT' : 'ORGANIZATION_INVITATION_CREATED',
       requestId: options.requestId,
       resourceType: 'ORGANIZATION_INVITATION',
       resourceId: invitation.id,
@@ -546,15 +605,17 @@ export class OrganizationService {
       { orderBy: { createdAt: 'DESC' } },
     );
 
-    return Promise.all(invitations.map(async (invitation) => ({
-      id: invitation.id,
-      organizationId: invitation.organizationId,
-      email: invitation.email,
-      role: await this.resolveInvitationRole(invitation),
-      status: invitation.status,
-      expiresAt: invitation.expiresAt.toISOString(),
-      createdAt: invitation.createdAt.toISOString(),
-    })));
+    return Promise.all(
+      invitations.map(async (invitation) => ({
+        id: invitation.id,
+        organizationId: invitation.organizationId,
+        email: invitation.email,
+        role: await this.resolveInvitationRole(invitation),
+        status: invitation.status,
+        expiresAt: invitation.expiresAt.toISOString(),
+        createdAt: invitation.createdAt.toISOString(),
+      })),
+    );
   }
 
   async cancelInvitation(actorId: string, organizationId: string, invitationId: string, options: MutationOptions = {}) {
@@ -570,11 +631,15 @@ export class OrganizationService {
     options: MutationOptions,
   ) {
     await this.requireManager(actorId, organizationId);
-    const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
-      id: invitationId,
-      organizationId,
-      status: OrganizationInvitationStatus.PENDING,
-    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
+    const invitation = await this.em.findOne(
+      OrganizationInvitationOrmEntity,
+      {
+        id: invitationId,
+        organizationId,
+        status: OrganizationInvitationStatus.PENDING,
+      },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
     if (!invitation) throw new NotFoundError('Pending organization invitation was not found');
 
     invitation.status = OrganizationInvitationStatus.CANCELLED;
@@ -594,9 +659,7 @@ export class OrganizationService {
 
   async acceptInvitation(userId: string, token: string, options: MutationOptions = {}) {
     try {
-      return await this.unitOfWork.run(() =>
-        this.acceptInvitationInTransaction(userId, token, options),
-      );
+      return await this.unitOfWork.run(() => this.acceptInvitationInTransaction(userId, token, options));
     } catch (error) {
       if (!(error instanceof ExpiredInvitationError)) throw error;
       await this.unitOfWork.run(() => this.expireInvitation(token));
@@ -605,10 +668,14 @@ export class OrganizationService {
   }
 
   private async acceptInvitationInTransaction(userId: string, token: string, options: MutationOptions) {
-    const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
-      tokenHash: this.hashToken(token),
-      status: OrganizationInvitationStatus.PENDING,
-    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
+    const invitation = await this.em.findOne(
+      OrganizationInvitationOrmEntity,
+      {
+        tokenHash: this.hashToken(token),
+        status: OrganizationInvitationStatus.PENDING,
+      },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
     if (!invitation) throw new NotFoundError('Invitation was not found or has already been used');
     if (invitation.expiresAt.getTime() <= Date.now()) {
       throw new ExpiredInvitationError();
@@ -620,8 +687,7 @@ export class OrganizationService {
       !connection ||
       !(
         connection.providerVerifiedEmails.includes(invitationEmail) ||
-        (connection.providerEmailVerified &&
-          connection.providerEmail?.toLowerCase() === invitationEmail)
+        (connection.providerEmailVerified && connection.providerEmail?.toLowerCase() === invitationEmail)
       )
     ) {
       throw new ForbiddenError('This invitation requires a matching verified GitHub email address');
@@ -645,11 +711,14 @@ export class OrganizationService {
       throw new ConflictError('The user is already an active member of this organization');
     }
     if (!membership) {
-      membership = this.em.create(OrganizationMemberOrmEntity, createOrganizationMember({
-        organizationId: organization.id,
-        userId,
-        roleId: role.id,
-      }));
+      membership = this.em.create(
+        OrganizationMemberOrmEntity,
+        createOrganizationMember({
+          organizationId: organization.id,
+          userId,
+          roleId: role.id,
+        }),
+      );
     } else {
       membership.roleId = role.id;
       membership.status = OrganizationMemberStatus.ACTIVE;
@@ -676,10 +745,14 @@ export class OrganizationService {
   }
 
   private async expireInvitation(token: string) {
-    const invitation = await this.em.findOne(OrganizationInvitationOrmEntity, {
-      tokenHash: this.hashToken(token),
-      status: OrganizationInvitationStatus.PENDING,
-    }, { lockMode: LockMode.PESSIMISTIC_WRITE });
+    const invitation = await this.em.findOne(
+      OrganizationInvitationOrmEntity,
+      {
+        tokenHash: this.hashToken(token),
+        status: OrganizationInvitationStatus.PENDING,
+      },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
     if (!invitation || invitation.expiresAt.getTime() > Date.now()) return;
     invitation.status = OrganizationInvitationStatus.EXPIRED;
     this.em.persist(invitation);
@@ -744,8 +817,7 @@ export class OrganizationService {
         continue;
       }
 
-      const permissionsChanged =
-        JSON.stringify(role.permissions) !== JSON.stringify(requiredRole.permissions);
+      const permissionsChanged = JSON.stringify(role.permissions) !== JSON.stringify(requiredRole.permissions);
       if (
         role.name !== requiredRole.name ||
         role.code !== requiredRole.code ||
@@ -770,10 +842,7 @@ export class OrganizationService {
     const owner = createOrganizationRole({
       organizationId,
       name: DEFAULT_ROLE_NAMES.owner,
-      permissions: [
-        ORGANIZATION_PERMISSIONS.MANAGE,
-        ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
-      ],
+      permissions: [ORGANIZATION_PERMISSIONS.MANAGE, ORGANIZATION_PERMISSIONS.MANAGE_PROJECT],
       isOwner: true,
       code: OrganizationMemberRole.OWNER,
     });
@@ -783,10 +852,7 @@ export class OrganizationService {
       createOrganizationRole({
         organizationId,
         name: DEFAULT_ROLE_NAMES.admin,
-        permissions: [
-          ORGANIZATION_PERMISSIONS.MANAGE,
-          ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
-        ],
+        permissions: [ORGANIZATION_PERMISSIONS.MANAGE, ORGANIZATION_PERMISSIONS.MANAGE_PROJECT],
         code: OrganizationMemberRole.ADMIN,
       }),
       createOrganizationRole({

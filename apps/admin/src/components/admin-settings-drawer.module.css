@@ -38,11 +38,7 @@
 }
 
 .settingsScrollbarThumb {
-  background-color: color-mix(
-    in srgb,
-    var(--mantine-color-dimmed) 32%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--mantine-color-dimmed) 32%, transparent);
 }
 
 .changeIndicator {

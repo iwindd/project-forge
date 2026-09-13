@@ -1,82 +1,68 @@
-'use client'
+'use client';
 
-import { useGetOrganizationsQuery } from './organization-api'
-import { resolveOrganizationFromRoute } from './organization-context'
-import type { Organization } from './types'
-import { usePathname, useRouter } from 'next/navigation'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode
-} from 'react'
+import { useGetOrganizationsQuery } from './organization-api';
+import { resolveOrganizationFromRoute } from './organization-context';
+import type { Organization } from './types';
+import { usePathname, useRouter } from 'next/navigation';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 type OrganizationContextValue = {
-  organizations: Organization[]
-  activeId: string | null
-  activeOrganization: Organization | undefined
-  pending: boolean
-  loadOrganizations: () => Promise<void>
-  switchOrganization: (id: string | null) => Promise<void>
-}
+  organizations: Organization[];
+  activeId: string | null;
+  activeOrganization: Organization | undefined;
+  pending: boolean;
+  loadOrganizations: () => Promise<void>;
+  switchOrganization: (id: string | null) => Promise<void>;
+};
 
-const OrganizationContext = createContext<OrganizationContextValue | null>(null)
+const OrganizationContext = createContext<OrganizationContextValue | null>(null);
 
 export function OrganizationProvider({
   children,
   organizationSlug,
-  organizationId
+  organizationId,
 }: Readonly<{
-  children: ReactNode
-  organizationSlug: string
-  organizationId: string
+  children: ReactNode;
+  organizationSlug: string;
+  organizationId: string;
 }>) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [switchPending, setSwitchPending] = useState(false)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [switchPending, setSwitchPending] = useState(false);
   const {
     data: organizations = [],
     isFetching,
-    refetch
+    refetch,
   } = useGetOrganizationsQuery(undefined, {
-    refetchOnMountOrArgChange: false
-  })
+    refetchOnMountOrArgChange: false,
+  });
 
   const activeOrganization = useMemo(
-    () =>
-      resolveOrganizationFromRoute(
-        organizations,
-        organizationSlug,
-        organizationId
-      ),
-    [organizationId, organizationSlug, organizations]
-  )
+    () => resolveOrganizationFromRoute(organizations, organizationSlug, organizationId),
+    [organizationId, organizationSlug, organizations],
+  );
 
   const loadOrganizations = useCallback(async () => {
-    await refetch().unwrap()
-  }, [refetch])
+    await refetch().unwrap();
+  }, [refetch]);
 
   const switchOrganization = useCallback(
     async (id: string | null) => {
-      if (!id || id === activeOrganization?.id) return
+      if (!id || id === activeOrganization?.id) return;
 
-      const organization = organizations.find(candidate => candidate.id === id)
-      if (!organization) return
+      const organization = organizations.find((candidate) => candidate.id === id);
+      if (!organization) return;
 
-      setSwitchPending(true)
+      setSwitchPending(true);
       try {
-        const suffix = pathname.split('/').filter(Boolean).slice(1).join('/')
-        router.push(
-          `/${encodeURIComponent(organization.slug)}${suffix ? `/${suffix}` : ''}`
-        )
+        const suffix = pathname.split('/').filter(Boolean).slice(1).join('/');
+        router.push(`/${encodeURIComponent(organization.slug)}${suffix ? `/${suffix}` : ''}`);
       } finally {
-        setSwitchPending(false)
+        setSwitchPending(false);
       }
     },
-    [activeOrganization?.id, organizations, pathname, router]
-  )
+    [activeOrganization?.id, organizations, pathname, router],
+  );
 
   const value = useMemo(
     () => ({
@@ -85,37 +71,24 @@ export function OrganizationProvider({
       activeOrganization,
       pending: isFetching || switchPending,
       loadOrganizations,
-      switchOrganization
-    }),
-    [
-      activeOrganization,
-      isFetching,
-      loadOrganizations,
-      organizations,
       switchOrganization,
-      switchPending
-    ]
-  )
+    }),
+    [activeOrganization, isFetching, loadOrganizations, organizations, switchOrganization, switchPending],
+  );
 
-  return (
-    <OrganizationContext.Provider value={value}>
-      {children}
-    </OrganizationContext.Provider>
-  )
+  return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;
 }
 
 export function useOptionalOrganizationContext() {
-  return useContext(OrganizationContext)
+  return useContext(OrganizationContext);
 }
 
 export function useOrganizationContext() {
-  const context = useOptionalOrganizationContext()
+  const context = useOptionalOrganizationContext();
 
   if (!context) {
-    throw new Error(
-      'useOrganizationContext must be used inside OrganizationProvider'
-    )
+    throw new Error('useOrganizationContext must be used inside OrganizationProvider');
   }
 
-  return context
+  return context;
 }

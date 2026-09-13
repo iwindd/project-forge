@@ -55,32 +55,33 @@ export class UsersController {
     const query = userListQuerySchema.parse(rawQuery);
     const result = await this.listUsers.execute({
       search: query.search,
-      status: query.status === 'active'
-        ? AccessStatus.APPROVED
-        : query.status === 'inactive'
-          ? AccessStatus.SUSPENDED
-          : undefined,
+      status:
+        query.status === 'active'
+          ? AccessStatus.APPROVED
+          : query.status === 'inactive'
+            ? AccessStatus.SUSPENDED
+            : undefined,
       role: query.role === 'EDITOR' ? UserRole.USER : query.role,
       page: query.page,
       limit: query.pageSize,
     });
-    return userListResponseSchema.parse(apiSuccess(
-      result.data.map((user) => this.present(user)),
-      {
-        page: result.page,
-        pageSize: result.limit,
-        total: result.total,
-        totalPages: Math.ceil(result.total / result.limit),
-      },
-    ));
+    return userListResponseSchema.parse(
+      apiSuccess(
+        result.data.map((user) => this.present(user)),
+        {
+          page: result.page,
+          pageSize: result.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / result.limit),
+        },
+      ),
+    );
   }
 
   @Get(':id')
   async get(@Param() rawParams: unknown) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return userResponseEnvelopeSchema.parse(
-      apiSuccess({ user: this.present(await this.getUser.execute(id)) }),
-    );
+    return userResponseEnvelopeSchema.parse(apiSuccess({ user: this.present(await this.getUser.execute(id)) }));
   }
 
   @Patch(':id/name')
@@ -88,13 +89,7 @@ export class UsersController {
     const { id } = userIdParamSchema.parse(rawParams);
     return userResponseEnvelopeSchema.parse(
       apiSuccess({
-        user: this.present(
-          await this.changeName.execute(
-            actor.id,
-            id,
-            changeUserNameSchema.parse(body),
-          ),
-        ),
+        user: this.present(await this.changeName.execute(actor.id, id, changeUserNameSchema.parse(body))),
       }),
     );
   }
@@ -104,13 +99,7 @@ export class UsersController {
     const { id } = userIdParamSchema.parse(rawParams);
     return userResponseEnvelopeSchema.parse(
       apiSuccess({
-        user: this.present(
-          await this.changeStatus.execute(
-            actor.id,
-            id,
-            changeUserStatusSchema.parse(body),
-          ),
-        ),
+        user: this.present(await this.changeStatus.execute(actor.id, id, changeUserStatusSchema.parse(body))),
       }),
     );
   }
@@ -120,13 +109,7 @@ export class UsersController {
     const { id } = userIdParamSchema.parse(rawParams);
     return userResponseEnvelopeSchema.parse(
       apiSuccess({
-        user: this.present(
-          await this.changeRole.execute(
-            actor.id,
-            id,
-            changeUserRoleSchema.parse(body),
-          ),
-        ),
+        user: this.present(await this.changeRole.execute(actor.id, id, changeUserRoleSchema.parse(body))),
       }),
     );
   }
@@ -134,8 +117,6 @@ export class UsersController {
   @Post(':id/revoke-sessions')
   revoke(@Param() rawParams: unknown, @Principal() actor: AuthenticatedPrincipal) {
     const { id } = userIdParamSchema.parse(rawParams);
-    return this.revokeSessions
-      .execute(actor.id, id)
-      .then(() => userMutationResponseSchema.parse(apiSuccess(null)));
+    return this.revokeSessions.execute(actor.id, id).then(() => userMutationResponseSchema.parse(apiSuccess(null)));
   }
 }

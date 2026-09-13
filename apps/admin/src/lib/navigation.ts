@@ -4,63 +4,53 @@ import {
   IconLayoutDashboard,
   IconUser,
   IconUsers,
-  type TablerIcon
-} from '@tabler/icons-react'
-import type { PermissionKey, PermissionMode } from './permissions'
-import { getRoute } from '../routes'
+  type TablerIcon,
+} from '@tabler/icons-react';
+import type { PermissionKey, PermissionMode } from './permissions';
+import { getRoute } from '../routes';
 
 export type AdminNavigationItem = {
-  id: string
-  routeName?: string
-  label: string
-  labelKey?: string
-  icon?: TablerIcon
-  href?: string
-  notification?: string
-  disabled?: boolean
-  info?: string
+  id: string;
+  routeName?: string;
+  label: string;
+  labelKey?: string;
+  icon?: TablerIcon;
+  href?: string;
+  notification?: string;
+  disabled?: boolean;
+  info?: string;
   badge?: {
-    label: string
-    color?: string
-  }
-  items?: AdminNavigationItem[]
+    label: string;
+    color?: string;
+  };
+  items?: AdminNavigationItem[];
   /**
    * Keeps a submenu open by default in the drawer sidebar, even when none of
    * its children match the active route.
    */
-  defaultOpened?: boolean
-  permissionKey?: PermissionKey | readonly PermissionKey[]
-  permissionMode?: PermissionMode
-}
+  defaultOpened?: boolean;
+  permissionKey?: PermissionKey | readonly PermissionKey[];
+  permissionMode?: PermissionMode;
+};
 
 export type AdminNavigationGroup = {
-  id: string
-  label: string
-  labelKey?: string
-  items: AdminNavigationItem[]
-  hideHeading?: boolean
-  permissionKey?: PermissionKey | readonly PermissionKey[]
-  permissionMode?: PermissionMode
-}
+  id: string;
+  label: string;
+  labelKey?: string;
+  items: AdminNavigationItem[];
+  hideHeading?: boolean;
+  permissionKey?: PermissionKey | readonly PermissionKey[];
+  permissionMode?: PermissionMode;
+};
 
-type RouteItemOptions = Omit<
-  AdminNavigationItem,
-  'id' | 'routeName' | 'label' | 'href' | 'disabled'
-> & {
-  label?: string
-  disabled?: boolean
-}
+type RouteItemOptions = Omit<AdminNavigationItem, 'id' | 'routeName' | 'label' | 'href' | 'disabled'> & {
+  label?: string;
+  disabled?: boolean;
+};
 
-function routeItem(
-  routeName: string,
-  options: RouteItemOptions = {}
-): AdminNavigationItem {
-  const route = getRoute(routeName)
-  const {
-    label = route.label,
-    disabled = route.disabled,
-    ...itemOptions
-  } = options
+function routeItem(routeName: string, options: RouteItemOptions = {}): AdminNavigationItem {
+  const route = getRoute(routeName);
+  const { label = route.label, disabled = route.disabled, ...itemOptions } = options;
 
   return {
     id: route.name,
@@ -68,8 +58,8 @@ function routeItem(
     label,
     href: route.path,
     disabled,
-    ...itemOptions
-  }
+    ...itemOptions,
+  };
 }
 
 export const organizationNavigation: AdminNavigationGroup[] = [
@@ -81,9 +71,9 @@ export const organizationNavigation: AdminNavigationGroup[] = [
     items: [
       routeItem('overview', {
         icon: IconLayoutDashboard,
-        labelKey: 'overview'
-      })
-    ]
+        labelKey: 'overview',
+      }),
+    ],
   },
   {
     id: 'projects',
@@ -92,9 +82,9 @@ export const organizationNavigation: AdminNavigationGroup[] = [
     items: [
       routeItem('projects', {
         icon: IconFolders,
-        labelKey: 'projects'
-      })
-    ]
+        labelKey: 'projects',
+      }),
+    ],
   },
   {
     id: 'audit',
@@ -106,9 +96,9 @@ export const organizationNavigation: AdminNavigationGroup[] = [
       routeItem('auditLogs', {
         icon: IconHistory,
         labelKey: 'auditLogs',
-        permissionKey: 'manageOrganization'
-      })
-    ]
+        permissionKey: 'manageOrganization',
+      }),
+    ],
   },
   {
     id: 'settings',
@@ -119,16 +109,16 @@ export const organizationNavigation: AdminNavigationGroup[] = [
       routeItem('settings.members', {
         icon: IconUsers,
         labelKey: 'members',
-        permissionKey: 'manageOrganization'
+        permissionKey: 'manageOrganization',
       }),
       routeItem('settings.roles', {
         icon: IconUsers,
         labelKey: 'roles',
-        permissionKey: 'manageOrganization'
-      })
-    ]
-  }
-]
+        permissionKey: 'manageOrganization',
+      }),
+    ],
+  },
+];
 
 export const accountNavigation: AdminNavigationGroup[] = [
   {
@@ -138,12 +128,12 @@ export const accountNavigation: AdminNavigationGroup[] = [
     items: [
       routeItem('account.settings', {
         icon: IconUser,
-        labelKey: 'account'
+        labelKey: 'account',
       }),
       routeItem('account.activity', {
         icon: IconHistory,
-        labelKey: 'activity'
-      })
-    ]
-  }
-]
+        labelKey: 'activity',
+      }),
+    ],
+  },
+];

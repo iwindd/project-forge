@@ -3,22 +3,11 @@ import { AUDIT_LOGGER } from '../../../../common/audit/audit.port.js';
 import type { AuditLogPort } from '../../../../common/audit/audit.port.js';
 import { UNIT_OF_WORK } from '../../../../common/database/unit-of-work.port.js';
 import type { UnitOfWork } from '../../../../common/database/unit-of-work.port.js';
-import {
-  ConflictError,
-  InvalidInputError,
-  NotFoundError,
-} from '../../../../common/errors/application-error.js';
+import { ConflictError, InvalidInputError, NotFoundError } from '../../../../common/errors/application-error.js';
 import { OrganizationService } from '../../../organizations/application/organization.service.js';
-import {
-  maskEnvironmentMetadata,
-  parseGithubRepositoryUrl,
-  ProjectStatus,
-} from '../../domain/project.js';
+import { maskEnvironmentMetadata, parseGithubRepositoryUrl, ProjectStatus } from '../../domain/project.js';
 import type { UpdateProjectDto } from '../../presentation/dto/project.schemas.js';
-import {
-  DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
-  PROJECT_REPOSITORY,
-} from '../ports/project.repository.js';
+import { DUPLICATE_REPOSITORY_CONFLICT_MESSAGE, PROJECT_REPOSITORY } from '../ports/project.repository.js';
 import type { ProjectRepository } from '../ports/project.repository.js';
 
 @Injectable()
@@ -62,10 +51,7 @@ export class UpdateProjectUseCase {
         const repository = parseGithubRepositoryUrl(input.githubUrl);
         if (!repository) throw new InvalidInputError('Only GitHub HTTPS repository URLs are supported');
         if (repository.url !== project.githubUrl) {
-          const collision = await this.projects.findByOrganizationAndGithubUrl(
-            organizationId,
-            repository.url,
-          );
+          const collision = await this.projects.findByOrganizationAndGithubUrl(organizationId, repository.url);
           if (collision && collision.id !== project.id) {
             throw new ConflictError(DUPLICATE_REPOSITORY_CONFLICT_MESSAGE);
           }

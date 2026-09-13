@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import type { LooseKeys, UseFormReturnType } from "@mantine/form";
-import { notifications } from "@mantine/notifications";
-import { useState, useTransition } from "react";
+import type { LooseKeys, UseFormReturnType } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
+import { useState, useTransition } from 'react';
 
 type ValidationErrors = {
   formErrors?: string[];
@@ -15,9 +15,7 @@ type ServerActionFormResult<TData> = {
   serverError?: { message: string; fieldErrors?: Record<string, string> };
 };
 
-type ServerAction<TInput, TData> = (
-  input: TInput,
-) => Promise<ServerActionFormResult<TData>>;
+type ServerAction<TInput, TData> = (input: TInput) => Promise<ServerActionFormResult<TData>>;
 
 type UseServerActionFormOptions<TInput extends Record<string, unknown>, TData> = {
   form: UseFormReturnType<TInput>;
@@ -30,10 +28,7 @@ type UseServerActionFormOptions<TInput extends Record<string, unknown>, TData> =
   };
 };
 
-export function useServerActionForm<
-  TInput extends Record<string, unknown>,
-  TData,
->({
+export function useServerActionForm<TInput extends Record<string, unknown>, TData>({
   form,
   action,
   onSuccessAction,
@@ -52,14 +47,9 @@ export function useServerActionForm<
 
       if (result.validationErrors) {
         onErrorAction?.();
-        setError(
-          result.validationErrors.formErrors?.[0] ??
-            "กรุณาตรวจสอบข้อมูลที่กรอก",
-        );
+        setError(result.validationErrors.formErrors?.[0] ?? 'กรุณาตรวจสอบข้อมูลที่กรอก');
 
-        for (const [field, messages] of Object.entries(
-          result.validationErrors.fieldErrors ?? {},
-        )) {
+        for (const [field, messages] of Object.entries(result.validationErrors.fieldErrors ?? {})) {
           const message = messages?.[0];
           if (message) {
             form.setFieldError(field as LooseKeys<TInput>, message);
@@ -70,12 +60,10 @@ export function useServerActionForm<
 
       if (result.serverError || !result.data) {
         onErrorAction?.();
-        for (const [field, message] of Object.entries(
-          result.serverError?.fieldErrors ?? {},
-        )) {
+        for (const [field, message] of Object.entries(result.serverError?.fieldErrors ?? {})) {
           form.setFieldError(field as LooseKeys<TInput>, message);
         }
-        setError(result.serverError?.message ?? "ไม่สามารถบันทึกข้อมูลได้");
+        setError(result.serverError?.message ?? 'ไม่สามารถบันทึกข้อมูลได้');
         return;
       }
 
@@ -85,7 +73,7 @@ export function useServerActionForm<
       if (successNotification) {
         notifications.show({
           ...successNotification,
-          color: "green",
+          color: 'green',
         });
       }
     });

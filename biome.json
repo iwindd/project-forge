@@ -48,6 +48,39 @@
           }
         }
       }
+    },
+    {
+      "includes": ["apps/admin/src/themes/shadcn/**/*.css"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnknownFunction": "off"
+          },
+          "style": {
+            "noDescendingSpecificity": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/api/src/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/admin/src/components/StatusScreen.tsx"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noImgElement": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {

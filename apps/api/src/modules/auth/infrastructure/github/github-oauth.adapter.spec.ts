@@ -16,24 +16,30 @@ describe('GithubOAuthAdapter', () => {
         }),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({
-          id: 123,
-          login: 'github-user',
-          name: 'GitHub User',
-        }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 123,
+            login: 'github-user',
+            name: 'GitHub User',
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify([
-          { email: 'secondary@example.com', primary: false, verified: true },
-          { email: 'primary@example.com', primary: true, verified: true },
-          { email: 'unverified@example.com', primary: false, verified: false },
-        ]), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify([
+            { email: 'secondary@example.com', primary: false, verified: true },
+            { email: 'primary@example.com', primary: true, verified: true },
+            { email: 'unverified@example.com', primary: false, verified: false },
+          ]),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -48,9 +54,6 @@ describe('GithubOAuthAdapter', () => {
 
     expect(result.profile.email).toBe('primary@example.com');
     expect(result.profile.emailVerified).toBe(true);
-    expect(result.profile.verifiedEmails).toEqual([
-      'secondary@example.com',
-      'primary@example.com',
-    ]);
+    expect(result.profile.verifiedEmails).toEqual(['secondary@example.com', 'primary@example.com']);
   });
 });

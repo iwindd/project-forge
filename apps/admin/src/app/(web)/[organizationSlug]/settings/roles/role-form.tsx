@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { schemaResolver, useForm } from "@mantine/form";
-import { Button, Checkbox, Group, Paper, Stack, TextInput } from "@mantine/core";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { schemaResolver, useForm } from '@mantine/form';
+import { Button, Checkbox, Group, Paper, Stack, TextInput } from '@mantine/core';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   ORGANIZATION_MANAGE_PERMISSION,
   ORGANIZATION_MANAGE_PROJECT_PERMISSION,
   organizationRoleFormSchema,
   type OrganizationRoleFormValues,
-} from "./role-form-schema";
-import classes from "./roles-page.module.css";
+} from './role-form-schema';
+import classes from './roles-page.module.css';
 
 type OrganizationRoleFormProps = {
   initialValues: OrganizationRoleFormValues;
@@ -25,7 +25,7 @@ export function OrganizationRoleForm({
   cancelHref,
   onSubmitAction,
 }: OrganizationRoleFormProps) {
-  const t = useTranslations("OrganizationRoles");
+  const t = useTranslations('OrganizationRoles');
   const form = useForm<OrganizationRoleFormValues>({
     initialValues,
     validate: schemaResolver(organizationRoleFormSchema),
@@ -33,56 +33,52 @@ export function OrganizationRoleForm({
   });
 
   return (
-    <Paper className={classes.card} withBorder radius="md" p="lg">
+    <Paper className={classes.card} withBorder radius='md' p='lg'>
       <form onSubmit={form.onSubmit(onSubmitAction)}>
-        <Stack gap="md">
+        <Stack gap='md'>
           <TextInput
-            label={t("roleName")}
-            placeholder={t("roleNamePlaceholder")}
-            {...form.getInputProps("name")}
+            label={t('roleName')}
+            placeholder={t('roleNamePlaceholder')}
+            {...form.getInputProps('name')}
             required
             autoFocus
           />
           <Checkbox
-            label={t("manageOrganization")}
-            description={t("manageOrganizationDescription")}
+            label={t('manageOrganization')}
+            description={t('manageOrganizationDescription')}
             checked={form.values.permissions.includes(ORGANIZATION_MANAGE_PERMISSION)}
             error={form.errors.permissions}
             onChange={(event) => {
               const permissions = form.values.permissions.filter(
-                permission => permission !== ORGANIZATION_MANAGE_PERMISSION
-              )
+                (permission) => permission !== ORGANIZATION_MANAGE_PERMISSION,
+              );
               form.setFieldValue(
-                "permissions",
-                event.currentTarget.checked
-                  ? [ORGANIZATION_MANAGE_PERMISSION, ...permissions]
-                  : permissions,
-              )
+                'permissions',
+                event.currentTarget.checked ? [ORGANIZATION_MANAGE_PERMISSION, ...permissions] : permissions,
+              );
             }}
           />
           <Checkbox
-            label={t("manageProject")}
-            description={t("manageProjectDescription")}
+            label={t('manageProject')}
+            description={t('manageProjectDescription')}
             checked={form.values.permissions.includes(ORGANIZATION_MANAGE_PROJECT_PERMISSION)}
             error={form.errors.permissions}
             onChange={(event) => {
               const permissions = form.values.permissions.filter(
-                permission => permission !== ORGANIZATION_MANAGE_PROJECT_PERMISSION
-              )
+                (permission) => permission !== ORGANIZATION_MANAGE_PROJECT_PERMISSION,
+              );
               form.setFieldValue(
-                "permissions",
-                event.currentTarget.checked
-                  ? [...permissions, ORGANIZATION_MANAGE_PROJECT_PERMISSION]
-                  : permissions,
-              )
+                'permissions',
+                event.currentTarget.checked ? [...permissions, ORGANIZATION_MANAGE_PROJECT_PERMISSION] : permissions,
+              );
             }}
           />
-          <Group justify="flex-end">
-            <Button component={Link} href={cancelHref} variant="default" type="button">
-              {t("cancel")}
+          <Group justify='flex-end'>
+            <Button component={Link} href={cancelHref} variant='default' type='button'>
+              {t('cancel')}
             </Button>
-            <Button type="submit" loading={pending || form.submitting}>
-              {t("save")}
+            <Button type='submit' loading={pending || form.submitting}>
+              {t('save')}
             </Button>
           </Group>
         </Stack>

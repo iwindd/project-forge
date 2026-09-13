@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Button, Pill, Stack } from "@mantine/core";
-import { IconTrash } from "@tabler/icons-react";
-import classes from "./filter-result.module.css";
+import { Button, Pill, Stack } from '@mantine/core';
+import { IconTrash } from '@tabler/icons-react';
+import classes from './filter-result.module.css';
 
 type FilterResultItem = {
   id: string;
@@ -27,17 +27,13 @@ export type FilterResultProps = {
   onClearAllAction: () => void;
 };
 
-export function FilterResult({
-  filters,
-  onRemoveAction,
-  onClearAllAction,
-}: FilterResultProps) {
+export function FilterResult({ filters, onRemoveAction, onClearAllAction }: FilterResultProps) {
   const activeGroups = filters.filter((group) => group.filters.length > 0);
 
   if (activeGroups.length === 0) return null;
 
   return (
-    <Stack className={classes.root} gap="sm">
+    <Stack className={classes.root} gap='sm'>
       <div className={classes.groups}>
         {activeGroups.map((group) => (
           <div key={group.id} className={classes.group}>
@@ -47,10 +43,8 @@ export function FilterResult({
                 <Pill
                   key={filter.id}
                   withRemoveButton
-                  onRemove={() =>
-                    onRemoveAction({ groupId: group.id, filterId: filter.id })
-                  }
-                  removeButtonProps={{ "aria-label": filter.removeLabel }}
+                  onRemove={() => onRemoveAction({ groupId: group.id, filterId: filter.id })}
+                  removeButtonProps={{ 'aria-label': filter.removeLabel }}
                 >
                   {filter.label}
                 </Pill>
@@ -59,9 +53,9 @@ export function FilterResult({
           </div>
         ))}
         <Button
-          type="button"
-          variant="subtle"
-          color="red"
+          type='button'
+          variant='subtle'
+          color='red'
           className={classes.clear}
           leftSection={<IconTrash size={16} />}
           onClick={onClearAllAction}

@@ -1,10 +1,10 @@
-import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation';
 
 export default async function LegacyOrganizationProfileActivityPage({
-  params
+  params,
 }: {
-  params: Promise<{ organizationSlug: string }>
+  params: Promise<{ organizationSlug: string }>;
 }) {
-  const { organizationSlug } = await params
-  redirect(`/${encodeURIComponent(organizationSlug)}/audit-logs`)
+  const { organizationSlug } = await params;
+  redirect(`/${encodeURIComponent(organizationSlug)}/audit-logs`);
 }

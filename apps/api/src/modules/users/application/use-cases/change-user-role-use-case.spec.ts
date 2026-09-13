@@ -25,9 +25,9 @@ describe('ChangeUserRoleUseCase', () => {
       { run: vi.fn(async <T>(work: () => Promise<T>) => work()) } as never,
     );
 
-    await expect(
-      useCase.execute('admin-id', 'admin-id', { role: UserRole.USER }),
-    ).rejects.toThrow('You cannot remove your own administrator access');
+    await expect(useCase.execute('admin-id', 'admin-id', { role: UserRole.USER })).rejects.toThrow(
+      'You cannot remove your own administrator access',
+    );
     expect(users.save).not.toHaveBeenCalled();
   });
 });

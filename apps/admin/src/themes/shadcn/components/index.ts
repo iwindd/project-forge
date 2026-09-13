@@ -11,7 +11,7 @@ import {
   Chip,
   Dialog,
   Indicator,
-  MantineThemeOverride,
+  type MantineThemeOverride,
   Mark,
   NavLink,
   Pagination,
@@ -23,18 +23,15 @@ import {
   Switch,
   ThemeIcon,
   Timeline,
-  Tooltip
-} from '@mantine/core'
-import Container from './container'
+  Tooltip,
+} from '@mantine/core';
+import Container from './container';
 
 export const components = {
   Container,
   Checkbox: Checkbox.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
       return {
         root: {
           '--checkbox-color': colorKey
@@ -43,18 +40,15 @@ export const components = {
 
           '--checkbox-icon-color': colorKey
             ? `var(--mantine-color-${colorKey}-contrast)`
-            : 'var(--mantine-primary-color-contrast)'
-        }
-      }
-    }
+            : 'var(--mantine-primary-color-contrast)',
+        },
+      };
+    },
   }),
   Chip: Chip.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const variant = props.variant ?? 'filled'
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const variant = props.variant ?? 'filled';
       return {
         root: {
           '--chip-bg':
@@ -68,10 +62,10 @@ export const components = {
               ? colorKey
                 ? `var(--mantine-color-${colorKey}-contrast)`
                 : 'var(--mantine-primary-color-contrast)'
-              : undefined
-        }
-      }
-    }
+              : undefined,
+        },
+      };
+    },
   }),
   Radio: Radio.extend({
     vars: (theme, props) => ({
@@ -86,137 +80,114 @@ export const components = {
           ? Object.keys(theme.colors).includes(props.color)
             ? `var(--mantine-color-${props.color}-contrast)`
             : props.color
-          : 'var(--mantine-primary-color-contrast)'
-      }
-    })
+          : 'var(--mantine-primary-color-contrast)',
+      },
+    }),
   }),
   SegmentedControl: SegmentedControl.extend({
     vars: (theme, props) => ({
       root: {
         '--sc-color': props.color
           ? Object.keys(theme.colors).includes(props.color)
-            ? ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-                props.color
-              )
+            ? ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(props.color)
               ? 'var(--mantine-color-body)'
               : `var(--mantine-color-${props.color}-filled)`
             : props.color
-          : 'var(--mantine-color-default)'
-      }
-    })
+          : 'var(--mantine-color-default)',
+      },
+    }),
   }),
   Switch: Switch.extend({
     styles: () => ({
       thumb: {
         backgroundColor: 'var(--mantine-color-default)',
-        borderColor: 'var(--mantine-color-default-border)'
+        borderColor: 'var(--mantine-color-default-border)',
       },
       track: {
-        borderColor: 'var(--mantine-color-default-border)'
-      }
-    })
+        borderColor: 'var(--mantine-color-default-border)',
+      },
+    }),
   }),
   Select: Select.extend({
     defaultProps: {
-      checkIconPosition: 'right'
-    }
+      checkIconPosition: 'right',
+    },
   }),
   ActionIcon: ActionIcon.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       const isNeutralPrimaryColor =
-        !colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-          theme.primaryColor
-        )
-      const variant = props.variant ?? 'filled'
-      const isDefaultSubtle = variant === 'subtle' && !props.color
+        !colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(theme.primaryColor);
+      const variant = props.variant ?? 'filled';
+      const isDefaultSubtle = variant === 'subtle' && !props.color;
 
       return {
         root: {
           '--ai-bg': isDefaultSubtle ? 'transparent' : undefined,
-          '--ai-hover': isDefaultSubtle
-            ? 'var(--mantine-color-default-hover)'
-            : undefined,
+          '--ai-hover': isDefaultSubtle ? 'var(--mantine-color-default-hover)' : undefined,
           '--ai-bd': isDefaultSubtle ? 'transparent' : undefined,
           '--ai-color': isDefaultSubtle
             ? 'var(--mantine-color-default-color, var(--mantine-color-text))'
             : (() => {
                 if (variant === 'filled') {
                   if (colorKey) {
-                    return `var(--mantine-color-${colorKey}-contrast)`
+                    return `var(--mantine-color-${colorKey}-contrast)`;
                   }
-                  return 'var(--mantine-primary-color-contrast)'
+                  return 'var(--mantine-primary-color-contrast)';
                 }
                 if (variant === 'white') {
                   if (isNeutralColor || isNeutralPrimaryColor) {
-                    return 'var(--mantine-color-black)'
+                    return 'var(--mantine-color-black)';
                   }
-                  return undefined
+                  return undefined;
                 }
-                return undefined
+                return undefined;
               })(),
           '--ai-hover-color': isDefaultSubtle
             ? 'var(--mantine-color-default-color, var(--mantine-color-text))'
-            : undefined
-        }
-      }
-    }
+            : undefined,
+        },
+      };
+    },
   }),
   Button: Button.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       const isNeutralPrimaryColor =
-        !colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-          theme.primaryColor
-        )
-      const variant = props.variant ?? 'filled'
+        !colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(theme.primaryColor);
+      const variant = props.variant ?? 'filled';
       return {
         root: {
           '--button-color': (() => {
             if (variant === 'filled') {
               if (colorKey) {
-                return `var(--mantine-color-${colorKey}-contrast)`
+                return `var(--mantine-color-${colorKey}-contrast)`;
               }
-              return 'var(--mantine-primary-color-contrast)'
+              return 'var(--mantine-primary-color-contrast)';
             }
             if (variant === 'white') {
               if (isNeutralColor || isNeutralPrimaryColor) {
-                return 'var(--mantine-color-black)'
+                return 'var(--mantine-color-black)';
               }
-              return undefined
+              return undefined;
             }
-            return undefined
-          })()
-        }
-      }
-    }
+            return undefined;
+          })(),
+        },
+      };
+    },
   }),
   Anchor: Anchor.extend({
     defaultProps: {
-      underline: 'always'
-    }
+      underline: 'always',
+    },
   }),
   NavLink: NavLink.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const variant = props.variant ?? 'light'
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const variant = props.variant ?? 'light';
       return {
         root: {
           '--nl-color':
@@ -224,57 +195,43 @@ export const components = {
               ? colorKey
                 ? `var(--mantine-color-${colorKey}-contrast)`
                 : 'var(--mantine-primary-color-contrast)'
-              : undefined
+              : undefined,
         },
-        children: {}
-      }
-    }
+        children: {},
+      };
+    },
   }),
   Pagination: Pagination.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
       return {
         root: {
           '--pagination-active-color': colorKey
             ? `var(--mantine-color-${colorKey}-contrast)`
-            : 'var(--mantine-primary-color-contrast)'
-        }
-      }
-    }
+            : 'var(--mantine-primary-color-contrast)',
+        },
+      };
+    },
   }),
   Stepper: Stepper.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
       return {
         root: {
           '--stepper-icon-color': colorKey
             ? `var(--mantine-color-${colorKey}-contrast)`
-            : 'var(--mantine-primary-color-contrast)'
-        }
-      }
-    }
+            : 'var(--mantine-primary-color-contrast)',
+        },
+      };
+    },
   }),
   Alert: Alert.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       const isNeutralPrimaryColor =
-        !colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-          theme.primaryColor
-        )
-      const variant = props.variant ?? 'light'
+        !colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(theme.primaryColor);
+      const variant = props.variant ?? 'light';
       return {
         root: {
           '--alert-color':
@@ -286,39 +243,31 @@ export const components = {
                 ? isNeutralColor || isNeutralPrimaryColor
                   ? `var(--mantine-color-black)`
                   : undefined
-                : undefined
-        }
-      }
-    }
+                : undefined,
+        },
+      };
+    },
   }),
   Dialog: Dialog.extend({
     defaultProps: {
-      withBorder: true
-    }
+      withBorder: true,
+    },
   }),
   Tooltip: Tooltip.extend({
     vars: () => ({
       tooltip: {
         '--tooltip-bg': 'var(--mantine-primary-color-filled)',
-        '--tooltip-color': 'var(--mantine-primary-color-contrast)'
-      }
-    })
+        '--tooltip-color': 'var(--mantine-primary-color-contrast)',
+      },
+    }),
   }),
   Avatar: Avatar.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       const isNeutralPrimaryColor =
-        !colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-          theme.primaryColor
-        )
-      const variant = props.variant ?? 'light'
+        !colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(theme.primaryColor);
+      const variant = props.variant ?? 'light';
       return {
         root: {
           '--avatar-bg':
@@ -358,32 +307,21 @@ export const components = {
               ? colorKey
                 ? `1px solid var(--mantine-color-${colorKey}-outline)`
                 : '1px solid var(--mantine-primary-color-filled)'
-              : undefined
-        }
-      }
-    }
+              : undefined,
+        },
+      };
+    },
   }),
   Badge: Badge.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       const isNeutralPrimaryColor =
-        !colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-          theme.primaryColor
-        )
-      const variant = props.variant ?? 'filled'
+        !colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(theme.primaryColor);
+      const variant = props.variant ?? 'filled';
       return {
         root: {
-          '--badge-bg':
-            variant === 'filled' && colorKey
-              ? `var(--mantine-color-${colorKey}-filled)`
-              : undefined,
+          '--badge-bg': variant === 'filled' && colorKey ? `var(--mantine-color-${colorKey}-filled)` : undefined,
           '--badge-color':
             variant === 'filled'
               ? colorKey
@@ -393,59 +331,48 @@ export const components = {
                 ? isNeutralColor || isNeutralPrimaryColor
                   ? `var(--mantine-color-black)`
                   : undefined
-                : undefined
-        }
-      }
-    }
+                : undefined,
+        },
+      };
+    },
   }),
   Card: Card.extend({
     defaultProps: {
       p: 'xl',
       shadow: 'xl',
-      withBorder: true
+      withBorder: true,
     },
-    styles: theme => {
+    styles: (theme) => {
       return {
         root: {
           backgroundColor:
             theme.primaryColor === 'rose' || theme.primaryColor === 'green'
               ? 'var(--mantine-color-secondary-filled)'
-              : undefined
-        }
-      }
-    }
+              : undefined,
+        },
+      };
+    },
   }),
   Indicator: Indicator.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
       return {
         root: {
           '--indicator-text-color': colorKey
             ? `var(--mantine-color-${colorKey}-contrast)`
-            : 'var(--mantine-primary-color-contrast)'
-        }
-      }
-    }
+            : 'var(--mantine-primary-color-contrast)',
+        },
+      };
+    },
   }),
   ThemeIcon: ThemeIcon.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       const isNeutralPrimaryColor =
-        !colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(
-          theme.primaryColor
-        )
+        !colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(theme.primaryColor);
 
-      const variant = props.variant ?? 'filled'
+      const variant = props.variant ?? 'filled';
       return {
         root: {
           '--ti-color':
@@ -457,64 +384,49 @@ export const components = {
                 ? isNeutralColor || isNeutralPrimaryColor
                   ? `var(--mantine-color-black)`
                   : undefined
-                : undefined
-        }
-      }
-    }
+                : undefined,
+        },
+      };
+    },
   }),
   Timeline: Timeline.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
       return {
         root: {
           '--tl-icon-color': colorKey
             ? `var(--mantine-color-${colorKey}-contrast)`
-            : 'var(--mantine-primary-color-contrast)'
-        }
-      }
-    }
+            : 'var(--mantine-primary-color-contrast)',
+        },
+      };
+    },
   }),
   Blockquote: Blockquote.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : undefined
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : undefined;
       return {
         root: {
-          '--bq-bg-dark': colorKey
-            ? `var(--mantine-color-${colorKey}-light)`
-            : 'var(--mantine-primary-color-light)',
-          '--bq-bg-light': colorKey
-            ? `var(--mantine-color-${colorKey}-light)`
-            : 'var(--mantine-primary-color-light)'
-        }
-      }
-    }
+          '--bq-bg-dark': colorKey ? `var(--mantine-color-${colorKey}-light)` : 'var(--mantine-primary-color-light)',
+          '--bq-bg-light': colorKey ? `var(--mantine-color-${colorKey}-light)` : 'var(--mantine-primary-color-light)',
+        },
+      };
+    },
   }),
   Mark: Mark.extend({
     vars: (theme, props) => {
-      const colorKey =
-        props.color && Object.keys(theme.colors).includes(props.color)
-          ? props.color
-          : 'yellow'
-      const isNeutralColor =
-        colorKey &&
-        ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey)
+      const colorKey = props.color && Object.keys(theme.colors).includes(props.color) ? props.color : 'yellow';
+      const isNeutralColor = colorKey && ['zinc', 'slate', 'gray', 'neutral', 'stone'].includes(colorKey);
       return {
         root: {
           '--mark-bg-light': `var(--mantine-color-${colorKey}-${isNeutralColor ? '3' : 'filled-hover'})`,
-          '--mark-bg-dark': `var(--mantine-color-${colorKey}-filled)`
-        }
-      }
-    }
+          '--mark-bg-dark': `var(--mantine-color-${colorKey}-filled)`,
+        },
+      };
+    },
   }),
   Paper: Paper.extend({
     defaultProps: {
-      shadow: 'xl'
-    }
-  })
-} satisfies MantineThemeOverride['components']
+      shadow: 'xl',
+    },
+  }),
+} satisfies MantineThemeOverride['components'];

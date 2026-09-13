@@ -1,4 +1,4 @@
-import type { EntityManager, FilterQuery } from '@mikro-orm/core';
+import { EntityManager, type FilterQuery } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { Controller, ForbiddenException, Get, Param, Query, Res, NotFoundException, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
@@ -10,7 +10,7 @@ import { Principal } from '../../../common/auth/principal.decorator.js';
 import { SessionGuard } from '../../../common/auth/session.guard.js';
 import { UserSecurityLogOrmEntity } from '../../../common/security/user-security-log.orm-entity.js';
 import { apiSuccess } from '../../../common/http/api-response.js';
-import type { OrganizationService } from '../../organizations/application/organization.service.js';
+import { OrganizationService } from '../../organizations/application/organization.service.js';
 import { ORGANIZATION_PERMISSIONS } from '../../organizations/domain/organization.js';
 import {
   auditLogIdParamSchema,

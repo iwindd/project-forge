@@ -1,32 +1,32 @@
-import Link from 'next/link'
-import React from 'react'
-import styles from './StatusScreen.module.css'
+import Link from 'next/link';
+import type React from 'react';
+import styles from './StatusScreen.module.css';
 
 type StatusScreenLink = {
-  label: string
-  description: string
-  href: string
-}
+  label: string;
+  description: string;
+  href: string;
+};
 
-type StatusScreenTone = 'info' | 'danger'
+type StatusScreenTone = 'info' | 'danger';
 
-type StatusActionVariant = 'solid' | 'ghost'
+type StatusActionVariant = 'solid' | 'ghost';
 
 /** Link styled as a status-screen action button. */
 export function StatusActionLink({
   href,
   variant = 'solid',
-  children
+  children,
 }: {
-  href: string
-  variant?: StatusActionVariant
-  children: React.ReactNode
+  href: string;
+  variant?: StatusActionVariant;
+  children: React.ReactNode;
 }) {
   return (
     <Link href={href} className={styles.action} data-variant={variant}>
       {children}
     </Link>
-  )
+  );
 }
 
 /**
@@ -37,74 +37,68 @@ export function StatusActionLink({
 export function StatusActionAnchor({
   href,
   variant = 'solid',
-  children
+  children,
 }: {
-  href: string
-  variant?: StatusActionVariant
-  children: React.ReactNode
+  href: string;
+  variant?: StatusActionVariant;
+  children: React.ReactNode;
 }) {
   return (
     <a href={href} className={styles.action} data-variant={variant}>
       {children}
     </a>
-  )
+  );
 }
 
 /** Button styled as a status-screen action button. Only usable from a Client Component. */
 export function StatusActionButton({
   onClick,
   variant = 'solid',
-  children
+  children,
 }: {
-  onClick: () => void
-  variant?: StatusActionVariant
-  children: React.ReactNode
+  onClick: () => void;
+  variant?: StatusActionVariant;
+  children: React.ReactNode;
 }) {
   return (
-    <button
-      type='button'
-      className={styles.action}
-      data-variant={variant}
-      onClick={onClick}
-    >
+    <button type='button' className={styles.action} data-variant={variant} onClick={onClick}>
       {children}
     </button>
-  )
+  );
 }
 
 type StatusScreenProps = {
   /** HTTP status code shown as the display figure, e.g. "404". */
-  code: string
+  code: string;
   /** Short pill label above the heading. */
-  eyebrow: string
+  eyebrow: string;
   /** Main heading of the status page. */
-  title: string
+  title: string;
   /** Supporting copy explaining what happened and what to do next. */
-  description: string
+  description: string;
   /** Colour treatment: `info` for 404, `danger` for 5xx. */
-  tone?: StatusScreenTone
+  tone?: StatusScreenTone;
   /**
    * `inline` sits inside the public layout between the site nav and footer.
    * `standalone` fills the viewport for documents that render without the layout.
    */
-  layout?: 'inline' | 'standalone'
+  layout?: 'inline' | 'standalone';
   /** Primary/secondary buttons. Rendered in the action row under the copy. */
-  children?: React.ReactNode
+  children?: React.ReactNode;
   /** Optional technical reference such as an error digest. */
-  reference?: string
+  reference?: string;
   /** Section links offered as a next step. Pass an empty array to hide them. */
-  links?: StatusScreenLink[]
+  links?: StatusScreenLink[];
   /**
    * Shows the SimpleDashboard logo above the copy. Use on `standalone` screens that render
    * without the site nav, so the page is still recognisable as part of the site.
    */
-  brand?: boolean
-}
+  brand?: boolean;
+};
 
-const DEFAULT_LINKS: StatusScreenLink[] = [
-]
+const DEFAULT_LINKS: StatusScreenLink[] = [];
 
-const WATERMARK_TEXT = 'ARDA ARDA ARDA\nARDA ARDA ARDA'
+const WATERMARK_TEXT = 'ARDA ARDA ARDA\nARDA ARDA ARDA';
 
 function ToneIcon({ tone }: { tone: StatusScreenTone }) {
   if (tone === 'danger') {
@@ -118,26 +112,16 @@ function ToneIcon({ tone }: { tone: StatusScreenTone }) {
           strokeLinejoin='round'
         />
       </svg>
-    )
+    );
   }
 
   return (
     <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
       <circle cx='11' cy='11' r='7' stroke='currentColor' strokeWidth='1.8' />
-      <path
-        d='m20 20-3.6-3.6'
-        stroke='currentColor'
-        strokeWidth='1.8'
-        strokeLinecap='round'
-      />
-      <path
-        d='M8.6 8.6l4.8 4.8m0-4.8-4.8 4.8'
-        stroke='currentColor'
-        strokeWidth='1.8'
-        strokeLinecap='round'
-      />
+      <path d='m20 20-3.6-3.6' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' />
+      <path d='M8.6 8.6l4.8 4.8m0-4.8-4.8 4.8' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' />
     </svg>
-  )
+  );
 }
 
 /**
@@ -157,7 +141,7 @@ export default function StatusScreen({
   children,
   reference,
   links = DEFAULT_LINKS,
-  brand = false
+  brand = false,
 }: StatusScreenProps) {
   return (
     <section className={styles.root} data-tone={tone} data-layout={layout}>
@@ -170,10 +154,7 @@ export default function StatusScreen({
           <div className={styles.brandRow}>
             <Link href='/' className={styles.brand}>
               {/* eslint-disable-next-line @next/next/no-img-element -- matches SiteNav, no optimisation needed on an error page */}
-              <img
-                src='/img/logo.png'
-                alt='SimpleDashboard Template'
-              />
+              <img src='/img/logo.png' alt='SimpleDashboard Template' />
             </Link>
           </div>
         ) : null}
@@ -206,16 +187,10 @@ export default function StatusScreen({
 
         {links.length ? (
           <nav className={styles.links} aria-label='ไปยังส่วนอื่นของเว็บไซต์'>
-            {links.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={styles.linkCard}
-              >
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} className={styles.linkCard}>
                 <span className={styles.linkLabel}>{link.label}</span>
-                <span className={styles.linkDescription}>
-                  {link.description}
-                </span>
+                <span className={styles.linkDescription}>{link.description}</span>
                 <span className={styles.linkArrow} aria-hidden='true'>
                   <svg viewBox='0 0 24 24' fill='none' aria-hidden='true'>
                     <path
@@ -233,5 +208,5 @@ export default function StatusScreen({
         ) : null}
       </div>
     </section>
-  )
+  );
 }

@@ -11,11 +11,8 @@ describe('CancelOrganizationInvitationUseCase', () => {
     await expect(
       useCase.execute('actor-id', 'organization-id', 'invitation-id', { requestId: 'request-id' }),
     ).resolves.toEqual({ ok: true });
-    expect(organizations.cancelInvitation).toHaveBeenCalledWith(
-      'actor-id',
-      'organization-id',
-      'invitation-id',
-      { requestId: 'request-id' },
-    );
+    expect(organizations.cancelInvitation).toHaveBeenCalledWith('actor-id', 'organization-id', 'invitation-id', {
+      requestId: 'request-id',
+    });
   });
 });

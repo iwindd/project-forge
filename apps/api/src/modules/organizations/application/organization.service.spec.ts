@@ -1,9 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ForbiddenError,
-  InvalidInputError,
-} from '../../../common/errors/application-error.js';
+import { ForbiddenError, InvalidInputError } from '../../../common/errors/application-error.js';
 import {
   ORGANIZATION_PERMISSIONS,
   OrganizationInvitationStatus,
@@ -35,7 +32,7 @@ class FakeEntityManager {
   }
 
   async findOne<T>(entity: EntityConstructor<T>, where: Record<string, unknown>) {
-    return (this.records.get(entity) ?? []).find((record) => matches(record, where)) as T | undefined ?? null;
+    return ((this.records.get(entity) ?? []).find((record) => matches(record, where)) as T | undefined) ?? null;
   }
 
   async find<T>(entity: EntityConstructor<T>, where: Record<string, unknown>) {
@@ -59,7 +56,10 @@ class FakeEntityManager {
 
   remove(record: unknown) {
     for (const [entity, records] of this.records) {
-      this.records.set(entity, records.filter((candidate) => candidate !== record));
+      this.records.set(
+        entity,
+        records.filter((candidate) => candidate !== record),
+      );
     }
   }
 
@@ -215,50 +215,132 @@ function standardOrganizationRecords() {
 describe('OrganizationService', () => {
   it('rolls back an organization update when the business audit fails', async () => {
     const org = organization();
-    const em = new FakeEntityManager([[OrganizationOrmEntity, org], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const em = new FakeEntityManager([
+      [OrganizationOrmEntity, org],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
+    ] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
-    const audit = { record: vi.fn(async (event: unknown) => { events.push(event); throw new Error('audit unavailable'); }) };
-    const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
+    const audit = {
+      record: vi.fn(async (event: unknown) => {
+        events.push(event);
+        throw new Error('audit unavailable');
+      }),
+    };
+    const service = new OrganizationService(
+      em as never,
+      audit as never,
+      { record: vi.fn() } as never,
+      new TransactionalFakeUnitOfWork(em, events) as never,
+    );
 
-    await expect(service.updateOrganization('owner-id', 'organization-id', 'Renamed')).rejects.toThrow('audit unavailable');
+    await expect(service.updateOrganization('owner-id', 'organization-id', 'Renamed')).rejects.toThrow(
+      'audit unavailable',
+    );
     expect(org.name).toBe('Organization');
     expect(events).toEqual([]);
   });
 
   it('rolls back a member mutation when the business audit fails', async () => {
     const target = member();
-    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })], [OrganizationMemberOrmEntity, target], [UserOrmEntity, user()]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const em = new FakeEntityManager([
+      [OrganizationOrmEntity, organization()],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
+      [OrganizationMemberOrmEntity, target],
+      [UserOrmEntity, user()],
+    ] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
-    const audit = { record: vi.fn(async (event: unknown) => { events.push(event); throw new Error('audit unavailable'); }) };
-    const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
+    const audit = {
+      record: vi.fn(async (event: unknown) => {
+        events.push(event);
+        throw new Error('audit unavailable');
+      }),
+    };
+    const service = new OrganizationService(
+      em as never,
+      audit as never,
+      { record: vi.fn() } as never,
+      new TransactionalFakeUnitOfWork(em, events) as never,
+    );
 
-    await expect(service.updateMemberStatus('owner-id', 'organization-id', 'member-id', false)).rejects.toThrow('audit unavailable');
+    await expect(service.updateMemberStatus('owner-id', 'organization-id', 'member-id', false)).rejects.toThrow(
+      'audit unavailable',
+    );
     expect(target.status).toBe(OrganizationMemberStatus.ACTIVE);
     expect(events).toEqual([]);
   });
 
   it('rolls back a role mutation when persistence fails, including its business audit', async () => {
     const target = role({ id: 'custom-role-id', name: 'Custom role', code: null });
-    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationRoleOrmEntity, target], [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const em = new FakeEntityManager([
+      [OrganizationOrmEntity, organization()],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationRoleOrmEntity, target],
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
+    ] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
-    const audit = { record: vi.fn(async (event: unknown) => { events.push(event); }) };
-    const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
-    em.flush = vi.fn(async () => { throw new Error('persistence unavailable'); });
+    const audit = {
+      record: vi.fn(async (event: unknown) => {
+        events.push(event);
+      }),
+    };
+    const service = new OrganizationService(
+      em as never,
+      audit as never,
+      { record: vi.fn() } as never,
+      new TransactionalFakeUnitOfWork(em, events) as never,
+    );
+    em.flush = vi.fn(async () => {
+      throw new Error('persistence unavailable');
+    });
 
-    await expect(service.updateRole('owner-id', 'organization-id', 'custom-role-id', { name: 'Reviewer' })).rejects.toThrow('persistence unavailable');
+    await expect(
+      service.updateRole('owner-id', 'organization-id', 'custom-role-id', { name: 'Reviewer' }),
+    ).rejects.toThrow('persistence unavailable');
     expect(target.name).toBe('Custom role');
     expect(events).toEqual([]);
   });
 
   it('rolls back an invitation mutation when persistence fails, including its business audit', async () => {
-    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), { id: 'invitation-id', organizationId: 'organization-id', invitedBy: 'owner-id', email: 'person@example.com', tokenHash: 'token-hash', roleId: 'member-role-id', status: OrganizationInvitationStatus.PENDING, expiresAt: new Date('2026-01-08T00:00:00.000Z'), acceptedBy: null, acceptedAt: null, createdAt: new Date('2026-01-01T00:00:00.000Z') });
-    const em = new FakeEntityManager([[OrganizationOrmEntity, organization()], ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const), [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })], [OrganizationInvitationOrmEntity, invitation]] as Array<[EntityConstructor<unknown>, unknown]>);
+    const invitation = Object.assign(new OrganizationInvitationOrmEntity(), {
+      id: 'invitation-id',
+      organizationId: 'organization-id',
+      invitedBy: 'owner-id',
+      email: 'person@example.com',
+      tokenHash: 'token-hash',
+      roleId: 'member-role-id',
+      status: OrganizationInvitationStatus.PENDING,
+      expiresAt: new Date('2026-01-08T00:00:00.000Z'),
+      acceptedBy: null,
+      acceptedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+    const em = new FakeEntityManager([
+      [OrganizationOrmEntity, organization()],
+      ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
+      [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
+      [OrganizationInvitationOrmEntity, invitation],
+    ] as Array<[EntityConstructor<unknown>, unknown]>);
     const events: unknown[] = [];
-    const audit = { record: vi.fn(async (event: unknown) => { events.push(event); }) };
-    const service = new OrganizationService(em as never, audit as never, { record: vi.fn() } as never, new TransactionalFakeUnitOfWork(em, events) as never);
-    em.flush = vi.fn(async () => { throw new Error('persistence unavailable'); });
+    const audit = {
+      record: vi.fn(async (event: unknown) => {
+        events.push(event);
+      }),
+    };
+    const service = new OrganizationService(
+      em as never,
+      audit as never,
+      { record: vi.fn() } as never,
+      new TransactionalFakeUnitOfWork(em, events) as never,
+    );
+    em.flush = vi.fn(async () => {
+      throw new Error('persistence unavailable');
+    });
 
-    await expect(service.cancelInvitation('owner-id', 'organization-id', 'invitation-id')).rejects.toThrow('persistence unavailable');
+    await expect(service.cancelInvitation('owner-id', 'organization-id', 'invitation-id')).rejects.toThrow(
+      'persistence unavailable',
+    );
     expect(invitation.status).toBe(OrganizationInvitationStatus.PENDING);
     expect(events).toEqual([]);
   });
@@ -286,11 +368,7 @@ describe('OrganizationService', () => {
     const created = await service.createShared('owner-id', '  Acme  ');
 
     expect(created.name).toBe('Acme');
-    expect(em.all(OrganizationRoleOrmEntity).map((item) => item.name)).toEqual([
-      'เจ้าของ',
-      'แอดมิน',
-      'สมาชิก',
-    ]);
+    expect(em.all(OrganizationRoleOrmEntity).map((item) => item.name)).toEqual(['เจ้าของ', 'แอดมิน', 'สมาชิก']);
     expect(em.all(OrganizationMemberOrmEntity)).toHaveLength(1);
     expect(em.all(OrganizationMemberOrmEntity)[0]).toMatchObject({
       userId: 'owner-id',
@@ -324,12 +402,12 @@ describe('OrganizationService', () => {
         roleId: 'member-role-id',
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(
-      service.updateMemberStatus('owner-id', 'organization-id', 'owner-id', false),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(
-      service.removeMember('owner-id', 'organization-id', 'owner-id'),
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(service.updateMemberStatus('owner-id', 'organization-id', 'owner-id', false)).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    await expect(service.removeMember('owner-id', 'organization-id', 'owner-id')).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
   });
 
   it('does not allow assigning the Owner role to another member', async () => {
@@ -361,9 +439,7 @@ describe('OrganizationService', () => {
     const em = new FakeEntityManager(records);
     const service = createService(em);
 
-    await expect(
-      service.requireProjectManager('member-id', 'organization-id'),
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(service.requireProjectManager('member-id', 'organization-id')).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it('defaults invitations to Member and rotates the pending invitation for the same email', async () => {
@@ -449,9 +525,9 @@ describe('OrganizationService', () => {
     const em = new FakeEntityManager(records);
     const service = createService(em);
 
-    await expect(
-      service.cancelInvitation('owner-id', 'organization-id', 'invitation-id'),
-    ).resolves.toEqual({ ok: true });
+    await expect(service.cancelInvitation('owner-id', 'organization-id', 'invitation-id')).resolves.toEqual({
+      ok: true,
+    });
     expect(invitation.status).toBe(OrganizationInvitationStatus.CANCELLED);
   });
 
@@ -476,20 +552,21 @@ describe('OrganizationService', () => {
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
       [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
-      [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
-        userId: 'member-id',
-        provider: 'GITHUB',
-        providerEmail: 'person@example.com',
-        providerEmailVerified: false,
-      })],
+      [
+        ConnectionOrmEntity,
+        Object.assign(new ConnectionOrmEntity(), {
+          userId: 'member-id',
+          provider: 'GITHUB',
+          providerEmail: 'person@example.com',
+          providerEmailVerified: false,
+        }),
+      ],
       [UserOrmEntity, user({ accessStatus: AccessStatus.APPROVED })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);
 
-    await expect(service.acceptInvitation('member-id', token)).rejects.toThrow(
-      'matching verified GitHub email',
-    );
+    await expect(service.acceptInvitation('member-id', token)).rejects.toThrow('matching verified GitHub email');
     expect(invitation.status).toBe(OrganizationInvitationStatus.PENDING);
   });
 
@@ -514,13 +591,16 @@ describe('OrganizationService', () => {
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
       [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
-      [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
-        userId: 'member-id',
-        provider: 'GITHUB',
-        providerEmail: 'primary@example.com',
-        providerEmailVerified: true,
-        providerVerifiedEmails: ['primary@example.com', 'secondary@example.com'],
-      })],
+      [
+        ConnectionOrmEntity,
+        Object.assign(new ConnectionOrmEntity(), {
+          userId: 'member-id',
+          provider: 'GITHUB',
+          providerEmail: 'primary@example.com',
+          providerEmailVerified: true,
+          providerVerifiedEmails: ['primary@example.com', 'secondary@example.com'],
+        }),
+      ],
       [UserOrmEntity, user({ accessStatus: AccessStatus.APPROVED })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
@@ -552,20 +632,21 @@ describe('OrganizationService', () => {
       ...standardOrganizationRecords().map((item) => [OrganizationRoleOrmEntity, item] as const),
       [OrganizationMemberOrmEntity, member({ userId: 'owner-id', roleId: 'owner-role-id' })],
       [OrganizationInvitationOrmEntity, invitation],
-      [ConnectionOrmEntity, Object.assign(new ConnectionOrmEntity(), {
-        userId: 'owner-id',
-        provider: 'GITHUB',
-        providerEmail: 'owner@example.com',
-        providerEmailVerified: true,
-      })],
+      [
+        ConnectionOrmEntity,
+        Object.assign(new ConnectionOrmEntity(), {
+          userId: 'owner-id',
+          provider: 'GITHUB',
+          providerEmail: 'owner@example.com',
+          providerEmailVerified: true,
+        }),
+      ],
       [UserOrmEntity, user({ id: 'owner-id', githubLogin: 'owner', name: 'Owner' })],
     ] as Array<[EntityConstructor<unknown>, unknown]>;
     const em = new FakeEntityManager(records);
     const service = createService(em);
 
-    await expect(service.acceptInvitation('owner-id', token)).rejects.toThrow(
-      'organization owner cannot accept',
-    );
+    await expect(service.acceptInvitation('owner-id', token)).rejects.toThrow('organization owner cannot accept');
     expect(invitation.status).toBe(OrganizationInvitationStatus.PENDING);
   });
 

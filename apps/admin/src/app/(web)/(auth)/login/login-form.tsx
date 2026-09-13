@@ -1,23 +1,21 @@
-"use client";
+'use client';
 
-import { Button, Stack } from "@mantine/core";
-import { IconBrandGithub } from "@tabler/icons-react";
+import { Button, Stack } from '@mantine/core';
+import { IconBrandGithub } from '@tabler/icons-react';
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050";
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5050';
 
 export function LoginForm({ returnTo }: { returnTo?: string }) {
-  const query = returnTo
-    ? '?returnTo=' + encodeURIComponent(returnTo)
-    : '';
+  const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
 
   return (
-    <Stack gap="md">
+    <Stack gap='md'>
       <Button
-        component="a"
-        href={apiOrigin + '/api/v1/auth/github/start' + query}
+        component='a'
+        href={`${apiOrigin}/api/v1/auth/github/start${query}`}
         fullWidth
-        size="md"
-        mt="sm"
+        size='md'
+        mt='sm'
         leftSection={<IconBrandGithub size={18} />}
       >
         เข้าสู่ระบบด้วย GitHub

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import { scopeUserToOrganization, type AdminUser } from './session'
+import { describe, expect, it } from 'vitest';
+import { scopeUserToOrganization, type AdminUser } from './session';
 
 describe('scopeUserToOrganization', () => {
   it('derives organization permissions from the route organization', () => {
-    const user: AdminUser = { id: 'user-id', role: 'EDITOR' }
+    const user: AdminUser = { id: 'user-id', role: 'EDITOR' };
     const organization = {
       id: 'organization-a',
       name: 'Organization A',
@@ -14,13 +14,13 @@ describe('scopeUserToOrganization', () => {
         name: 'แอดมิน',
         permissions: ['organization.manage'],
         isOwner: false,
-        code: 'ADMIN' as const
-      }
-    }
+        code: 'ADMIN' as const,
+      },
+    };
 
     expect(scopeUserToOrganization(user, organization)).toMatchObject({
       organizationRole: organization.role,
-      organizationPermissions: ['organization.manage']
-    })
-  })
-})
+      organizationPermissions: ['organization.manage'],
+    });
+  });
+});

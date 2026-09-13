@@ -1,44 +1,44 @@
-'use client'
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-const HIDE_DELAY = 1000
+const HIDE_DELAY = 1000;
 
 export function useScrollbarVisibility() {
-  const [visible, setVisible] = useState(false)
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [visible, setVisible] = useState(false);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearHideTimeout = useCallback(() => {
-    if (!hideTimeoutRef.current) return
+    if (!hideTimeoutRef.current) return;
 
-    clearTimeout(hideTimeoutRef.current)
-    hideTimeoutRef.current = null
-  }, [])
+    clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = null;
+  }, []);
 
   const hide = useCallback(() => {
-    clearHideTimeout()
+    clearHideTimeout();
 
     hideTimeoutRef.current = setTimeout(() => {
-      setVisible(false)
-      hideTimeoutRef.current = null
-    }, HIDE_DELAY)
-  }, [clearHideTimeout])
+      setVisible(false);
+      hideTimeoutRef.current = null;
+    }, HIDE_DELAY);
+  }, [clearHideTimeout]);
 
   const show = useCallback(() => {
-    clearHideTimeout()
-    setVisible(true)
-  }, [clearHideTimeout])
+    clearHideTimeout();
+    setVisible(true);
+  }, [clearHideTimeout]);
 
   const showThenHide = useCallback(() => {
-    show()
-    hide()
-  }, [hide, show])
+    show();
+    hide();
+  }, [hide, show]);
 
-  useEffect(() => clearHideTimeout, [clearHideTimeout])
+  useEffect(() => clearHideTimeout, [clearHideTimeout]);
 
   return {
     visible,
     hide,
-    showThenHide
-  }
+    showThenHide,
+  };
 }
