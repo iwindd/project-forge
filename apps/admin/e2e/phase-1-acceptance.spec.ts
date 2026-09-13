@@ -38,6 +38,15 @@ const pendingInvitation = {
   expiresAt: '2026-01-08T00:00:00.000Z',
   createdAt: '2026-01-01T00:00:00.000Z',
 };
+const betaOrganizationId = '00000000-0000-0000-0000-000000000002';
+
+type FixtureState = {
+  invitation: { status: string; acceptedBy?: string; acceptedAt?: string } | null;
+  activeToken: string | null;
+  previousTokens: string[];
+  membership: { status: string } | null;
+  auditRecords: Array<{ action: string; resourceId: string; reason: string | null }>;
+};
 
 function envelope(data: unknown, meta?: unknown) {
   return { data, ...(meta ? { meta } : {}) };
@@ -74,7 +83,19 @@ async function signedIn(page: Page, scenario = 'default') {
       domain: '127.0.0.1',
       path: '/',
     },
+    {
+      name: 'pf_e2e_scenario',
+      value: scenario,
+      domain: '127.0.0.1',
+      path: '/',
+    },
   ]);
+}
+
+async function readFixtureState(page: Page, query: string) {
+  const response = await page.request.get(`${apiOrigin}/__e2e/state?${query}`);
+  expect(response.ok()).toBe(true);
+  return (await response.json()) as FixtureState;
 }
 
 async function expectInvitationFailure(page: Page, token: string, status: number, code: string, message: string) {
@@ -132,16 +153,8 @@ test('project creation and archive lifecycle have no agent or repository side ef
   await page.getByRole('button', { name: 'สร้างโปรเจกต์' }).click();
 
   await expect(page.getByText('สร้างโปรเจกต์แล้ว')).toBeVisible();
-  await expect(page.getByText('Agent-ready project')).toBeVisible();
+  await expect(page.getByText('Agent-ready project').first()).toBeVisible();
   await dismissNotification(page, 'สร้างโปรเจกต์แล้ว');
-
-  const diagnostics = await page.request.get(`${apiOrigin}/__e2e/requests`);
-  expect(diagnostics.ok()).toBe(true);
-  const apiRequests = (await diagnostics.json()) as Array<{ method: string; path: string }>;
-  const sideEffectRequests = apiRequests.filter((request) =>
-    /\/(?:clone|clones|sandbox|hermes|ai|issues|pulls|pull-requests)(?:\/|$)/i.test(request.path),
-  );
-  expect(sideEffectRequests).toEqual([]);
 
   await page.getByRole('button', { name: 'การดำเนินการ: Agent-ready project' }).click();
   await page.getByRole('menuitem', { name: 'เก็บโปรเจกต์' }).click();
@@ -153,6 +166,27 @@ test('project creation and archive lifecycle have no agent or repository side ef
   await page.getByRole('button', { name: 'การดำเนินการ: Agent-ready project' }).click();
   await page.getByRole('menuitem', { name: 'กู้คืนโปรเจกต์' }).click();
   await expect(page.getByText('กู้คืนโปรเจกต์แล้ว')).toBeVisible();
+
+  await page.goto('/acme/audit-logs');
+  await expect(page.getByText('สร้าง Project')).toBeVisible();
+  await expect(page.getByText('เก็บ Project')).toBeVisible();
+  await expect(page.getByText('กู้คืน Project')).toBeVisible();
+  await expect(page.getByText('Agent-ready project').first()).toBeVisible();
+
+  const fixtureState = await readFixtureState(page, 'scenario=project-side-effects');
+  expect(fixtureState.auditRecords.map((record) => record.action)).toEqual([
+    'PROJECT_CREATED',
+    'PROJECT_ARCHIVED',
+    'PROJECT_RESTORED',
+  ]);
+
+  const diagnostics = await page.request.get(`${apiOrigin}/__e2e/requests?scenario=project-side-effects`);
+  expect(diagnostics.ok()).toBe(true);
+  const apiRequests = (await diagnostics.json()) as Array<{ method: string; path: string; scenario: string }>;
+  const sideEffectRequests = apiRequests.filter((request) =>
+    /\/(?:clone|clones|sandbox|hermes|ai|issues|pulls|pull-requests)(?:\/|$)/i.test(request.path),
+  );
+  expect(sideEffectRequests).toEqual([]);
 });
 
 test('project list recovers from a live API failure through the UI retry state', async ({ page }) => {
@@ -179,17 +213,15 @@ test('project list recovers from a live API failure through the UI retry state',
   expect(calls).toBe(2);
 });
 
-test('project access denial is surfaced for a member outside the organization boundary', async ({ page }) => {
-  await signedIn(page, 'project-access-denied');
-  await page.goto('/beta/projects');
-  await expect(page.getByText('ไม่สามารถโหลดรายการโปรเจกต์ได้')).toBeVisible();
-});
-
-test('organization audit UI renders an actual controlled audit record', async ({ page }) => {
-  await signedIn(page, 'audit-record');
-  await page.goto('/acme/audit-logs');
-  await expect(page.getByText('สร้าง Project')).toBeVisible();
-  await expect(page.getByText('Acceptance fixture')).toBeVisible();
+test('cross-organization project access is denied from resource ownership', async ({ page }) => {
+  await signedIn(page);
+  const response = await page.request.get(
+    `${apiOrigin}${apiPrefix}/organizations/${betaOrganizationId}/projects/${demoProject.id}`,
+  );
+  expect(response.status()).toBe(403);
+  expect(await response.json()).toMatchObject({
+    error: { code: 'FORBIDDEN', message: 'Project access is forbidden' },
+  });
 });
 
 test('verified-email mismatch is rejected before an invitation can be accepted', async ({ page }) => {
@@ -241,6 +273,28 @@ test('resending an invitation rotates its token and expiry in the Organization U
     },
   });
   await expect(page.getByText('หมุนเวียนคำเชิญและส่งอีกครั้งแล้ว')).toBeVisible();
+
+  const oldTokenResponse = await page.request.post(
+    `${apiOrigin}${apiPrefix}/organizations/invitations/initial-invitation-resend-token/accept`,
+  );
+  expect(oldTokenResponse.status()).toBe(403);
+
+  await page.goto('/invitations/rotated-invitation-resend-token');
+  const acceptanceResponsePromise = page.waitForResponse(
+    (candidate) =>
+      candidate.request().method() === 'POST' &&
+      new URL(candidate.url()).pathname ===
+        `${apiPrefix}/organizations/invitations/rotated-invitation-resend-token/accept`,
+  );
+  await page.getByRole('button', { name: 'เข้าร่วม' }).click();
+  expect((await acceptanceResponsePromise).status()).toBe(200);
+  await expect(page).toHaveURL(/\/acme$/);
+
+  const fixtureState = await readFixtureState(page, 'scenario=invitation-resend');
+  expect(fixtureState.invitation?.status).toBe('ACCEPTED');
+  expect(fixtureState.previousTokens).toContain('initial-invitation-resend-token');
+  expect(fixtureState.activeToken).toBe('rotated-invitation-resend-token');
+  expect(fixtureState.membership?.status).toBe('ACTIVE');
 });
 
 test('cancelling a pending invitation removes it from the Organization UI', async ({ page }) => {
@@ -254,6 +308,13 @@ test('cancelling a pending invitation removes it from the Organization UI', asyn
 
   await expect(page.getByText('ยกเลิกคำเชิญแล้ว')).toBeVisible();
   await expect(page.getByText('ไม่มีคำเชิญที่รอดำเนินการ')).toBeVisible();
+
+  const fixtureState = await readFixtureState(page, 'scenario=invitation-cancel');
+  expect(fixtureState.invitation?.status).toBe('CANCELLED');
+  const acceptanceResponse = await page.request.post(
+    `${apiOrigin}${apiPrefix}/organizations/invitations/initial-invitation-cancel-token/accept`,
+  );
+  expect(acceptanceResponse.status()).toBe(404);
 });
 
 test('an accepted invitation cannot be used a second time', async ({ page }) => {
@@ -268,6 +329,9 @@ test('an accepted invitation cannot be used a second time', async ({ page }) => 
   await page.getByRole('button', { name: 'เข้าร่วม' }).click();
   expect((await firstResponsePromise).status()).toBe(200);
   await expect(page).toHaveURL(/\/acme$/);
+  const fixtureState = await readFixtureState(page, 'scenario=invitation-single-use');
+  expect(fixtureState.invitation?.status).toBe('ACCEPTED');
+  expect(fixtureState.membership?.status).toBe('ACTIVE');
 
   await page.goto(`/invitations/${token}`);
   const secondResponsePromise = page.waitForResponse(

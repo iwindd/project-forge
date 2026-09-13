@@ -106,25 +106,26 @@ const pendingInvitation = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 const invitationScenarios = new Map();
-const acceptedInvitationTokens = new Set();
+const invitationTokens = new Map();
 const requestLog = [];
-const auditRecord = {
-  id: '00000000-0000-0000-0000-000000000041',
-  createdAt: '2026-01-03T00:00:00.000Z',
-  action: 'PROJECT_CREATED',
-  resourceType: 'PROJECT',
-  resourceId: projects[0].id,
-  actorRole: 'ADMIN',
-  actor: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.test' },
-  target: null,
-  reason: 'Acceptance fixture',
-  hasBefore: false,
-  hasAfter: true,
-};
+const auditRecordsByScenario = new Map();
 let nextProjectId = 22;
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) });
 const errorEnvelope = (code, message, requestId) =>
   JSON.stringify({ error: { code, message, details: {}, requestId } });
+const cloneInvitation = (overrides = {}) => ({
+  ...pendingInvitation,
+  role: { ...pendingInvitation.role },
+  ...overrides,
+});
+const createInvitationState = ({ scenario, token, invitation, requiresVerifiedEmail = false }) => ({
+  scenario,
+  invitation: cloneInvitation(invitation),
+  token,
+  previousTokens: [],
+  membership: null,
+  requiresVerifiedEmail,
+});
 const readJson = (req, callback) => {
   let body = '';
   req.on('data', (chunk) => {
@@ -132,17 +133,56 @@ const readJson = (req, callback) => {
   });
   req.on('end', () => callback(body ? JSON.parse(body) : {}));
 };
+const parseScenarioCookie = (cookieHeader) => {
+  const match = cookieHeader?.match(/(?:^|;\s*)pf_e2e_scenario=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : undefined;
+};
 const requestScenario = (req) =>
-  typeof req.headers['x-e2e-scenario'] === 'string' ? req.headers['x-e2e-scenario'] : 'default';
+  (typeof req.headers['x-e2e-scenario'] === 'string' && req.headers['x-e2e-scenario']) ||
+  parseScenarioCookie(req.headers.cookie) ||
+  'default';
 const invitationScenario = (scenario) => {
   if (!invitationScenarios.has(scenario)) {
-    invitationScenarios.set(scenario, {
-      invitation: { ...pendingInvitation },
-      token: `initial-${scenario}-token`,
-    });
+    const token = `initial-${scenario}-token`;
+    const state = createInvitationState({ scenario, token });
+    invitationScenarios.set(scenario, state);
+    invitationTokens.set(token, state);
   }
   return invitationScenarios.get(scenario);
 };
+const tokenInvitationState = (token, options = {}) => {
+  if (!invitationTokens.has(token)) {
+    invitationTokens.set(token, createInvitationState({ scenario: `token:${token}`, token, ...options }));
+  }
+  return invitationTokens.get(token);
+};
+const auditRecordsFor = (scenario) => {
+  if (!auditRecordsByScenario.has(scenario)) auditRecordsByScenario.set(scenario, []);
+  return auditRecordsByScenario.get(scenario);
+};
+const recordProjectAudit = (scenario, action, project) => {
+  const records = auditRecordsFor(scenario);
+  records.push({
+    id: `e2e-audit-${scenario}-${records.length + 1}`,
+    createdAt: new Date().toISOString(),
+    action,
+    resourceType: 'PROJECT',
+    resourceId: project.id,
+    actorRole: 'ADMIN',
+    actor: { id: 'user-1', name: 'Ada Lovelace', email: 'ada@example.test' },
+    target: null,
+    reason: project.name,
+    hasBefore: action !== 'PROJECT_CREATED',
+    hasAfter: true,
+  });
+};
+const invitationMembership = (state) => ({
+  id: `00000000-0000-0000-0000-${String(40 + state.previousTokens.length).padStart(12, '0')}`,
+  userId: 'user-1',
+  organizationId: organization.id,
+  roleId: state.invitation.role.id,
+  status: 'ACTIVE',
+});
 const send = (req, res, status, body) => {
   res.writeHead(status, {
     'content-type': 'application/json',
@@ -161,7 +201,25 @@ const server = http.createServer((req, res) => {
   const scenario = requestScenario(req);
   if (requestUrl.pathname === '/__e2e/requests' && req.method === 'GET') {
     const requestedScenario = requestUrl.searchParams.get('scenario') ?? scenario;
-    return send(req, res, 200, JSON.stringify(requestLog.filter((request) => request.scenario === requestedScenario)));
+    const records =
+      requestedScenario === 'all' ? requestLog : requestLog.filter((request) => request.scenario === requestedScenario);
+    return send(req, res, 200, JSON.stringify(records));
+  }
+  if (requestUrl.pathname === '/__e2e/state' && req.method === 'GET') {
+    const requestedScenario = requestUrl.searchParams.get('scenario') ?? scenario;
+    const invitation = invitationScenarios.get(requestedScenario);
+    return send(
+      req,
+      res,
+      200,
+      JSON.stringify({
+        invitation: invitation?.invitation ?? null,
+        activeToken: invitation?.token ?? null,
+        previousTokens: invitation?.previousTokens ?? [],
+        membership: invitation?.membership ?? null,
+        auditRecords: auditRecordsFor(requestedScenario),
+      }),
+    );
   }
   requestLog.push({ scenario, method: req.method, path: requestUrl.pathname });
   if (path === 'auth/me')
@@ -237,11 +295,13 @@ const server = http.createServer((req, res) => {
     );
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/projects' && req.method === 'GET')
     return send(req, res, 200, envelope(projects.filter((project) => project.organizationId === organization.id)));
-  if (path === 'organizations/00000000-0000-0000-0000-000000000002/projects' && req.method === 'GET') {
-    if (scenario === 'project-access-denied')
-      return send(req, res, 403, errorEnvelope('FORBIDDEN', 'Project access is forbidden', 'e2e-project-forbidden'));
-    return send(req, res, 200, envelope([]));
-  }
+  if (path === 'organizations/00000000-0000-0000-0000-000000000002/projects' && req.method === 'GET')
+    return send(
+      req,
+      res,
+      200,
+      envelope(projects.filter((project) => project.organizationId === secondOrganization.id)),
+    );
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/projects' && req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => {
@@ -269,44 +329,34 @@ const server = http.createServer((req, res) => {
         archivedAt: null,
       };
       projects.push(project);
+      recordProjectAudit(scenario, 'PROJECT_CREATED', project);
       send(req, res, 200, envelope({ project }));
     });
   }
-  const projectAction = path.match(
-    /^organizations\/00000000-0000-0000-0000-000000000001\/projects\/([^/]+)\/(archive|restore)$/,
-  );
+  const projectAction = path.match(/^organizations\/([^/]+)\/projects\/([^/]+)\/(archive|restore)$/);
   if (projectAction && req.method === 'POST') {
-    const project = projects.find((candidate) => candidate.id === projectAction[1]);
+    const project = projects.find((candidate) => candidate.id === projectAction[2]);
     if (!project)
-      return send(
-        req,
-        res,
-        404,
-        JSON.stringify({
-          error: { code: 'NOT_FOUND', message: 'Project was not found', details: {}, requestId: 'e2e' },
-        }),
-      );
-    project.status = projectAction[2] === 'archive' ? 'ARCHIVED' : 'ACTIVE';
+      return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Project was not found', 'e2e'));
+    if (project.organizationId !== projectAction[1])
+      return send(req, res, 403, errorEnvelope('FORBIDDEN', 'Project access is forbidden', 'e2e-project-forbidden'));
+    project.status = projectAction[3] === 'archive' ? 'ARCHIVED' : 'ACTIVE';
     project.archivedAt = project.status === 'ARCHIVED' ? new Date().toISOString() : null;
     project.updatedAt = new Date().toISOString();
+    recordProjectAudit(scenario, project.status === 'ARCHIVED' ? 'PROJECT_ARCHIVED' : 'PROJECT_RESTORED', project);
     return send(req, res, 200, envelope({ project }));
   }
-  const projectResource = path.match(/^organizations\/00000000-0000-0000-0000-000000000001\/projects\/([^/]+)$/);
+  const projectResource = path.match(/^organizations\/([^/]+)\/projects\/([^/]+)$/);
   if (projectResource && req.method === 'GET') {
-    const project = projects.find((candidate) => candidate.id === projectResource[1]);
+    const project = projects.find((candidate) => candidate.id === projectResource[2]);
     if (!project)
-      return send(
-        req,
-        res,
-        404,
-        JSON.stringify({
-          error: { code: 'NOT_FOUND', message: 'Project was not found', details: {}, requestId: 'e2e' },
-        }),
-      );
+      return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Project was not found', 'e2e'));
+    if (project.organizationId !== projectResource[1])
+      return send(req, res, 403, errorEnvelope('FORBIDDEN', 'Project access is forbidden', 'e2e-project-forbidden'));
     return send(req, res, 200, envelope({ project }));
   }
   if (path === 'audit-logs/organization/00000000-0000-0000-0000-000000000001') {
-    const records = scenario === 'audit-record' ? [auditRecord] : [];
+    const records = auditRecordsFor(scenario);
     return send(
       req,
       res,
@@ -317,7 +367,8 @@ const server = http.createServer((req, res) => {
   const invitationCollection = path.match(/^organizations\/00000000-0000-0000-0000-000000000001\/invitations$/);
   if (invitationCollection && req.method === 'GET') {
     const state = scenario === 'default' ? undefined : invitationScenario(scenario);
-    return send(req, res, 200, envelope(state?.invitation ? [state.invitation] : []));
+    const invitations = state?.invitation?.status === 'PENDING' ? [state.invitation] : [];
+    return send(req, res, 200, envelope(invitations));
   }
   if (invitationCollection && req.method === 'POST') {
     return readJson(req, (input) => {
@@ -331,7 +382,9 @@ const server = http.createServer((req, res) => {
         expiresAt: '2026-01-10T00:00:00.000Z',
         status: 'PENDING',
       };
+      state.previousTokens.push(state.token);
       state.token = `rotated-${scenario}-token`;
+      invitationTokens.set(state.token, state);
       send(req, res, 200, envelope({ invitation: state.invitation, token: state.token }));
     });
   }
@@ -340,7 +393,7 @@ const server = http.createServer((req, res) => {
     const state = invitationScenarios.get(scenario);
     if (!state?.invitation || state.invitation.id !== invitationResource[1])
       return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Invitation was not found', 'e2e-invitation-not-found'));
-    state.invitation = null;
+    state.invitation = { ...state.invitation, status: 'CANCELLED' };
     return send(req, res, 200, envelope(null));
   }
   const invitationAccept = path.match(/^organizations\/invitations\/([^/]+)\/accept$/);
@@ -348,7 +401,11 @@ const server = http.createServer((req, res) => {
     const token = decodeURIComponent(invitationAccept[1]);
     if (token === 'controlled-no-invitation')
       return send(req, res, 403, errorEnvelope('FORBIDDEN', 'ผู้ใช้ยังไม่ได้รับคำเชิญเข้า Organization นี้', 'e2e-no-invitation'));
-    if (token === 'controlled-unverified-email')
+    if (token === 'controlled-unverified-email') {
+      tokenInvitationState(token, {
+        invitation: { status: 'PENDING' },
+        requiresVerifiedEmail: true,
+      });
       return send(
         req,
         res,
@@ -359,14 +416,18 @@ const server = http.createServer((req, res) => {
           'e2e-controlled-unverified-email',
         ),
       );
-    if (token === 'controlled-expired-invitation')
+    }
+    if (token === 'controlled-expired-invitation') {
+      tokenInvitationState(token, { invitation: { status: 'EXPIRED' } });
       return send(
         req,
         res,
         409,
         errorEnvelope('CONFLICT', 'Invitation has expired', 'e2e-controlled-expired-invitation'),
       );
-    if (token === 'controlled-cancelled-invitation')
+    }
+    if (token === 'controlled-cancelled-invitation') {
+      tokenInvitationState(token, { invitation: { status: 'CANCELLED' } });
       return send(
         req,
         res,
@@ -377,10 +438,43 @@ const server = http.createServer((req, res) => {
           'e2e-controlled-cancelled-invitation',
         ),
       );
-    if (token === 'controlled-one-time-token' || token === 'controlled-single-use-invitation') {
-      if (acceptedInvitationTokens.has(token))
+    }
+    const state =
+      invitationTokens.get(token) ??
+      (token === 'controlled-one-time-token' || token === 'controlled-single-use-invitation'
+        ? tokenInvitationState(token, { scenario })
+        : undefined);
+    if (state) {
+      if (scenario !== 'default' && !invitationScenarios.has(scenario)) invitationScenarios.set(scenario, state);
+      if (state.invitation.status === 'EXPIRED')
+        return send(req, res, 409, errorEnvelope('CONFLICT', 'Invitation has expired', 'e2e-expired'));
+      if (state.invitation.status === 'CANCELLED')
+        return send(
+          req,
+          res,
+          404,
+          errorEnvelope('NOT_FOUND', 'Invitation was not found or has already been used', 'e2e-cancelled'),
+        );
+      if (state.requiresVerifiedEmail)
+        return send(
+          req,
+          res,
+          403,
+          errorEnvelope(
+            'FORBIDDEN',
+            'This invitation requires a matching verified GitHub email address',
+            'e2e-unverified-email',
+          ),
+        );
+      if (token !== state.token || state.invitation.status !== 'PENDING')
         return send(req, res, 403, errorEnvelope('FORBIDDEN', 'คำเชิญนี้ไม่สามารถใช้ได้', 'e2e-one-time-used'));
-      acceptedInvitationTokens.add(token);
+      state.invitation = {
+        ...state.invitation,
+        status: 'ACCEPTED',
+        acceptedBy: 'user-1',
+        acceptedAt: new Date().toISOString(),
+      };
+      state.membership = invitationMembership(state);
       return send(req, res, 200, envelope({ organization }));
     }
     return send(req, res, 403, errorEnvelope('FORBIDDEN', 'คำเชิญนี้ไม่สามารถใช้ได้', 'e2e'));
