@@ -7,6 +7,7 @@
       "!apps/**/.next/**",
       "!apps/**/dist/**",
       "!apps/**/coverage/**",
+      "!apps/**/test-results/**",
       "!apps/**/next-env.d.ts",
       "!apps/**/tsconfig.tsbuildinfo",
       "!apps/api/src/database/migrations/**"

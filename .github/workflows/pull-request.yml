@@ -38,6 +38,9 @@ jobs:
       - name: Prepare CI environment
         run: cp .env.example .env
 
+      - name: Repository check
+        run: pnpm run check
+
       - name: API lint
         run: pnpm --filter @project-forge/api lint
 
