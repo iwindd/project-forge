@@ -336,8 +336,7 @@ const server = http.createServer((req, res) => {
   const projectAction = path.match(/^organizations\/([^/]+)\/projects\/([^/]+)\/(archive|restore)$/);
   if (projectAction && req.method === 'POST') {
     const project = projects.find((candidate) => candidate.id === projectAction[2]);
-    if (!project)
-      return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Project was not found', 'e2e'));
+    if (!project) return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Project was not found', 'e2e'));
     if (project.organizationId !== projectAction[1])
       return send(req, res, 403, errorEnvelope('FORBIDDEN', 'Project access is forbidden', 'e2e-project-forbidden'));
     project.status = projectAction[3] === 'archive' ? 'ARCHIVED' : 'ACTIVE';
@@ -349,8 +348,7 @@ const server = http.createServer((req, res) => {
   const projectResource = path.match(/^organizations\/([^/]+)\/projects\/([^/]+)$/);
   if (projectResource && req.method === 'GET') {
     const project = projects.find((candidate) => candidate.id === projectResource[2]);
-    if (!project)
-      return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Project was not found', 'e2e'));
+    if (!project) return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Project was not found', 'e2e'));
     if (project.organizationId !== projectResource[1])
       return send(req, res, 403, errorEnvelope('FORBIDDEN', 'Project access is forbidden', 'e2e-project-forbidden'));
     return send(req, res, 200, envelope({ project }));
