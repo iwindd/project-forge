@@ -8,7 +8,13 @@ import { UserSecurityLogOrmEntity } from '../../common/security/user-security-lo
 import { AuditLogsController } from './presentation/audit-logs.controller.js';
 
 @Module({
-  imports: [AuthModule, AuditModule, OrganizationsModule, SecurityModule, MikroOrmModule.forFeature([UserSecurityLogOrmEntity])],
+  imports: [
+    AuthModule,
+    AuditModule,
+    OrganizationsModule,
+    SecurityModule,
+    MikroOrmModule.forFeature([UserSecurityLogOrmEntity]),
+  ],
   controllers: [AuditLogsController],
 })
 export class AuditLogsModule {}

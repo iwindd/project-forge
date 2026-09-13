@@ -10,7 +10,13 @@ import { UserOrmEntity } from '../users/infrastructure/persistence/user.orm-enti
 import { ProfileController } from './presentation/profile.controller.js';
 
 @Module({
-  imports: [AuthModule, AuditModule, DatabaseModule, MikroOrmModule.forFeature([UserOrmEntity, ConnectionOrmEntity]), SecurityModule],
+  imports: [
+    AuthModule,
+    AuditModule,
+    DatabaseModule,
+    MikroOrmModule.forFeature([UserOrmEntity, ConnectionOrmEntity]),
+    SecurityModule,
+  ],
   controllers: [ProfileController],
   providers: [ProfileConnectionRepository],
 })
