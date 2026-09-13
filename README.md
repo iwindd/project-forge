@@ -43,12 +43,12 @@ pnpm db:verify
 
 ## Current documentation
 
-- [CONTEXT.md](CONTEXT.md) — glossary และ domain rules
-- [architecture-refactor-spec.md](docs/architecture-refactor-spec.md) — current architecture/spec
+- [CONTEXT.md](CONTEXT.md) — glossary and domain rules
+- [ARCHITECTURE.md](ARCHITECTURE.md) — current module boundaries and data flow
+- [architecture-refactor-spec.md](docs/architecture-refactor-spec.md) — approved architecture scope and decisions
 - [architecture-refactor-tickets.md](docs/architecture-refactor-tickets.md) — GitHub issue dependency graph
 - [ADR directory](docs/adr/) — accepted architecture decisions
 - [phase_1.md](phase_1.md) — historical archive; ไม่ใช่ source of truth
-- [.requirements/](.requirements/) — historical product input; ไม่ใช่ implementation instruction
 
 ## Roadmap
 
