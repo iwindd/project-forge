@@ -49,7 +49,6 @@ export class MikroOrmSessionRepository implements SessionRepository {
   async revokeAllForUser(userId: string): Promise<void> {
     await this.em.nativeUpdate(SessionOrmEntity, { userId, revokedAt: null }, { revokedAt: new Date() });
   }
-
 }
 
 function toRecord(session: SessionOrmEntity): SessionRecord {

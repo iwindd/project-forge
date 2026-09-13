@@ -1,26 +1,26 @@
-'use client'
+'use client';
 
-import type { AdminUser } from '@/session'
-import { Drawer } from '@mantine/core'
-import type { SidebarNavigationMode } from './navigation-utils'
-import { SIDEBAR_WIDTH } from './sidebar-constants'
-import classes from './sidebar-drawer.module.css'
-import SidebarDefault from './sidebar-default'
+import type { AdminUser } from '@/session';
+import { Drawer } from '@mantine/core';
+import type { SidebarNavigationMode } from './navigation-utils';
+import { SIDEBAR_WIDTH } from './sidebar-constants';
+import classes from './sidebar-drawer.module.css';
+import SidebarDefault from './sidebar-default';
 
 type SidebarDrawerProps = {
-  opened: boolean
-  onCloseAction: () => void
-  user: AdminUser
-  organizationSlug?: string
-  navigationMode?: SidebarNavigationMode
-}
+  opened: boolean;
+  onCloseAction: () => void;
+  user: AdminUser;
+  organizationSlug?: string;
+  navigationMode?: SidebarNavigationMode;
+};
 
 export default function SidebarDrawer({
   opened,
   onCloseAction,
   user,
   organizationSlug,
-  navigationMode = 'app'
+  navigationMode = 'app',
 }: SidebarDrawerProps) {
   return (
     <Drawer
@@ -34,7 +34,7 @@ export default function SidebarDrawer({
       overlayProps={{ backgroundOpacity: 0.45, blur: 2 }}
       classNames={{
         body: classes.mobileDrawerBody,
-        content: classes.mobileDrawerContent
+        content: classes.mobileDrawerContent,
       }}
     >
       <SidebarDefault
@@ -44,5 +44,5 @@ export default function SidebarDrawer({
         onNavigateAction={onCloseAction}
       />
     </Drawer>
-  )
+  );
 }

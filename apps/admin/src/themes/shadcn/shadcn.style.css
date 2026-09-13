@@ -341,10 +341,7 @@
     &:where([data-active]) {
       background-color: var(--pagination-active-bg);
       border-color: var(--pagination-active-bg);
-      color: var(
-        --pagination-active-color,
-        var(--mantine-primary-color-contrast)
-      );
+      color: var(--pagination-active-color, var(--mantine-primary-color-contrast));
 
       &:hover {
         background-color: rgba(from var(--pagination-active-bg) r g b / 0.9);
@@ -479,13 +476,8 @@
   .mantine-Menu-item {
     background-color: transparent;
 
-    &:where(:hover, :focus, [data-menu-active]):where(
-        :not(:disabled, [data-disabled])
-      ) {
-      background-color: var(
-        --menu-item-hover,
-        var(--mantine-color-default-hover)
-      );
+    &:where(:hover, :focus, [data-menu-active]):where(:not(:disabled, [data-disabled])) {
+      background-color: var(--menu-item-hover, var(--mantine-color-default-hover));
     }
   }
 
@@ -504,9 +496,7 @@
   background-color: transparent;
   color: var(--mantine-color-text);
 
-  &:where(:hover, :focus, [data-combobox-active]):where(
-      :not([data-combobox-selected], [data-combobox-disabled])
-    ) {
+  &:where(:hover, :focus, [data-combobox-active]):where(:not([data-combobox-selected], [data-combobox-disabled])) {
     background-color: var(--mantine-color-default-hover);
   }
 
@@ -724,14 +714,7 @@
 
         font-size: calc(var(--day-size) / 2.28);
 
-        &:hover:where(
-            :not(
-              [data-static],
-              [data-disabled],
-              [data-selected],
-              [data-in-range]
-            )
-          ) {
+        &:hover:where(:not([data-static], [data-disabled], [data-selected], [data-in-range])) {
           background-color: var(--mantine-color-default-hover) !important;
           border-radius: var(--mantine-radius-default);
 
@@ -740,9 +723,7 @@
           }
         }
 
-        &:where([data-selected]):hover:where(
-            :not([data-disabled], [data-static])
-          ) {
+        &:where([data-selected]):hover:where(:not([data-disabled], [data-static])) {
           background-color: var(--mantine-primary-color-filled-hover);
           border-radius: var(--mantine-radius-default);
         }
@@ -851,21 +832,11 @@
 .mantine-datatable {
   --mantine-datatable-color: var(--mantine-color-text) !important;
   --mantine-datatable-background-color: var(--mantine-color-body) !important;
-  --mantine-datatable-row-background-color-light: var(
-    --mantine-color-default
-  ) !important;
-  --mantine-datatable-row-background-color-dark: var(
-    --mantine-color-default
-  ) !important;
-  --mantine-datatable-border-color: var(
-    --mantine-color-default-border
-  ) !important;
-  --mantine-datatable-row-border-color: var(
-    --mantine-color-default-border
-  ) !important;
-  --mantine-datatable-highlight-on-hover-color: var(
-    --mantine-color-default-hover
-  ) !important;
+  --mantine-datatable-row-background-color-light: var(--mantine-color-default) !important;
+  --mantine-datatable-row-background-color-dark: var(--mantine-color-default) !important;
+  --mantine-datatable-border-color: var(--mantine-color-default-border) !important;
+  --mantine-datatable-row-border-color: var(--mantine-color-default-border) !important;
+  --mantine-datatable-highlight-on-hover-color: var(--mantine-color-default-hover) !important;
 
   overflow: hidden;
   border: 1px solid var(--mantine-datatable-border-color);
@@ -903,7 +874,6 @@
   background-color: var(--mantine-color-default-hover);
 }
 
-.mantine-Table-tbody
-  .mantine-Table-tr[data-with-row-border]:not(:last-of-type) {
+.mantine-Table-tbody .mantine-Table-tr[data-with-row-border]:not(:last-of-type) {
   border-bottom: 1px solid var(--mantine-color-default-border);
 }

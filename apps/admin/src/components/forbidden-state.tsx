@@ -1,9 +1,7 @@
-import { Button, Center, Paper, Stack, Text, Title } from '@mantine/core'
-import Link from 'next/link'
+import { Button, Center, Paper, Stack, Text, Title } from '@mantine/core';
+import Link from 'next/link';
 
-export function ForbiddenState({
-  backHref
-}: Readonly<{ backHref?: string }>) {
+export function ForbiddenState({ backHref }: Readonly<{ backHref?: string }>) {
   return (
     <Center mih='60vh' p='xl'>
       <Paper
@@ -23,9 +21,7 @@ export function ForbiddenState({
           <Title id='forbidden-state-title' order={2}>
             ไม่สามารถเปิดข้อมูลส่วนนี้ได้
           </Title>
-          <Text c='dimmed'>
-            บัญชีของคุณไม่มีสิทธิ์สำหรับข้อมูลนี้ และระบบจะไม่ส่งคุณกลับไปหน้าเข้าสู่ระบบ
-          </Text>
+          <Text c='dimmed'>บัญชีของคุณไม่มีสิทธิ์สำหรับข้อมูลนี้ และระบบจะไม่ส่งคุณกลับไปหน้าเข้าสู่ระบบ</Text>
           {backHref ? (
             <Button component={Link} href={backHref} variant='light'>
               กลับบัญชีของฉัน
@@ -34,5 +30,5 @@ export function ForbiddenState({
         </Stack>
       </Paper>
     </Center>
-  )
+  );
 }

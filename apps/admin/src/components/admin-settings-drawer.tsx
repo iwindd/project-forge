@@ -1,52 +1,30 @@
-"use client";
+'use client';
 
-import {
-  ActionIcon,
-  Box,
-  Drawer,
-  Group,
-  ScrollArea,
-  Stack,
-  Text,
-  Tooltip,
-  useMantineColorScheme,
-} from "@mantine/core";
-import {
-  IconMaximize,
-  IconMinimize,
-  IconRotate,
-  IconX,
-} from "@tabler/icons-react";
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import CorePreferences from "./settings-drawer/core-preferences";
-import { useScrollbarVisibility } from "./settings-drawer/use-scrollbar-visibility";
-import classes from "./admin-settings-drawer.module.css";
+import { ActionIcon, Box, Drawer, Group, ScrollArea, Stack, Text, Tooltip, useMantineColorScheme } from '@mantine/core';
+import { IconMaximize, IconMinimize, IconRotate, IconX } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import CorePreferences from './settings-drawer/core-preferences';
+import { useScrollbarVisibility } from './settings-drawer/use-scrollbar-visibility';
+import classes from './admin-settings-drawer.module.css';
 
-export function AdminSettingsDrawer({
-  opened,
-  onCloseAction,
-}: {
-  opened: boolean;
-  onCloseAction: () => void;
-}) {
-  const t = useTranslations("Settings");
+export function AdminSettingsDrawer({ opened, onCloseAction }: { opened: boolean; onCloseAction: () => void }) {
+  const t = useTranslations('Settings');
   const [fullscreen, setFullscreen] = useState(false);
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.settingsScrollbar} ${
-    scrollbar.visible ? classes.settingsScrollbarVisible : ""
+    scrollbar.visible ? classes.settingsScrollbarVisible : ''
   }`;
-  const hasAnyChanges = colorScheme !== "auto";
+  const hasAnyChanges = colorScheme !== 'auto';
 
   useEffect(() => {
     const onFullscreenChange = () => {
       setFullscreen(Boolean(document.fullscreenElement));
     };
 
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
   const toggleFullscreen = () => {
@@ -59,14 +37,14 @@ export function AdminSettingsDrawer({
   };
 
   const resetAll = () => {
-    setColorScheme("auto");
+    setColorScheme('auto');
   };
 
   return (
     <Drawer
       opened={opened}
       onClose={onCloseAction}
-      position="right"
+      position='right'
       size={360}
       withCloseButton={false}
       padding={0}
@@ -75,56 +53,33 @@ export function AdminSettingsDrawer({
         body: classes.drawerBody,
       }}
     >
-      <Group className={classes.drawerHeader} justify="space-between" p="md">
-        <Text
-          fw={700}
-          size="lg"
-          c="var(--mantine-color-text)"
-        >
-          {t("title")}
+      <Group className={classes.drawerHeader} justify='space-between' p='md'>
+        <Text fw={700} size='lg' c='var(--mantine-color-text)'>
+          {t('title')}
         </Text>
         <Group gap={4}>
-          <Tooltip
-            label={fullscreen ? t("exitFullscreen") : t("fullscreen")}
-            position="bottom"
-          >
+          <Tooltip label={fullscreen ? t('exitFullscreen') : t('fullscreen')} position='bottom'>
             <ActionIcon
               onClick={toggleFullscreen}
-              variant="subtle"
-              radius="md"
-              size="lg"
-              aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")}
+              variant='subtle'
+              radius='md'
+              size='lg'
+              aria-label={fullscreen ? t('exitFullscreen') : t('fullscreen')}
             >
-              {fullscreen ? (
-                <IconMinimize size={20} />
-              ) : (
-                <IconMaximize size={20} />
-              )}
+              {fullscreen ? <IconMinimize size={20} /> : <IconMaximize size={20} />}
             </ActionIcon>
           </Tooltip>
 
-          <Tooltip label={t("reset")} position="bottom">
-            <Box pos="relative">
-              <ActionIcon
-                onClick={resetAll}
-                variant="subtle"
-                radius="md"
-                size="lg"
-                aria-label={t("reset")}
-              >
+          <Tooltip label={t('reset')} position='bottom'>
+            <Box pos='relative'>
+              <ActionIcon onClick={resetAll} variant='subtle' radius='md' size='lg' aria-label={t('reset')}>
                 <IconRotate size={20} />
               </ActionIcon>
               {hasAnyChanges && <Box className={classes.changeIndicator} />}
             </Box>
           </Tooltip>
 
-          <ActionIcon
-            onClick={onCloseAction}
-            variant="subtle"
-            radius="md"
-            size="lg"
-            aria-label={t("close")}
-          >
+          <ActionIcon onClick={onCloseAction} variant='subtle' radius='md' size='lg' aria-label={t('close')}>
             <IconX size={20} />
           </ActionIcon>
         </Group>
@@ -139,12 +94,12 @@ export function AdminSettingsDrawer({
         onMouseEnter={scrollbar.showThenHide}
         onMouseLeave={scrollbar.hide}
         onScrollPositionChange={scrollbar.showThenHide}
-        scrollbars="y"
+        scrollbars='y'
         scrollbarSize={10}
         scrollHideDelay={500}
-        type="always"
+        type='always'
       >
-        <Stack className={classes.drawerContentInner} px="md" gap="xl" pb="xl">
+        <Stack className={classes.drawerContentInner} px='md' gap='xl' pb='xl'>
           <CorePreferences />
         </Stack>
       </ScrollArea>

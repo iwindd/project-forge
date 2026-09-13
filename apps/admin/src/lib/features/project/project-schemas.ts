@@ -1,14 +1,13 @@
-import { z } from 'zod'
-import type { Project } from './types'
+import { z } from 'zod';
+import type { Project } from './types';
 
 /** Value the API stores for every environment variable key it accepts. */
-export const MASKED_ENVIRONMENT_METADATA_VALUE = 'configured'
+export const MASKED_ENVIRONMENT_METADATA_VALUE = 'configured';
 
-const postgresUuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const postgresUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** PostgreSQL accepts any canonical UUID-shaped value, not only RFC UUID versions. */
-export const databaseUuidSchema = z.string().regex(postgresUuidPattern)
+export const databaseUuidSchema = z.string().regex(postgresUuidPattern);
 
 export const projectSchema = z.object({
   id: databaseUuidSchema,
@@ -20,26 +19,24 @@ export const projectSchema = z.object({
   sourceBranch: z.string().min(1),
   targetBranch: z.string().min(1),
   nodeVersion: z.string().nullable(),
-  environmentMetadata: z
-    .record(z.string(), z.literal(MASKED_ENVIRONMENT_METADATA_VALUE))
-    .nullable(),
+  environmentMetadata: z.record(z.string(), z.literal(MASKED_ENVIRONMENT_METADATA_VALUE)).nullable(),
   status: z.enum(['ACTIVE', 'ARCHIVED']),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
-  archivedAt: z.string().nullable()
-}) satisfies z.ZodType<Project>
+  archivedAt: z.string().nullable(),
+}) satisfies z.ZodType<Project>;
 
 /** Wire shape of `GET /organizations/:organizationId/projects`. */
 export const projectListResponseSchema = z.object({
-  data: z.array(projectSchema)
-})
+  data: z.array(projectSchema),
+});
 
 /** Wire shape of every Project mutation response. */
 export const projectResponseEnvelopeSchema = z.object({
   data: z.object({
-    project: projectSchema
-  })
-})
+    project: projectSchema,
+  }),
+});
 
 /*
  * The RTK Query base query unwraps the standard `data` envelope before
@@ -47,9 +44,9 @@ export const projectResponseEnvelopeSchema = z.object({
  * against the documented envelope of its endpoint.
  */
 export function parseProjectListResponse(response: unknown): Project[] {
-  return projectListResponseSchema.parse({ data: response }).data
+  return projectListResponseSchema.parse({ data: response }).data;
 }
 
 export function parseProjectResponse(response: unknown): { project: Project } {
-  return projectResponseEnvelopeSchema.parse({ data: response }).data
+  return projectResponseEnvelopeSchema.parse({ data: response }).data;
 }

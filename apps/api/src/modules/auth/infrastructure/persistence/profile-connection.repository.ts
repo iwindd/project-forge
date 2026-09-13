@@ -7,11 +7,7 @@ import { ProfileOrmEntity } from '../../../users/infrastructure/persistence/prof
 export class ProfileConnectionRepository {
   constructor(private readonly em: EntityManager) {}
 
-  async ensureProfile(input: {
-    userId: string;
-    displayName?: string | null;
-    avatarUrl?: string | null;
-  }) {
+  async ensureProfile(input: { userId: string; displayName?: string | null; avatarUrl?: string | null }) {
     let profile = await this.em.findOne(ProfileOrmEntity, { userId: input.userId });
     if (!profile) {
       profile = this.em.create(ProfileOrmEntity, {
@@ -31,7 +27,10 @@ export class ProfileConnectionRepository {
     return this.em.findOne(ProfileOrmEntity, { userId });
   }
 
-  async updateProfile(userId: string, input: { displayName?: string | null; bio?: string | null; timezone?: string | null }) {
+  async updateProfile(
+    userId: string,
+    input: { displayName?: string | null; bio?: string | null; timezone?: string | null },
+  ) {
     const profile = await this.findProfile(userId);
     if (!profile) return null;
     if (input.displayName !== undefined) profile.displayName = input.displayName;
@@ -73,7 +72,7 @@ export class ProfileConnectionRepository {
     }
     if (input.providerVerifiedEmails !== undefined) {
       connection.providerVerifiedEmails = input.providerVerifiedEmails
-        .map(email => email.trim().toLowerCase())
+        .map((email) => email.trim().toLowerCase())
         .filter(Boolean);
     }
     connection.accessTokenCiphertext = input.accessTokenCiphertext ?? connection.accessTokenCiphertext;

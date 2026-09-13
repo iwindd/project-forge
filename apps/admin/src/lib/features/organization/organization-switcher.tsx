@@ -1,158 +1,122 @@
-'use client'
+'use client';
 
-import { getBrowserApiErrorMessage } from '@/lib/api/api'
-import { getPath } from '@/routes'
-import {
-  ActionIcon,
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  Menu,
-  Modal,
-  Select,
-  Stack,
-  Text,
-  TextInput
-} from '@mantine/core'
-import { schemaResolver, useForm } from '@mantine/form'
-import {
-  IconBuilding,
-  IconCheck,
-  IconCopy,
-  IconSearch,
-  IconSelector,
-  IconUsers
-} from '@tabler/icons-react'
-import Link from 'next/link'
-import { useTranslations } from 'next-intl'
-import { useMemo, useState } from 'react'
-import { z } from 'zod'
-import {
-  useCreateInvitationMutation,
-  useGetRolesQuery
-} from './organization-members-api'
-import { useOrganizationContext } from './organization-provider'
-import { databaseUuidSchema } from './organization-schemas'
-import {
-  getDefaultInvitationRoleId,
-  getInvitationRoleOptions
-} from './invitation-role-options'
-import type { Organization } from './types'
-import classes from './organization-switcher.module.css'
+import { getBrowserApiErrorMessage } from '@/lib/api/api';
+import { getPath } from '@/routes';
+import { ActionIcon, Alert, Avatar, Badge, Button, Menu, Modal, Select, Stack, Text, TextInput } from '@mantine/core';
+import { schemaResolver, useForm } from '@mantine/form';
+import { IconBuilding, IconCheck, IconCopy, IconSearch, IconSelector, IconUsers } from '@tabler/icons-react';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+import { z } from 'zod';
+import { useCreateInvitationMutation, useGetRolesQuery } from './organization-members-api';
+import { useOrganizationContext } from './organization-provider';
+import { databaseUuidSchema } from './organization-schemas';
+import { getDefaultInvitationRoleId, getInvitationRoleOptions } from './invitation-role-options';
+import type { Organization } from './types';
+import classes from './organization-switcher.module.css';
 
 export const inviteMemberFormSchema = z.object({
   email: z.string().trim().email('กรุณาระบุอีเมลให้ถูกต้อง'),
-  roleId: databaseUuidSchema
-})
+  roleId: databaseUuidSchema,
+});
 
-type InviteMemberFormValues = z.infer<typeof inviteMemberFormSchema>
+type InviteMemberFormValues = z.infer<typeof inviteMemberFormSchema>;
 
 function getOrganizationInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase() || 'O'
+  return name.trim().charAt(0).toUpperCase() || 'O';
 }
 
 function getOrganizationTypeLabel(type: Organization['type']) {
-  return type === 'PERSONAL' ? 'ส่วนตัว' : 'ทีม'
+  return type === 'PERSONAL' ? 'ส่วนตัว' : 'ทีม';
 }
 
 function canInviteMembers(organization: Organization | undefined) {
   return Boolean(
     organization &&
-    organization.type === 'SHARED' &&
-    (organization.role.isOwner ||
-      organization.role.permissions.includes('organization.manage'))
-  )
+      organization.type === 'SHARED' &&
+      (organization.role.isOwner || organization.role.permissions.includes('organization.manage')),
+  );
 }
 
 export function OrganizationSwitcher() {
-  const t = useTranslations('OrganizationMembers')
+  const t = useTranslations('OrganizationMembers');
   const {
     organizations,
     activeId,
     activeOrganization,
     pending: switchPending,
-    switchOrganization
-  } = useOrganizationContext()
-  const [createInvitationMutation, { isLoading: invitationCreating }] =
-    useCreateInvitationMutation()
+    switchOrganization,
+  } = useOrganizationContext();
+  const [createInvitationMutation, { isLoading: invitationCreating }] = useCreateInvitationMutation();
   const { data: rolesResult } = useGetRolesQuery(
     { organizationId: activeOrganization?.id ?? '' },
-    { skip: !activeOrganization || !canInviteMembers(activeOrganization) }
-  )
-  const [inviteOpened, setInviteOpened] = useState(false)
-  const [search, setSearch] = useState('')
-  const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [copiedInviteLink, setCopiedInviteLink] = useState(false)
-  const [inviteError, setInviteError] = useState<string | null>(null)
-  const pending = switchPending || invitationCreating
+    { skip: !activeOrganization || !canInviteMembers(activeOrganization) },
+  );
+  const [inviteOpened, setInviteOpened] = useState(false);
+  const [search, setSearch] = useState('');
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const pending = switchPending || invitationCreating;
   const inviteForm = useForm<InviteMemberFormValues>({
     initialValues: { email: '', roleId: '' },
     validate: schemaResolver(inviteMemberFormSchema),
-    validateInputOnBlur: true
-  })
-  const inviteRoles = useMemo(
-    () => getInvitationRoleOptions(rolesResult?.data ?? []),
-    [rolesResult?.data]
-  )
-  const defaultInviteRoleId = getDefaultInvitationRoleId(inviteRoles)
-  const selectedInviteRoleId = inviteForm.values.roleId || defaultInviteRoleId
+    validateInputOnBlur: true,
+  });
+  const inviteRoles = useMemo(() => getInvitationRoleOptions(rolesResult?.data ?? []), [rolesResult?.data]);
+  const defaultInviteRoleId = getDefaultInvitationRoleId(inviteRoles);
+  const selectedInviteRoleId = inviteForm.values.roleId || defaultInviteRoleId;
 
   const createInvitation = async (values: InviteMemberFormValues) => {
-    if (!activeOrganization) return
+    if (!activeOrganization) return;
 
-    setInviteError(null)
+    setInviteError(null);
     try {
       const result = await createInvitationMutation({
         organizationId: activeOrganization.id,
         email: values.email,
-        roleId: values.roleId
-      }).unwrap()
-      setInviteLink(
-        `${window.location.origin}/invitations/${result.token}`
-      )
-      setCopiedInviteLink(false)
-      inviteForm.setFieldValue('email', '')
+        roleId: values.roleId,
+      }).unwrap();
+      setInviteLink(`${window.location.origin}/invitations/${result.token}`);
+      setCopiedInviteLink(false);
+      inviteForm.setFieldValue('email', '');
     } catch (error) {
-      setInviteError(
-        getBrowserApiErrorMessage(error, 'ไม่สามารถสร้างลิงก์เชิญได้')
-      )
+      setInviteError(getBrowserApiErrorMessage(error, 'ไม่สามารถสร้างลิงก์เชิญได้'));
     }
-  }
+  };
 
   const copyInviteLink = async () => {
-    if (!inviteLink) return
+    if (!inviteLink) return;
     try {
-      await navigator.clipboard.writeText(inviteLink)
-      setCopiedInviteLink(true)
+      await navigator.clipboard.writeText(inviteLink);
+      setCopiedInviteLink(true);
     } catch {
-      setInviteError(t('copyInviteFailed'))
+      setInviteError(t('copyInviteFailed'));
     }
-  }
+  };
 
   const openInviteMembers = () => {
-    setInviteError(null)
+    setInviteError(null);
     if (!inviteForm.values.roleId && defaultInviteRoleId) {
-      inviteForm.setFieldValue('roleId', defaultInviteRoleId)
+      inviteForm.setFieldValue('roleId', defaultInviteRoleId);
     }
-    setInviteOpened(true)
-  }
+    setInviteOpened(true);
+  };
 
   const filteredOrganizations = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase()
-    if (!normalizedSearch) return organizations
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return organizations;
 
-    return organizations.filter(organization =>
-      `${organization.name} ${organization.slug}`
-        .toLowerCase()
-        .includes(normalizedSearch)
-    )
-  }, [organizations, search])
+    return organizations.filter((organization) =>
+      `${organization.name} ${organization.slug}`.toLowerCase().includes(normalizedSearch),
+    );
+  }, [organizations, search]);
 
-  if (!organizations.length || !activeOrganization) return null
+  if (!organizations.length || !activeOrganization) return null;
 
-  const selectedOrganization = activeOrganization
-  const showInviteAction = canInviteMembers(activeOrganization)
+  const selectedOrganization = activeOrganization;
+  const showInviteAction = canInviteMembers(activeOrganization);
 
   return (
     <>
@@ -162,14 +126,14 @@ export function OrganizationSwitcher() {
         width={340}
         shadow='md'
         withinPortal
-        onChange={opened => {
-          if (!opened) setSearch('')
+        onChange={(opened) => {
+          if (!opened) setSearch('');
         }}
       >
         <div className={classes.control}>
           <Link
             href={getPath('overview', {
-              organizationSlug: selectedOrganization.slug
+              organizationSlug: selectedOrganization.slug,
             })}
             className={classes.projectLink}
           >
@@ -199,8 +163,8 @@ export function OrganizationSwitcher() {
         <Menu.Dropdown className={classes.dropdown}>
           <TextInput
             value={search}
-            onChange={event => setSearch(event.currentTarget.value)}
-            onKeyDown={event => event.stopPropagation()}
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            onKeyDown={(event) => event.stopPropagation()}
             placeholder='ค้นหา Organization...'
             leftSection={<IconSearch size={16} />}
             aria-label='ค้นหา Organization'
@@ -209,8 +173,8 @@ export function OrganizationSwitcher() {
           />
 
           <Stack gap={4} mt='xs'>
-            {filteredOrganizations.map(organization => {
-              const selected = organization.id === activeId
+            {filteredOrganizations.map((organization) => {
+              const selected = organization.id === activeId;
 
               return (
                 <Menu.Item
@@ -221,9 +185,7 @@ export function OrganizationSwitcher() {
                       {getOrganizationInitial(organization.name)}
                     </Avatar>
                   }
-                  rightSection={
-                    selected ? <IconCheck size={17} stroke={2.2} /> : null
-                  }
+                  rightSection={selected ? <IconCheck size={17} stroke={2.2} /> : null}
                   onClick={() => void switchOrganization(organization.id)}
                 >
                   <Stack gap={0}>
@@ -235,17 +197,12 @@ export function OrganizationSwitcher() {
                     </Badge>
                   </Stack>
                 </Menu.Item>
-              )
+              );
             })}
           </Stack>
 
           {!filteredOrganizations.length && (
-            <Stack
-              className={classes.emptyState}
-              align='center'
-              gap={4}
-              py='lg'
-            >
+            <Stack className={classes.emptyState} align='center' gap={4} py='lg'>
               <IconBuilding size={22} stroke={1.5} />
               <Text size='sm' c='dimmed' ta='center'>
                 ไม่พบ Organization
@@ -254,10 +211,7 @@ export function OrganizationSwitcher() {
           )}
 
           {showInviteAction && (
-            <Menu.Item
-              leftSection={<IconUsers size={18} />}
-              onClick={openInviteMembers}
-            >
+            <Menu.Item leftSection={<IconUsers size={18} />} onClick={openInviteMembers}>
               <Stack gap={0}>
                 <Text size='sm' fw={600}>
                   เชิญสมาชิก
@@ -274,29 +228,23 @@ export function OrganizationSwitcher() {
       <Modal
         opened={inviteOpened}
         onClose={() => {
-          setInviteOpened(false)
-          setInviteError(null)
-          setCopiedInviteLink(false)
+          setInviteOpened(false);
+          setInviteError(null);
+          setCopiedInviteLink(false);
         }}
         title='เชิญสมาชิกเข้า Organization'
       >
         <form onSubmit={inviteForm.onSubmit(createInvitation)}>
           <Stack>
-            <TextInput
-              label='อีเมลสำหรับตรวจสอบสิทธิ์'
-              required
-              {...inviteForm.getInputProps('email')}
-            />
+            <TextInput label='อีเมลสำหรับตรวจสอบสิทธิ์' required {...inviteForm.getInputProps('email')} />
             <Select
               label='บทบาท'
               value={selectedInviteRoleId || null}
-              onChange={value =>
-                inviteForm.setFieldValue('roleId', value ?? '')
-              }
+              onChange={(value) => inviteForm.setFieldValue('roleId', value ?? '')}
               error={inviteForm.errors.roleId}
-              data={inviteRoles.map(role => ({
+              data={inviteRoles.map((role) => ({
                 value: role.id as string,
-                label: role.name
+                label: role.name,
               }))}
             />
             <Button
@@ -315,18 +263,10 @@ export function OrganizationSwitcher() {
                   type='button'
                   variant='subtle'
                   size='xs'
-                  leftSection={
-                    copiedInviteLink ? (
-                      <IconCheck size={14} />
-                    ) : (
-                      <IconCopy size={14} />
-                    )
-                  }
+                  leftSection={copiedInviteLink ? <IconCheck size={14} /> : <IconCopy size={14} />}
                   onClick={() => void copyInviteLink()}
                 >
-                  {copiedInviteLink
-                    ? t('copiedInviteLink')
-                    : t('copyInviteLink')}
+                  {copiedInviteLink ? t('copiedInviteLink') : t('copyInviteLink')}
                 </Button>
               </Stack>
             ) : null}
@@ -335,5 +275,5 @@ export function OrganizationSwitcher() {
         </form>
       </Modal>
     </>
-  )
+  );
 }

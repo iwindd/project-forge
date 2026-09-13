@@ -88,9 +88,7 @@ describe('CompleteGithubLoginUseCase', () => {
       updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     };
     const organizations = {
-      listForUser: vi.fn().mockResolvedValue([
-        { organization: { id: 'organization-id', slug: 'project-forge' } },
-      ]),
+      listForUser: vi.fn().mockResolvedValue([{ organization: { id: 'organization-id', slug: 'project-forge' } }]),
     };
     const { issueSession, useCase } = createUseCase({
       organizations,

@@ -1,8 +1,8 @@
-import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
+import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: 'standalone',
   experimental: {
     // Keep static-generation workers stable on the Windows build environment.
     cpus: 4,
@@ -13,14 +13,10 @@ const nextConfig: NextConfig = {
     // The app intentionally has no `src/app/layout.tsx`, so unmatched URLs
     // need a global fallback that can render its own document.
     globalNotFound: true,
-    optimizePackageImports: [
-      "@mantine/core",
-      "@mantine/hooks",
-      "@tabler/icons-react",
-    ],
+    optimizePackageImports: ['@mantine/core', '@mantine/hooks', '@tabler/icons-react'],
   },
 };
 
-const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
+const withNextIntl = createNextIntlPlugin('./src/lib/i18n/request.ts');
 
 export default withNextIntl(nextConfig);

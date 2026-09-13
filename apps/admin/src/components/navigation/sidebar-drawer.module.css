@@ -16,7 +16,7 @@
   overflow: hidden !important;
 }
 
-:global([data-mantine-color-scheme='dark']) .mobileDrawerContent {
+:global([data-mantine-color-scheme="dark"]) .mobileDrawerContent {
   --nav-item-text-color: var(--mantine-color-secondary-4);
   --nav-nested-item-text-color: var(--mantine-color-secondary-4);
   --nav-muted-text-color: var(--mantine-color-secondary-4);

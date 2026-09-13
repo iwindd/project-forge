@@ -1,19 +1,19 @@
 const PERMISSIONS = {
-  manageOrganization: "organization.manage",
-  viewAuditLogs: "audit-logs.view",
+  manageOrganization: 'organization.manage',
+  viewAuditLogs: 'audit-logs.view',
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
-export type PermissionMode = "all" | "any";
-export type GrantedPermission = (typeof PERMISSIONS)[PermissionKey] | "*";
+export type PermissionMode = 'all' | 'any';
+export type GrantedPermission = (typeof PERMISSIONS)[PermissionKey] | '*';
 
 export function getPermissionsForUser(
-  platformRole: "ADMIN" | "EDITOR" | undefined,
+  platformRole: 'ADMIN' | 'EDITOR' | undefined,
   organizationPermissions: readonly string[] | null | undefined,
   organizationIsOwner = false,
 ): readonly GrantedPermission[] {
-  if (platformRole === "ADMIN") {
-    return ["*"];
+  if (platformRole === 'ADMIN') {
+    return ['*'];
   }
 
   if (organizationIsOwner || organizationPermissions?.includes(PERMISSIONS.manageOrganization)) {
@@ -26,14 +26,14 @@ export function getPermissionsForUser(
 export function hasPermission(
   granted: readonly string[],
   keys: PermissionKey | readonly PermissionKey[],
-  mode: PermissionMode = "all",
+  mode: PermissionMode = 'all',
 ) {
-  if (granted.includes("*")) {
+  if (granted.includes('*')) {
     return true;
   }
 
-  const requiredKeys = typeof keys === "string" ? [keys] : keys;
+  const requiredKeys = typeof keys === 'string' ? [keys] : keys;
   const checks = requiredKeys.map((key) => granted.includes(PERMISSIONS[key]));
 
-  return mode === "all" ? checks.every(Boolean) : checks.some(Boolean);
+  return mode === 'all' ? checks.every(Boolean) : checks.some(Boolean);
 }

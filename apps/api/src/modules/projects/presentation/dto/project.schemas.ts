@@ -40,15 +40,12 @@ const TOKEN_SHAPED_SUFFIX_MIN_LENGTH = 16;
 function isTokenShapedSuffix(suffix: string) {
   return (
     DIGIT_PATTERN.test(suffix) &&
-    (UPPERCASE_LETTER_PATTERN.test(suffix) ||
-      suffix.length >= TOKEN_SHAPED_SUFFIX_MIN_LENGTH)
+    (UPPERCASE_LETTER_PATTERN.test(suffix) || suffix.length >= TOKEN_SHAPED_SUFFIX_MIN_LENGTH)
   );
 }
 
 function isCredentialShapedEnvironmentName(name: string) {
-  const prefix = CREDENTIAL_PREFIXES.find((candidate) =>
-    name.startsWith(candidate),
-  );
+  const prefix = CREDENTIAL_PREFIXES.find((candidate) => name.startsWith(candidate));
 
   return prefix !== undefined && isTokenShapedSuffix(name.slice(prefix.length));
 }

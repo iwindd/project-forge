@@ -16,15 +16,11 @@ describe('ListProjectsUseCase', () => {
   it('does not query projects when the user has no active organization membership', async () => {
     const projects = { findByOrganizationId: vi.fn() };
     const organizations = {
-      requireProjectAccess: vi.fn().mockRejectedValue(
-        new Error('You are not a member of this organization'),
-      ),
+      requireProjectAccess: vi.fn().mockRejectedValue(new Error('You are not a member of this organization')),
     };
     const useCase = new ListProjectsUseCase(projects as never, organizations as never);
 
-    await expect(
-      useCase.execute('uninvited-user-id', 'organization-id'),
-    ).rejects.toThrow('not a member');
+    await expect(useCase.execute('uninvited-user-id', 'organization-id')).rejects.toThrow('not a member');
     expect(projects.findByOrganizationId).not.toHaveBeenCalled();
   });
 

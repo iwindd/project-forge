@@ -43,14 +43,12 @@
 
 .controlStart[data-orientation="vertical"] {
   top: 0;
-  box-shadow: 0 0.625rem 1rem -0.875rem
-    color-mix(in srgb, var(--mantine-color-text) 24%, transparent);
+  box-shadow: 0 0.625rem 1rem -0.875rem color-mix(in srgb, var(--mantine-color-text) 24%, transparent);
 }
 
 .controlEnd[data-orientation="vertical"] {
   bottom: 0;
-  box-shadow: 0 -0.625rem 1rem -0.875rem
-    color-mix(in srgb, var(--mantine-color-text) 24%, transparent);
+  box-shadow: 0 -0.625rem 1rem -0.875rem color-mix(in srgb, var(--mantine-color-text) 24%, transparent);
 }
 
 .controlStart[data-hidden="true"][data-orientation="vertical"] {

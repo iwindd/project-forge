@@ -1,15 +1,15 @@
-import { api } from '@/lib/api/api'
+import { api } from '@/lib/api/api';
 
 export const authApi = api.injectEndpoints({
-  endpoints: builder => ({
+  endpoints: (builder) => ({
     logout: builder.mutation<null, void>({
       query: () => ({
         url: 'auth/logout',
-        method: 'POST'
-      })
-    })
+        method: 'POST',
+      }),
+    }),
   }),
-  overrideExisting: false
-})
+  overrideExisting: false,
+});
 
-export const { useLogoutMutation } = authApi
+export const { useLogoutMutation } = authApi;

@@ -78,10 +78,7 @@ describe('ArchiveProjectUseCase', () => {
         to: ProjectStatus.ARCHIVED,
       }),
     );
-    expect(organizations.requireProjectManager).toHaveBeenCalledWith(
-      'actor-id',
-      'organization-id',
-    );
+    expect(organizations.requireProjectManager).toHaveBeenCalledWith('actor-id', 'organization-id');
     expect(audit.record).toHaveBeenCalledOnce();
     expect(audit.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -130,8 +127,6 @@ describe('ArchiveProjectUseCase', () => {
     expect(first.status).toBe(ProjectStatus.ARCHIVED);
     expect(second.status).toBe(ProjectStatus.ARCHIVED);
     expect(audit.record).toHaveBeenCalledOnce();
-    expect(audit.record).toHaveBeenCalledWith(
-      expect.objectContaining({ requestId: 'first-request' }),
-    );
+    expect(audit.record).toHaveBeenCalledWith(expect.objectContaining({ requestId: 'first-request' }));
   });
 });

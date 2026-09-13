@@ -3,10 +3,12 @@ import { createInvitationSchema } from './organization.schemas.js';
 
 describe('createInvitationSchema', () => {
   it('requires a persisted organization role id', () => {
-    expect(createInvitationSchema.parse({
-      email: 'person@example.com',
-      roleId: '550e8400-e29b-41d4-a716-446655440000',
-    })).toEqual({
+    expect(
+      createInvitationSchema.parse({
+        email: 'person@example.com',
+        roleId: '550e8400-e29b-41d4-a716-446655440000',
+      }),
+    ).toEqual({
       email: 'person@example.com',
       roleId: '550e8400-e29b-41d4-a716-446655440000',
     });

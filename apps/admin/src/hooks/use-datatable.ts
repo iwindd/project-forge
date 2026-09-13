@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useDebouncedCallback } from "@mantine/hooks";
-import type { DataTableColumn, DataTableSortStatus } from "mantine-datatable";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useDebouncedCallback } from '@mantine/hooks';
+import type { DataTableColumn, DataTableSortStatus } from 'mantine-datatable';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 
 type DatatableQuery = {
   page: number;
   pageSize: number;
   search?: string;
   sortBy: string;
-  sortDirection: "asc" | "desc";
+  sortDirection: 'asc' | 'desc';
 };
 
 type QueryUpdateValue = string | number | readonly string[] | undefined;
@@ -28,11 +28,7 @@ type DatatableDefaultProps = {
   recordsPerPageLabel?: string;
   noRecordsText?: string;
   highlightOnHover?: boolean;
-  paginationText?: (params: {
-    from: number;
-    to: number;
-    totalRecords: number;
-  }) => React.ReactNode;
+  paginationText?: (params: { from: number; to: number; totalRecords: number }) => React.ReactNode;
 };
 
 type DatatableProps<T> = {
@@ -47,19 +43,12 @@ type DatatableProps<T> = {
 } & DatatableDefaultProps;
 
 const DEFAULT_DATATABLE_PROPS: DatatableDefaultProps = {
-  recordsPerPageLabel: "แสดงต่อหน้า",
-  noRecordsText: "ไม่พบข้อมูล",
+  recordsPerPageLabel: 'แสดงต่อหน้า',
+  noRecordsText: 'ไม่พบข้อมูล',
   highlightOnHover: true,
-  verticalSpacing: "sm",
-  paginationText: ({
-    from,
-    to,
-    totalRecords,
-  }: {
-    from: number;
-    to: number;
-    totalRecords: number;
-  }) => `${from} - ${to} จาก ${totalRecords} รายการ`,
+  verticalSpacing: 'sm',
+  paginationText: ({ from, to, totalRecords }: { from: number; to: number; totalRecords: number }) =>
+    `${from} - ${to} จาก ${totalRecords} รายการ`,
 };
 
 export default function useDatatable<T, Q extends DatatableQuery>({
@@ -80,7 +69,7 @@ export default function useDatatable<T, Q extends DatatableQuery>({
       const params = new URLSearchParams(window.location.search);
 
       for (const [key, value] of Object.entries(updates)) {
-        if (value === undefined || value === "") {
+        if (value === undefined || value === '') {
           params.delete(key);
         } else if (Array.isArray(value)) {
           params.delete(key);
@@ -94,17 +83,14 @@ export default function useDatatable<T, Q extends DatatableQuery>({
       const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
       // Next.js synchronizes native History API updates with useSearchParams
       // without starting an App Router navigation.
-      window.history.replaceState(null, "", nextUrl);
+      window.history.replaceState(null, '', nextUrl);
     },
     [pathname],
   );
 
-  const setSearchValue = useDebouncedCallback(
-    (value: string) => {
-      updateQuery({ search: value || undefined, page: 1 });
-    },
-    300,
-  );
+  const setSearchValue = useDebouncedCallback((value: string) => {
+    updateQuery({ search: value || undefined, page: 1 });
+  }, 300);
 
   const sortStatus = useMemo<DataTableSortStatus<T>>(
     () => ({
@@ -114,10 +100,7 @@ export default function useDatatable<T, Q extends DatatableQuery>({
     [query.sortBy, query.sortDirection],
   );
 
-  const setPage = useCallback(
-    (nextPage: number) => updateQuery({ page: nextPage }),
-    [updateQuery],
-  );
+  const setPage = useCallback((nextPage: number) => updateQuery({ page: nextPage }), [updateQuery]);
 
   const setPageSize = useCallback(
     (nextPageSize: number) => updateQuery({ pageSize: nextPageSize, page: 1 }),

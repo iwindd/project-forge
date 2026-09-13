@@ -8,11 +8,7 @@
   --shell-main-bg-color: var(--mantine-color-body);
   --nav-surface-bg-color: var(--mantine-color-body);
   --nav-surface-border-color: var(--mantine-color-default-border);
-  --nav-header-bg-color: color-mix(
-    in srgb,
-    var(--mantine-color-body) 86%,
-    transparent
-  );
+  --nav-header-bg-color: color-mix(in srgb, var(--mantine-color-body) 86%, transparent);
   --nav-item-text-color: var(--mantine-color-secondary-7);
   --nav-item-hover-bg-color: var(--mantine-color-default-hover);
   --nav-item-active-bg-color: var(--mantine-primary-color-light);

@@ -2,10 +2,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { ConnectionOrmEntity } from '../../../auth/infrastructure/persistence/connection.orm-entity.js';
 import { UserOrmEntity } from '../../../users/infrastructure/persistence/user.orm-entity.js';
-import {
-  ForbiddenError,
-  NotFoundError,
-} from '../../../../common/errors/application-error.js';
+import { ForbiddenError, NotFoundError } from '../../../../common/errors/application-error.js';
 import type {
   OrganizationMemberQuery,
   OrganizationMemberQueryRecord,
@@ -39,9 +36,7 @@ export class MikroOrmOrganizationMemberQuery implements OrganizationMemberQuery 
       { orderBy: { joinedAt: 'ASC' } },
     );
     const userIds = members.map((member) => member.userId);
-    const users = userIds.length
-      ? await this.em.find(UserOrmEntity, { id: { $in: userIds } })
-      : [];
+    const users = userIds.length ? await this.em.find(UserOrmEntity, { id: { $in: userIds } }) : [];
     const connections = userIds.length
       ? await this.em.find(ConnectionOrmEntity, {
           userId: { $in: userIds },
@@ -51,9 +46,7 @@ export class MikroOrmOrganizationMemberQuery implements OrganizationMemberQuery 
     const roles = await this.em.find(OrganizationRoleOrmEntity, { organizationId });
     const roleMap = new Map(roles.map((role) => [role.id, role]));
     const userMap = new Map(users.map((user) => [user.id, user]));
-    const emailMap = new Map(
-      connections.map((connection) => [connection.userId, connection.providerEmail]),
-    );
+    const emailMap = new Map(connections.map((connection) => [connection.userId, connection.providerEmail]));
 
     return members.map((member) => {
       const user = userMap.get(member.userId);
@@ -65,9 +58,7 @@ export class MikroOrmOrganizationMemberQuery implements OrganizationMemberQuery 
         email: emailMap.get(member.userId) ?? user?.githubLogin ?? null,
         role,
         status: member.status,
-        isActive:
-          member.status === OrganizationMemberStatus.ACTIVE &&
-          Boolean(user?.isActive),
+        isActive: member.status === OrganizationMemberStatus.ACTIVE && Boolean(user?.isActive),
         createdAt: user?.createdAt.toISOString() ?? member.joinedAt.toISOString(),
         updatedAt: user?.updatedAt.toISOString() ?? member.updatedAt.toISOString(),
       };

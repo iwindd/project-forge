@@ -1,29 +1,22 @@
-import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script'
-import { fontClasses } from '@/themes/shadcn/font'
-import { mantineHtmlProps } from '@mantine/core'
-import '@mantine/tiptap/styles.css'
-import type { Metadata } from 'next'
-import { NextIntlClientProvider } from 'next-intl'
-import { getLocale, getMessages } from 'next-intl/server'
+import { AppColorSchemaScript } from '@/components/providers/app-color-schema-script';
+import { fontClasses } from '@/themes/shadcn/font';
+import { mantineHtmlProps } from '@mantine/core';
+import '@mantine/tiptap/styles.css';
+import type { Metadata } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 
 export const metadata: Metadata = {
   title: 'SimpleDashboard Template',
-  description: 'เทมเพลตแดชบอร์ด SimpleDashboard'
-}
+  description: 'เทมเพลตแดชบอร์ด SimpleDashboard',
+};
 
-export default async function AppRootLayout({
-  children
-}: Readonly<{ children: React.ReactNode }>) {
-  const locale = await getLocale()
-  const messages = await getMessages()
+export default async function AppRootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
-    <html
-      lang={locale}
-      {...mantineHtmlProps}
-      suppressHydrationWarning
-      className={fontClasses}
-    >
+    <html lang={locale} {...mantineHtmlProps} suppressHydrationWarning className={fontClasses}>
       <head>
         {/*
          * mantineHtmlProps hard-codes data-mantine-color-scheme="light" on the
@@ -39,5 +32,5 @@ export default async function AppRootLayout({
         </NextIntlClientProvider>
       </body>
     </html>
-  )
+  );
 }

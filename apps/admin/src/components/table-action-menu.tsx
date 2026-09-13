@@ -1,33 +1,33 @@
-'use client'
+'use client';
 
-import { ActionIcon, Button, Group, Menu } from '@mantine/core'
-import { IconDotsVertical } from '@tabler/icons-react'
-import Link from 'next/link'
+import { ActionIcon, Button, Group, Menu } from '@mantine/core';
+import { IconDotsVertical } from '@tabler/icons-react';
+import Link from 'next/link';
 
 type TableActionItem = {
-  label: string
-  action: string | (() => void)
-  icon?: React.ComponentType<{ size?: number }>
-}
+  label: string;
+  action: string | (() => void);
+  icon?: React.ComponentType<{ size?: number }>;
+};
 
 type TableActionMenuProps = {
-  label?: string
-  displayType?: 'menu' | 'icon' | 'button'
-  variant?: 'default' | 'subtle'
-  actions: TableActionItem[]
-}
+  label?: string;
+  displayType?: 'menu' | 'icon' | 'button';
+  variant?: 'default' | 'subtle';
+  actions: TableActionItem[];
+};
 
 function TableActionMenu({
   label = 'Actions',
   displayType = 'menu',
   variant = 'subtle',
-  actions
+  actions,
 }: TableActionMenuProps) {
   if (displayType === 'button') {
     return (
       <Group gap='xs' justify='flex-end' wrap='nowrap'>
-        {actions.map(action => {
-          const Icon = action.icon
+        {actions.map((action) => {
+          const Icon = action.icon;
 
           return typeof action.action === 'string' ? (
             <Button
@@ -50,18 +50,18 @@ function TableActionMenu({
             >
               {action.label}
             </Button>
-          )
+          );
         })}
       </Group>
-    )
+    );
   }
 
   if (displayType === 'icon') {
     return (
       <Group gap='xs' justify='flex-end' wrap='nowrap'>
-        {actions.map(action => {
-          if (!action.icon) return null
-          const Icon = action.icon
+        {actions.map((action) => {
+          if (!action.icon) return null;
+          const Icon = action.icon;
 
           return typeof action.action === 'string' ? (
             <ActionIcon
@@ -74,18 +74,13 @@ function TableActionMenu({
               <Icon size={16} />
             </ActionIcon>
           ) : (
-            <ActionIcon
-              key={action.label}
-              variant='light'
-              aria-label={action.label}
-              onClick={action.action}
-            >
+            <ActionIcon key={action.label} variant='light' aria-label={action.label} onClick={action.action}>
               <Icon size={16} />
             </ActionIcon>
-          )
+          );
         })}
       </Group>
-    )
+    );
   }
 
   return (
@@ -96,8 +91,8 @@ function TableActionMenu({
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown>
-        {actions.map(action => {
-          const Icon = action.icon
+        {actions.map((action) => {
+          const Icon = action.icon;
 
           return typeof action.action === 'string' ? (
             <Menu.Item
@@ -109,18 +104,14 @@ function TableActionMenu({
               {action.label}
             </Menu.Item>
           ) : (
-            <Menu.Item
-              key={action.label}
-              onClick={action.action}
-              leftSection={Icon ? <Icon size={16} /> : undefined}
-            >
+            <Menu.Item key={action.label} onClick={action.action} leftSection={Icon ? <Icon size={16} /> : undefined}>
               {action.label}
             </Menu.Item>
-          )
+          );
         })}
       </Menu.Dropdown>
     </Menu>
-  )
+  );
 }
 
-export default TableActionMenu
+export default TableActionMenu;

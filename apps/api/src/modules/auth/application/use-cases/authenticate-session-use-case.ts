@@ -30,7 +30,8 @@ export class AuthenticateSessionUseCase implements SessionAuthenticator {
         !user?.isActive ||
         user.accessStatus === AccessStatus.REJECTED ||
         user.accessStatus === AccessStatus.SUSPENDED
-      ) return null;
+      )
+        return null;
       session.lastSeenAt = new Date();
       await this.sessions.save(session);
       return toPrincipal(user);

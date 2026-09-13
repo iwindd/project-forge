@@ -8,9 +8,7 @@ import { MikroOrmProjectRepository } from './mikro-orm-project.repository.js';
 
 function uniqueConstraintViolation() {
   return new UniqueConstraintViolationException(
-    new Error(
-      'duplicate key value violates unique constraint "projects_organization_id_github_url_unique"',
-    ),
+    new Error('duplicate key value violates unique constraint "projects_organization_id_github_url_unique"'),
   );
 }
 

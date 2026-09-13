@@ -24,10 +24,7 @@ export class MikroOrmProjectRepository implements ProjectRepository {
     return project ? toRecord(project) : null;
   }
 
-  async findByOrganizationAndGithubUrl(
-    organizationId: string,
-    githubUrl: string,
-  ): Promise<ProjectRecord | null> {
+  async findByOrganizationAndGithubUrl(organizationId: string, githubUrl: string): Promise<ProjectRecord | null> {
     const project = await this.em.findOne(ProjectOrmEntity, { organizationId, githubUrl });
     return project ? toRecord(project) : null;
   }
@@ -37,9 +34,7 @@ export class MikroOrmProjectRepository implements ProjectRepository {
    * exactly one of two concurrent requests can observe `affected === 1`. The follow-up read uses
    * `refresh` so it returns the row as stored rather than any identity-map copy loaded earlier.
    */
-  async transitionStatus(
-    transition: ProjectStatusTransition,
-  ): Promise<ProjectStatusTransitionResult | null> {
+  async transitionStatus(transition: ProjectStatusTransition): Promise<ProjectStatusTransitionResult | null> {
     const affected = await this.em.nativeUpdate(
       ProjectOrmEntity,
       {

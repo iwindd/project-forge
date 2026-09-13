@@ -1,16 +1,16 @@
-import { buildRouteUtility, ROUTER } from './lib/routing'
+import { buildRouteUtility, ROUTER } from './lib/routing';
 
 const organizationAppRoutes = ROUTER({
   overview: {
     path: '/:organizationSlug',
     label: 'ภาพรวม',
     navigationLabelKey: 'overview',
-    hiddenBreadcrumb: true
+    hiddenBreadcrumb: true,
   },
   projects: {
     path: '/:organizationSlug/projects',
     label: 'โปรเจกต์',
-    navigationLabelKey: 'projects'
+    navigationLabelKey: 'projects',
   },
   account: {
     path: '/account',
@@ -20,24 +20,24 @@ const organizationAppRoutes = ROUTER({
       settings: {
         path: '/account/settings',
         label: 'บัญชี',
-        navigationLabelKey: 'account'
+        navigationLabelKey: 'account',
       },
       activity: {
         path: '/account/activity',
         label: 'ประวัติการทำรายการ',
-        navigationLabelKey: 'activity'
-      }
-    }
+        navigationLabelKey: 'activity',
+      },
+    },
   },
   login: {
     path: '/login',
-    label: 'เข้าสู่ระบบ'
+    label: 'เข้าสู่ระบบ',
   },
   auditLogs: {
     path: '/:organizationSlug/audit-logs',
     label: 'ประวัติการทำรายการ',
     navigationLabelKey: 'auditLogs',
-    permission: 'manageOrganization'
+    permission: 'manageOrganization',
   },
   settings: {
     path: '/:organizationSlug/settings',
@@ -49,7 +49,7 @@ const organizationAppRoutes = ROUTER({
         path: '/:organizationSlug/settings/members',
         label: 'สมาชิก',
         navigationLabelKey: 'members',
-        permission: 'manageOrganization'
+        permission: 'manageOrganization',
       },
       roles: {
         path: '/:organizationSlug/settings/roles',
@@ -60,18 +60,17 @@ const organizationAppRoutes = ROUTER({
           new: {
             path: '/:organizationSlug/settings/roles/new',
             label: 'สร้างบทบาท',
-            permission: 'manageOrganization'
+            permission: 'manageOrganization',
           },
           edit: {
             path: '/:organizationSlug/settings/roles/:roleId',
             label: 'แก้ไขบทบาท',
-            permission: 'manageOrganization'
-          }
-        }
-      }
-    }
-  }
-})
+            permission: 'manageOrganization',
+          },
+        },
+      },
+    },
+  },
+});
 
-export const { getRoute, getPath, findRouteTrail } =
-  buildRouteUtility(organizationAppRoutes)
+export const { getRoute, getPath, findRouteTrail } = buildRouteUtility(organizationAppRoutes);

@@ -1,15 +1,12 @@
-import { api, type BrowserApiMeta } from '@/lib/api/api'
-import type {
-  AuditLogListQuery,
-  AuditLogListResult
-} from '@/servers/audit-log/types'
-import { z } from 'zod'
+import { api, type BrowserApiMeta } from '@/lib/api/api';
+import type { AuditLogListQuery, AuditLogListResult } from '@/servers/audit-log/types';
+import { z } from 'zod';
 
 const auditLogUserSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
-  email: z.string()
-})
+  email: z.string(),
+});
 
 const auditLogListItemSchema = z.object({
   id: z.string().min(1),
@@ -22,15 +19,15 @@ const auditLogListItemSchema = z.object({
   target: auditLogUserSchema.nullable(),
   reason: z.string().nullable(),
   hasBefore: z.boolean(),
-  hasAfter: z.boolean()
-})
+  hasAfter: z.boolean(),
+});
 
 const auditLogMetaSchema = z.object({
   total: z.number(),
   page: z.number(),
   pageSize: z.number(),
-  totalPages: z.number()
-})
+  totalPages: z.number(),
+});
 
 const auditLogExportDataSchema = z.object({
   id: z.string().min(1),
@@ -44,140 +41,122 @@ const auditLogExportDataSchema = z.object({
   afterJson: z.record(z.string(), z.unknown()).nullable(),
   reason: z.string().nullable(),
   requestId: z.string().nullable(),
-  createdAt: z.string().min(1)
-})
+  createdAt: z.string().min(1),
+});
 
 export const auditLogExportResponseSchema = z.object({
-  data: auditLogExportDataSchema
-})
+  data: auditLogExportDataSchema,
+});
 
 export function parseAuditLogsResponse(
   response: unknown,
-  meta: Pick<BrowserApiMeta, 'apiMeta'> | undefined
+  meta: Pick<BrowserApiMeta, 'apiMeta'> | undefined,
 ): AuditLogListResult {
-  const records = z.array(auditLogListItemSchema).parse(response)
-  const parsedMeta = auditLogMetaSchema.parse(meta?.apiMeta)
+  const records = z.array(auditLogListItemSchema).parse(response);
+  const parsedMeta = auditLogMetaSchema.parse(meta?.apiMeta);
 
-  return { data: records, total: parsedMeta.total }
+  return { data: records, total: parsedMeta.total };
 }
 
 /** Which timeline to read. The server re-derives every scope it can. */
-export type AuditLogScopeArg =
-  | { kind: 'all' }
-  | { kind: 'user'; userId: string }
-  | { kind: 'own' }
+export type AuditLogScopeArg = { kind: 'all' } | { kind: 'user'; userId: string } | { kind: 'own' };
 
-export function getAuditLogsTag(
-  scope: AuditLogScopeArg,
-  organizationId?: string
-) {
+export function getAuditLogsTag(scope: AuditLogScopeArg, organizationId?: string) {
   return {
     type: 'AuditLogs' as const,
-    id: scope.kind === 'own' ? 'own' : organizationId ?? 'platform'
-  }
+    id: scope.kind === 'own' ? 'own' : (organizationId ?? 'platform'),
+  };
 }
 
-function getAuditLogListUrl(
-  scope: AuditLogScopeArg,
-  organizationId?: string
-) {
+function getAuditLogListUrl(scope: AuditLogScopeArg, organizationId?: string) {
   if (organizationId && scope.kind === 'user') {
-    return `audit-logs/organization/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(scope.userId)}`
+    return `audit-logs/organization/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(scope.userId)}`;
   }
   if (organizationId && scope.kind === 'all') {
-    return `audit-logs/organization/${encodeURIComponent(organizationId)}`
+    return `audit-logs/organization/${encodeURIComponent(organizationId)}`;
   }
   if (scope.kind === 'user') {
-    return `audit-logs/users/${encodeURIComponent(scope.userId)}`
+    return `audit-logs/users/${encodeURIComponent(scope.userId)}`;
   }
 
-  return scope.kind === 'own' ? 'audit-logs/me' : 'audit-logs'
+  return scope.kind === 'own' ? 'audit-logs/me' : 'audit-logs';
 }
 
-export function getAuditLogExportPath(
-  scope: AuditLogScopeArg,
-  id: string,
-  organizationId?: string
-) {
-  const base = scope.kind === 'own'
-    ? 'audit-logs/me'
+export function getAuditLogExportPath(scope: AuditLogScopeArg, id: string, organizationId?: string) {
+  const base =
+    scope.kind === 'own'
+      ? 'audit-logs/me'
       : organizationId
-      ? `audit-logs/organization/${encodeURIComponent(organizationId)}`
-      : 'audit-logs'
+        ? `audit-logs/organization/${encodeURIComponent(organizationId)}`
+        : 'audit-logs';
 
-  return `${base}/${encodeURIComponent(id)}/export`
+  return `${base}/${encodeURIComponent(id)}/export`;
 }
 
-export async function parseAuditLogExportResponse(
-  response: Response
-): Promise<string | unknown> {
+export async function parseAuditLogExportResponse(response: Response): Promise<string | unknown> {
   // Keep the successful payload serializable while RTK Query stores the
   // mutation result. The component turns this JSON string into a Blob only
   // at the point where the browser download is started.
   if (response.ok) {
-    const body: unknown = await response.json()
-    return JSON.stringify(auditLogExportResponseSchema.parse(body), null, 2)
+    const body: unknown = await response.json();
+    return JSON.stringify(auditLogExportResponseSchema.parse(body), null, 2);
   }
 
-  const body = await response.text()
-  if (!body) return {}
+  const body = await response.text();
+  if (!body) return {};
 
   try {
-    return JSON.parse(body) as unknown
+    return JSON.parse(body) as unknown;
   } catch {
-    return body
+    return body;
   }
 }
 
 export type AuditLogExportArgs = {
-  scope: AuditLogScopeArg
-  auditLogId: string
-  organizationId?: string
-}
+  scope: AuditLogScopeArg;
+  auditLogId: string;
+  organizationId?: string;
+};
 
 /** Multi-value filters travel as comma-separated lists. */
 function toRequestParams(query: AuditLogListQuery) {
-  const { actions, resourceTypes, pageSize, ...rest } = query
+  const { actions, resourceTypes, pageSize, ...rest } = query;
 
   return {
     ...rest,
     limit: pageSize,
     ...(actions?.length ? { actions: actions.join(',') } : {}),
-    ...(resourceTypes?.length
-      ? { resourceTypes: resourceTypes.join(',') }
-      : {})
-  }
+    ...(resourceTypes?.length ? { resourceTypes: resourceTypes.join(',') } : {}),
+  };
 }
 
 export const auditLogsApi = api.injectEndpoints({
-  endpoints: builder => ({
+  endpoints: (builder) => ({
     getAuditLogs: builder.query<
       AuditLogListResult,
       {
-        scope: AuditLogScopeArg
-        query: AuditLogListQuery
-        organizationId?: string
+        scope: AuditLogScopeArg;
+        query: AuditLogListQuery;
+        organizationId?: string;
       }
     >({
       query: ({ scope, query, organizationId }) => ({
         url: getAuditLogListUrl(scope, organizationId),
-        params: toRequestParams(query)
+        params: toRequestParams(query),
       }),
       transformResponse: parseAuditLogsResponse,
-      providesTags: (_result, _error, { scope, organizationId }) => [
-        getAuditLogsTag(scope, organizationId)
-      ]
+      providesTags: (_result, _error, { scope, organizationId }) => [getAuditLogsTag(scope, organizationId)],
     }),
     exportAuditLog: builder.mutation<string, AuditLogExportArgs>({
       query: ({ scope, auditLogId, organizationId }) => ({
         url: getAuditLogExportPath(scope, auditLogId, organizationId),
         method: 'GET',
         cache: 'no-store',
-        responseHandler: parseAuditLogExportResponse
-      })
-    })
+        responseHandler: parseAuditLogExportResponse,
+      }),
+    }),
   }),
-  overrideExisting: false
-})
+  overrideExisting: false,
+});
 
-export const { useExportAuditLogMutation, useGetAuditLogsQuery } = auditLogsApi
+export const { useExportAuditLogMutation, useGetAuditLogsQuery } = auditLogsApi;

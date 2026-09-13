@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Card, Stack, Text } from "@mantine/core";
-import type { ReactNode } from "react";
+import { Card, Stack, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 
 export function ProfileEditCard({
   title,
@@ -14,10 +14,10 @@ export function ProfileEditCard({
 }) {
   return (
     <Card>
-      <Stack gap="lg">
+      <Stack gap='lg'>
         <Stack gap={2}>
           <Text fw={600}>{title}</Text>
-          <Text size="sm" c="dimmed">
+          <Text size='sm' c='dimmed'>
             {description}
           </Text>
         </Stack>

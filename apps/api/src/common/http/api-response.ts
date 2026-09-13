@@ -11,6 +11,8 @@ export function apiSuccess<T>(data: T, meta?: ApiMeta): ApiSuccessResponse<T> {
   return meta ? { data, meta } : { data };
 }
 
-export const apiNullSuccessResponseSchema = z.object({
-  data: z.null(),
-}).strict();
+export const apiNullSuccessResponseSchema = z
+  .object({
+    data: z.null(),
+  })
+  .strict();

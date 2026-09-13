@@ -49,10 +49,6 @@
 .navigationScrollbarThumb:hover,
 .navigationScrollbarThumb:active {
   border-radius: 999px;
-  background-color: color-mix(
-    in srgb,
-    var(--mantine-color-dimmed) 32%,
-    transparent
-  ) !important;
+  background-color: color-mix(in srgb, var(--mantine-color-dimmed) 32%, transparent) !important;
   transition: none;
 }

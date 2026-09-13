@@ -99,10 +99,7 @@ export const organizationRolesResponseSchema = z.object({
   meta: z.object({
     availablePermissions: z.array(
       z.object({
-        key: z.enum([
-          ORGANIZATION_PERMISSIONS.MANAGE,
-          ORGANIZATION_PERMISSIONS.MANAGE_PROJECT,
-        ]),
+        key: z.enum([ORGANIZATION_PERMISSIONS.MANAGE, ORGANIZATION_PERMISSIONS.MANAGE_PROJECT]),
       }),
     ),
   }),

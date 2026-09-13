@@ -11,7 +11,12 @@ export type CreateOrganizationRoleInput = {
 export class CreateOrganizationRoleUseCase {
   constructor(private readonly organizations: OrganizationService) {}
 
-  execute(actorId: string, organizationId: string, input: CreateOrganizationRoleInput, options: { requestId?: string } = {}) {
+  execute(
+    actorId: string,
+    organizationId: string,
+    input: CreateOrganizationRoleInput,
+    options: { requestId?: string } = {},
+  ) {
     return this.organizations.createRole(actorId, organizationId, input.name, input.permissions, options);
   }
 }

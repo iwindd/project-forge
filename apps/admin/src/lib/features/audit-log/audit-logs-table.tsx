@@ -1,75 +1,41 @@
-'use client'
+'use client';
 
-import {
-  FilterResult,
-  type FilterResultGroup,
-  type FilterResultRemoveEvent
-} from '@/components/filter-result'
-import TableSearchInput from '@/components/table-search-input'
-import useDatatable from '@/hooks/use-datatable'
-import { getBrowserApiErrorMessage } from '@/lib/api/api'
-import { parseListAuditLogsQuery } from '@/servers/audit-log/queries/get-audit-log-list-schema'
-import type {
-  AuditLogListItem,
-  AuditLogListQuery
-} from '@/servers/audit-log/types'
-import {
-  ActionIcon,
-  Alert,
-  Badge,
-  Button,
-  Group,
-  Menu,
-  Paper,
-  Stack,
-  Text
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
-import { IconDotsVertical, IconFileCode, IconFilter } from '@tabler/icons-react'
-import { DataTable, type DataTableColumn } from 'mantine-datatable'
-import { useFormatter } from 'next-intl'
-import { useCallback, useMemo, useState } from 'react'
-import {
-  AUDIT_ACTOR_ROLE_LABELS,
-  getAuditActionLabel,
-  getAuditResourceTypeLabel
-} from './audit-log-labels'
-import {
-  useExportAuditLogMutation,
-  useGetAuditLogsQuery,
-  type AuditLogScopeArg
-} from './audit-logs-api'
-import { useOptionalOrganizationContext } from '../organization/organization-provider'
-import {
-  AuditLogsFilterDrawer,
-  RELATIONSHIP_LABELS
-} from './audit-logs-filter-drawer'
-import classes from './audit-logs-table.module.css'
+import { FilterResult, type FilterResultGroup, type FilterResultRemoveEvent } from '@/components/filter-result';
+import TableSearchInput from '@/components/table-search-input';
+import useDatatable from '@/hooks/use-datatable';
+import { getBrowserApiErrorMessage } from '@/lib/api/api';
+import { parseListAuditLogsQuery } from '@/servers/audit-log/queries/get-audit-log-list-schema';
+import type { AuditLogListItem, AuditLogListQuery } from '@/servers/audit-log/types';
+import { ActionIcon, Alert, Badge, Button, Group, Menu, Paper, Stack, Text } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
+import { IconDotsVertical, IconFileCode, IconFilter } from '@tabler/icons-react';
+import { DataTable, type DataTableColumn } from 'mantine-datatable';
+import { useFormatter } from 'next-intl';
+import { useCallback, useMemo, useState } from 'react';
+import { AUDIT_ACTOR_ROLE_LABELS, getAuditActionLabel, getAuditResourceTypeLabel } from './audit-log-labels';
+import { useExportAuditLogMutation, useGetAuditLogsQuery, type AuditLogScopeArg } from './audit-logs-api';
+import { useOptionalOrganizationContext } from '../organization/organization-provider';
+import { AuditLogsFilterDrawer, RELATIONSHIP_LABELS } from './audit-logs-filter-drawer';
+import classes from './audit-logs-table.module.css';
 
-const SORTABLE_FIELDS = ['createdAt'] as const
-const WIDE_SCREEN_QUERY = '(min-width: 75em)'
+const SORTABLE_FIELDS = ['createdAt'] as const;
+const WIDE_SCREEN_QUERY = '(min-width: 75em)';
 
 type AuditLogsTableProps = {
   /** `user` and `own` narrow the timeline to a single person. */
-  scope: AuditLogScopeArg['kind']
+  scope: AuditLogScopeArg['kind'];
   /** Required when `scope` is `user`. */
-  userId?: string
-}
+  userId?: string;
+};
 
-function UserCell({
-  user,
-  fallback
-}: {
-  user: AuditLogListItem['actor']
-  fallback: string
-}) {
+function UserCell({ user, fallback }: { user: AuditLogListItem['actor']; fallback: string }) {
   if (!user) {
     return (
       <Text size='sm' c='dimmed'>
         {fallback}
       </Text>
-    )
+    );
   }
 
   return (
@@ -79,109 +45,104 @@ function UserCell({
         {user.email}
       </Text>
     </Stack>
-  )
+  );
 }
 
 function AuditLogExportMenuItem({
   scope,
   auditLogId,
-  organizationId
+  organizationId,
 }: {
-  scope: AuditLogScopeArg
-  auditLogId: string
-  organizationId?: string
+  scope: AuditLogScopeArg;
+  auditLogId: string;
+  organizationId?: string;
 }) {
-  const [exportAuditLog] = useExportAuditLogMutation()
-  const [downloading, setDownloading] = useState(false)
+  const [exportAuditLog] = useExportAuditLogMutation();
+  const [downloading, setDownloading] = useState(false);
 
   const downloadExport = async () => {
-    setDownloading(true)
+    setDownloading(true);
     try {
       const payload = await exportAuditLog({
         scope,
         auditLogId,
-        organizationId
-      }).unwrap()
-      const blob = new Blob([payload], { type: 'application/json' })
-      const objectUrl = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = objectUrl
-      anchor.download = `audit-log-${auditLogId}.json`
-      document.body.append(anchor)
-      anchor.click()
-      anchor.remove()
-      URL.revokeObjectURL(objectUrl)
+        organizationId,
+      }).unwrap();
+      const blob = new Blob([payload], { type: 'application/json' });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = `audit-log-${auditLogId}.json`;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
     } catch (error) {
       notifications.show({
         title: 'ดาวน์โหลดไม่สำเร็จ',
-        message: getBrowserApiErrorMessage(
-          error,
-          'ไม่สามารถส่งออกบันทึกกิจกรรมได้ กรุณาลองใหม่อีกครั้ง'
-        ),
-        color: 'red'
-      })
+        message: getBrowserApiErrorMessage(error, 'ไม่สามารถส่งออกบันทึกกิจกรรมได้ กรุณาลองใหม่อีกครั้ง'),
+        color: 'red',
+      });
     } finally {
-      setDownloading(false)
+      setDownloading(false);
     }
-  }
+  };
 
   return (
-    <Menu.Item
-      leftSection={<IconFileCode size={16} />}
-      disabled={downloading}
-      onClick={() => void downloadExport()}
-    >
+    <Menu.Item leftSection={<IconFileCode size={16} />} disabled={downloading} onClick={() => void downloadExport()}>
       ดาวน์โหลด JSON
     </Menu.Item>
-  )
+  );
 }
 
 export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
-  const format = useFormatter()
-  const formatDateTime = useCallback((value: string) => {
-    const date = new Date(value)
-    return Number.isNaN(date.getTime())
-      ? '-'
-      : format.dateTime(date, 'dateTime')
-  }, [format])
-  const formatShortDate = useCallback((value: string) => {
-    const date = new Date(value)
-    return Number.isNaN(date.getTime())
-      ? '-'
-      : format.dateTime(date, 'shortDate')
-  }, [format])
-  const formatPeriodFilterLabel = useCallback((from?: string, to?: string) => {
-    if (from && to) {
-      return `ตั้งแต่ ${formatShortDate(from)} - ${formatShortDate(to)}`
-    }
+  const format = useFormatter();
+  const formatDateTime = useCallback(
+    (value: string) => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'dateTime');
+    },
+    [format],
+  );
+  const formatShortDate = useCallback(
+    (value: string) => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '-' : format.dateTime(date, 'shortDate');
+    },
+    [format],
+  );
+  const formatPeriodFilterLabel = useCallback(
+    (from?: string, to?: string) => {
+      if (from && to) {
+        return `ตั้งแต่ ${formatShortDate(from)} - ${formatShortDate(to)}`;
+      }
 
-    if (from) {
-      return `ตั้งแต่วันที่ ${formatShortDate(from)} เป็นต้นไป`
-    }
+      if (from) {
+        return `ตั้งแต่วันที่ ${formatShortDate(from)} เป็นต้นไป`;
+      }
 
-    if (to) {
-      return `สิ้นสุดที่ ${formatShortDate(to)}`
-    }
+      if (to) {
+        return `สิ้นสุดที่ ${formatShortDate(to)}`;
+      }
 
-    return ''
-  }, [formatShortDate])
+      return '';
+    },
+    [formatShortDate],
+  );
   const scopeArg = useMemo<AuditLogScopeArg>(
-    () =>
-      scope === 'user'
-        ? { kind: 'user', userId: userId ?? '' }
-        : { kind: scope },
-    [scope, userId]
-  )
-  const organizationContext = useOptionalOrganizationContext()
-  const organizationId = organizationContext?.activeId ?? undefined
-  const isPersonalTimeline = scope !== 'all'
+    () => (scope === 'user' ? { kind: 'user', userId: userId ?? '' } : { kind: scope }),
+    [scope, userId],
+  );
+  const organizationContext = useOptionalOrganizationContext();
+  const organizationId = organizationContext?.activeId ?? undefined;
+  const isPersonalTimeline = scope !== 'all';
 
   const columns = useMemo<DataTableColumn<AuditLogListItem>[]>(
     () => [
       {
         accessor: 'action',
         title: 'เหตุการณ์',
-        render: record => (
+        render: (record) => (
           <Stack gap={4}>
             <Text size='sm' fw={500}>
               {getAuditActionLabel(record.action)}
@@ -190,120 +151,104 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
               {formatDateTime(record.createdAt)}
             </Text>
           </Stack>
-        )
+        ),
       },
       {
         accessor: 'resourceType',
         title: 'ประเภท',
-        render: record => (
+        render: (record) => (
           <Text size='sm' c='dimmed'>
             {getAuditResourceTypeLabel(record.resourceType)}
           </Text>
-        )
+        ),
       },
       {
         accessor: 'actor',
         title: 'ผู้กระทำ',
-        render: record => (
+        render: (record) => (
           <Stack gap={4}>
             <UserCell user={record.actor} fallback='ระบบ' />
           </Stack>
-        )
+        ),
       },
       {
         accessor: 'reason',
         title: 'หมายเหตุ/เหตุผล',
         visibleMediaQuery: WIDE_SCREEN_QUERY,
-        render: record => (
-          <Text
-            size='sm'
-            c={record.reason ? undefined : 'dimmed'}
-            lineClamp={2}
-          >
+        render: (record) => (
+          <Text size='sm' c={record.reason ? undefined : 'dimmed'} lineClamp={2}>
             {record.reason ?? '-'}
           </Text>
-        )
+        ),
       },
       {
         accessor: 'actions',
         title: '',
         width: '60px',
         textAlign: 'right' as const,
-        render: record => {
+        render: (record) => {
           return (
             <Group gap='xs' justify='flex-end' wrap='nowrap'>
               <Menu shadow='md' position='bottom-end'>
                 <Menu.Target>
-                  <ActionIcon
-                    variant='subtle'
-                    aria-label={`เมนูของรายการ ${getAuditActionLabel(record.action)}`}
-                  >
+                  <ActionIcon variant='subtle' aria-label={`เมนูของรายการ ${getAuditActionLabel(record.action)}`}>
                     <IconDotsVertical size={18} />
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
-                  <AuditLogExportMenuItem
-                    scope={scopeArg}
-                    auditLogId={record.id}
-                    organizationId={organizationId}
-                  />
+                  <AuditLogExportMenuItem scope={scopeArg} auditLogId={record.id} organizationId={organizationId} />
                 </Menu.Dropdown>
               </Menu>
             </Group>
-          )
-        }
-      }
+          );
+        },
+      },
     ],
-    [formatDateTime, organizationId, scopeArg]
-  )
+    [formatDateTime, organizationId, scopeArg],
+  );
 
   const datatable = useDatatable<AuditLogListItem, AuditLogListQuery>({
     parseQueryAction: parseListAuditLogsQuery,
     columns,
     sortableFields: SORTABLE_FIELDS,
-    recordsPerPageOptions: [25, 50, 100]
-  })
-  const { query, setSearchValue, updateQuery } = datatable
+    recordsPerPageOptions: [25, 50, 100],
+  });
+  const { query, setSearchValue, updateQuery } = datatable;
   const { data, isFetching, isError, refetch } = useGetAuditLogsQuery(
     { scope: scopeArg, query, organizationId },
     {
-      skip:
-        (scope === 'user' && !userId) ||
-        (scope !== 'own' && !organizationId)
-    }
-  )
-  const [filtersOpened, { close: closeFilters, open: openFilters }] =
-    useDisclosure(false)
+      skip: (scope === 'user' && !userId) || (scope !== 'own' && !organizationId),
+    },
+  );
+  const [filtersOpened, { close: closeFilters, open: openFilters }] = useDisclosure(false);
 
-  const selectedActions = query.actions ?? []
-  const selectedResourceTypes = query.resourceTypes ?? []
-  const periodFilterLabel = formatPeriodFilterLabel(query.from, query.to)
+  const selectedActions = query.actions ?? [];
+  const selectedResourceTypes = query.resourceTypes ?? [];
+  const periodFilterLabel = formatPeriodFilterLabel(query.from, query.to);
 
   const filterGroups: FilterResultGroup[] = [
     {
       id: 'search',
       label: 'ค้นหา',
-      filters: query.search
-        ? [{ id: 'query', label: query.search, removeLabel: 'ลบคำค้นหา' }]
-        : []
+      filters: query.search ? [{ id: 'query', label: query.search, removeLabel: 'ลบคำค้นหา' }] : [],
     },
     {
       id: 'actions',
       label: 'เหตุการณ์',
-      filters: selectedActions.map(action => ({
+      filters: selectedActions.map((action) => ({
         id: action,
         label: getAuditActionLabel(action),
-        removeLabel: `ลบเหตุการณ์ ${getAuditActionLabel(action)}`
-      }))
+        removeLabel: `ลบเหตุการณ์ ${getAuditActionLabel(action)}`,
+      })),
     },
     {
       id: 'resourceTypes',
       label: 'ประเภทข้อมูล',
-      filters: selectedResourceTypes.map(resourceType => ({
+      filters: selectedResourceTypes.map((resourceType) => ({
         id: resourceType,
         label: getAuditResourceTypeLabel(resourceType),
-        removeLabel: `ลบประเภทข้อมูล ${getAuditResourceTypeLabel(resourceType)}`
-      }))
+        removeLabel: `ลบประเภทข้อมูล ${getAuditResourceTypeLabel(resourceType)}`,
+      })),
     },
     {
       id: 'actorRole',
@@ -313,10 +258,10 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
             {
               id: query.actorRole,
               label: AUDIT_ACTOR_ROLE_LABELS[query.actorRole],
-              removeLabel: 'ลบบทบาทผู้กระทำ'
-            }
+              removeLabel: 'ลบบทบาทผู้กระทำ',
+            },
           ]
-        : []
+        : [],
     },
     {
       id: 'relationship',
@@ -327,10 +272,10 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
               {
                 id: query.relationship,
                 label: RELATIONSHIP_LABELS[query.relationship],
-                removeLabel: 'ลบความเกี่ยวข้อง'
-              }
+                removeLabel: 'ลบความเกี่ยวข้อง',
+              },
             ]
-          : []
+          : [],
     },
     {
       id: 'period',
@@ -340,44 +285,40 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
             {
               id: 'range',
               label: periodFilterLabel,
-              removeLabel: 'ลบช่วงวันที่'
-            }
+              removeLabel: 'ลบช่วงวันที่',
+            },
           ]
-        : []
-    }
-  ]
+        : [],
+    },
+  ];
 
   const removeFilter = ({ groupId, filterId }: FilterResultRemoveEvent) => {
     if (groupId === 'search') {
-      setSearchValue.cancel()
-      updateQuery({ search: undefined, page: 1 })
+      setSearchValue.cancel();
+      updateQuery({ search: undefined, page: 1 });
     } else if (groupId === 'actions') {
-      const nextActions = selectedActions.filter(action => action !== filterId)
+      const nextActions = selectedActions.filter((action) => action !== filterId);
       updateQuery({
         actions: nextActions.length ? nextActions.join(',') : undefined,
-        page: 1
-      })
+        page: 1,
+      });
     } else if (groupId === 'resourceTypes') {
-      const nextResourceTypes = selectedResourceTypes.filter(
-        resourceType => resourceType !== filterId
-      )
+      const nextResourceTypes = selectedResourceTypes.filter((resourceType) => resourceType !== filterId);
       updateQuery({
-        resourceTypes: nextResourceTypes.length
-          ? nextResourceTypes.join(',')
-          : undefined,
-        page: 1
-      })
+        resourceTypes: nextResourceTypes.length ? nextResourceTypes.join(',') : undefined,
+        page: 1,
+      });
     } else if (groupId === 'actorRole') {
-      updateQuery({ actorRole: undefined, page: 1 })
+      updateQuery({ actorRole: undefined, page: 1 });
     } else if (groupId === 'relationship') {
-      updateQuery({ relationship: 'all', page: 1 })
+      updateQuery({ relationship: 'all', page: 1 });
     } else if (groupId === 'period') {
-      updateQuery({ from: undefined, to: undefined, page: 1 })
+      updateQuery({ from: undefined, to: undefined, page: 1 });
     }
-  }
+  };
 
   const clearFilters = () => {
-    setSearchValue.cancel()
+    setSearchValue.cancel();
     updateQuery({
       search: undefined,
       actions: undefined,
@@ -386,13 +327,13 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
       relationship: 'all',
       from: undefined,
       to: undefined,
-      page: 1
-    })
-  }
+      page: 1,
+    });
+  };
 
   const activeFilterCount = filterGroups
-    .filter(group => group.id !== 'search')
-    .reduce((count, group) => count + group.filters.length, 0)
+    .filter((group) => group.id !== 'search')
+    .reduce((count, group) => count + group.filters.length, 0);
 
   return (
     <Stack gap='lg'>
@@ -436,20 +377,11 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         clearFiltersAction={clearFilters}
       />
 
-      <FilterResult
-        filters={filterGroups}
-        onRemoveAction={removeFilter}
-        onClearAllAction={clearFilters}
-      />
+      <FilterResult filters={filterGroups} onRemoveAction={removeFilter} onClearAllAction={clearFilters} />
 
       {isError ? (
         <Alert color='red' title='ไม่สามารถโหลดประวัติการทำรายการได้'>
-          <Button
-            variant='light'
-            size='xs'
-            mt='sm'
-            onClick={() => void refetch()}
-          >
+          <Button variant='light' size='xs' mt='sm' onClick={() => void refetch()}>
             ลองใหม่
           </Button>
         </Alert>
@@ -466,5 +398,5 @@ export function AuditLogsTable({ scope, userId }: AuditLogsTableProps) {
         />
       </Paper>
     </Stack>
-  )
+  );
 }

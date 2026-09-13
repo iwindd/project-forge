@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import {
-  ORGANIZATION_MEMBER_QUERY,
-} from '../ports/organization-member.query.js';
-import type {
-  OrganizationMemberQuery,
-  OrganizationMemberQueryRecord,
-} from '../ports/organization-member.query.js';
+import { ORGANIZATION_MEMBER_QUERY } from '../ports/organization-member.query.js';
+import type { OrganizationMemberQuery, OrganizationMemberQueryRecord } from '../ports/organization-member.query.js';
 
 type OrganizationMember = OrganizationMemberQueryRecord;
 
@@ -44,9 +39,7 @@ export class ListOrganizationMembersUseCase {
     const search = query.search?.trim().toLowerCase();
 
     if (search) {
-      data = data.filter((member) =>
-        `${member.name} ${member.email ?? ''}`.toLowerCase().includes(search),
-      );
+      data = data.filter((member) => `${member.name} ${member.email ?? ''}`.toLowerCase().includes(search));
     }
 
     if (query.roleId && query.roleId !== 'all') {
@@ -66,10 +59,7 @@ export class ListOrganizationMembersUseCase {
 
     const total = data.length;
     return {
-      data: data.slice(
-        (query.page - 1) * query.pageSize,
-        query.page * query.pageSize,
-      ),
+      data: data.slice((query.page - 1) * query.pageSize, query.page * query.pageSize),
       page: query.page,
       pageSize: query.pageSize,
       total,

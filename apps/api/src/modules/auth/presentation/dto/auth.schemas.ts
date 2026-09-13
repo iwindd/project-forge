@@ -37,26 +37,29 @@ export const githubReturnToSchema = z
   .string()
   .trim()
   .max(2048)
-  .refine(
-    (value) => value.startsWith('/') && !value.startsWith('//'),
-    'returnTo must be a same-origin path',
-  );
+  .refine((value) => value.startsWith('/') && !value.startsWith('//'), 'returnTo must be a same-origin path');
 
 export const githubStartQuerySchema = z.object({
   returnTo: githubReturnToSchema.optional(),
 });
 
-export const authMeDataSchema = z.object({
-  user: identitySchema,
-  profile: profileSchema.nullable(),
-}).strict();
-
-export const authMeResponseSchema = z.object({
-  data: authMeDataSchema,
-}).strict();
-
-export const authUpdateMeResponseSchema = z.object({
-  data: z.object({
+export const authMeDataSchema = z
+  .object({
     user: identitySchema,
-  }),
-}).strict();
+    profile: profileSchema.nullable(),
+  })
+  .strict();
+
+export const authMeResponseSchema = z
+  .object({
+    data: authMeDataSchema,
+  })
+  .strict();
+
+export const authUpdateMeResponseSchema = z
+  .object({
+    data: z.object({
+      user: identitySchema,
+    }),
+  })
+  .strict();

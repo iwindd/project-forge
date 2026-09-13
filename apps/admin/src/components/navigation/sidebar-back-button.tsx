@@ -1,17 +1,13 @@
-'use client'
+'use client';
 
-import { Text } from '@mantine/core'
-import { IconArrowLeft } from '@tabler/icons-react'
-import { useTranslations } from 'next-intl'
-import Link from 'next/link'
-import classes from './sidebar-back-button.module.css'
+import { Text } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import classes from './sidebar-back-button.module.css';
 
-export function SidebarBackButton({
-  organizationSlug
-}: {
-  organizationSlug?: string
-}) {
-  const t = useTranslations('Common')
+export function SidebarBackButton({ organizationSlug }: { organizationSlug?: string }) {
+  const t = useTranslations('Common');
 
   return (
     <Link
@@ -24,5 +20,5 @@ export function SidebarBackButton({
         {t('back')}
       </Text>
     </Link>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { PageHeader } from '@/components/page-header'
+import { PageHeader } from '@/components/page-header';
 import {
   useCreateInvitationMutation,
   useCancelInvitationMutation,
@@ -12,13 +12,13 @@ import {
   useUpdateMemberStatusMutation,
   type OrganizationInvitation,
   type OrganizationMember,
-  type OrganizationRoleSummary
-} from '@/lib/features/organization/organization-members-api'
-import { useOrganizationContext } from '@/lib/features/organization/organization-provider'
+  type OrganizationRoleSummary,
+} from '@/lib/features/organization/organization-members-api';
+import { useOrganizationContext } from '@/lib/features/organization/organization-provider';
 import {
   getDefaultInvitationRoleId,
-  getInvitationRoleOptions
-} from '@/lib/features/organization/invitation-role-options'
+  getInvitationRoleOptions,
+} from '@/lib/features/organization/invitation-role-options';
 import {
   ActionIcon,
   Alert,
@@ -37,9 +37,9 @@ import {
   Table,
   Tabs,
   Text,
-  TextInput
-} from '@mantine/core'
-import { notifications } from '@mantine/notifications'
+  TextInput,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconAlertCircle,
   IconCalendar,
@@ -50,329 +50,282 @@ import {
   IconPlus,
   IconRefresh,
   IconSearch,
-  IconUserPlus
-} from '@tabler/icons-react'
-import { useFormatter, useTranslations } from 'next-intl'
-import { schemaResolver, useForm } from '@mantine/form'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { z } from 'zod'
-import classes from './members-page.module.css'
+  IconUserPlus,
+} from '@tabler/icons-react';
+import { useFormatter, useTranslations } from 'next-intl';
+import { schemaResolver, useForm } from '@mantine/form';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { z } from 'zod';
+import classes from './members-page.module.css';
 
-type MembersTab = 'members' | 'invitations'
-type MemberRoleFilter = 'all' | string
-type MemberStatusFilter = 'all' | 'active' | 'inactive'
+type MembersTab = 'members' | 'invitations';
+type MemberRoleFilter = 'all' | string;
+type MemberStatusFilter = 'all' | 'active' | 'inactive';
 
 type InviteRow = {
-  id: string
-  email: string
-  roleId: string
-}
+  id: string;
+  email: string;
+  roleId: string;
+};
 
 type InviteRowsFormValues = {
-  rows: InviteRow[]
-}
+  rows: InviteRow[];
+};
 
 const INITIAL_INVITE_ROW: InviteRow = {
   id: 'invite-0',
   email: '',
-  roleId: ''
-}
+  roleId: '',
+};
 
 const inviteRowsSchema = z.object({
-  rows: z.array(
-    z.object({
-      id: z.string().min(1),
-      email: z
-        .string()
-        .trim()
-        .min(1, 'กรุณาระบุอีเมลก่อนส่งคำเชิญ')
-        .email('กรุณาระบุอีเมลให้ถูกต้อง'),
-      roleId: z.string().min(1, 'กรุณาเลือกบทบาท')
-    })
-  ).min(1)
-})
+  rows: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        email: z.string().trim().min(1, 'กรุณาระบุอีเมลก่อนส่งคำเชิญ').email('กรุณาระบุอีเมลให้ถูกต้อง'),
+        roleId: z.string().min(1, 'กรุณาเลือกบทบาท'),
+      }),
+    )
+    .min(1),
+});
 
 function getInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase() || 'U'
+  return name.trim().charAt(0).toUpperCase() || 'U';
 }
 
 export default function OrganizationMembersPage() {
-  const t = useTranslations('OrganizationMembers')
-  const format = useFormatter()
-  const { activeOrganization } = useOrganizationContext()
-  const organizationId = activeOrganization?.id ?? ''
+  const t = useTranslations('OrganizationMembers');
+  const format = useFormatter();
+  const { activeOrganization } = useOrganizationContext();
+  const organizationId = activeOrganization?.id ?? '';
   const canManage = Boolean(
     activeOrganization?.type === 'SHARED' &&
-    (activeOrganization.role.isOwner ||
-      activeOrganization.role.permissions.includes('organization.manage'))
-  )
+      (activeOrganization.role.isOwner || activeOrganization.role.permissions.includes('organization.manage')),
+  );
 
-  const [activeTab, setActiveTab] = useState<MembersTab>('members')
-  const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState<MemberRoleFilter>('all')
-  const [status, setStatus] = useState<MemberStatusFilter>('all')
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<MembersTab>('members');
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<MemberRoleFilter>('all');
+  const [status, setStatus] = useState<MemberStatusFilter>('all');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const inviteForm = useForm<InviteRowsFormValues>({
     initialValues: {
-      rows: [{ ...INITIAL_INVITE_ROW }]
+      rows: [{ ...INITIAL_INVITE_ROW }],
     },
     validate: schemaResolver(inviteRowsSchema),
-    validateInputOnBlur: true
-  })
-  const { setValues: setInviteValues } = inviteForm
-  const [inviteLinks, setInviteLinks] = useState<
-    Array<{ email: string | null; url: string }>
-  >([])
-  const [copiedInviteLink, setCopiedInviteLink] = useState<string | null>(null)
-  const [memberActionId, setMemberActionId] = useState<string | null>(null)
-  const nextInviteRowId = useRef(1)
+    validateInputOnBlur: true,
+  });
+  const { setValues: setInviteValues } = inviteForm;
+  const [inviteLinks, setInviteLinks] = useState<Array<{ email: string | null; url: string }>>([]);
+  const [copiedInviteLink, setCopiedInviteLink] = useState<string | null>(null);
+  const [memberActionId, setMemberActionId] = useState<string | null>(null);
+  const nextInviteRowId = useRef(1);
 
   const memberQuery = useMemo(
     () => ({
       ...(search.trim() ? { search: search.trim() } : {}),
-      ...(roleFilter !== 'all'
-        ? { roleId: roleFilter }
-        : {}),
+      ...(roleFilter !== 'all' ? { roleId: roleFilter } : {}),
       ...(status !== 'all' ? { status } : {}),
       page: 1,
       pageSize: 100,
       sortBy: 'createdAt' as const,
-      sortDirection
+      sortDirection,
     }),
-    [roleFilter, search, sortDirection, status]
-  )
+    [roleFilter, search, sortDirection, status],
+  );
 
   const {
     data: membersResult,
     isError: membersError,
     isFetching: membersFetching,
-    refetch: refetchMembers
-  } = useGetMembersQuery(
-    { organizationId, query: memberQuery },
-    { skip: !organizationId }
-  )
-  const { data: rolesResult } = useGetRolesQuery(
-    { organizationId },
-    { skip: !organizationId || !canManage }
-  )
+    refetch: refetchMembers,
+  } = useGetMembersQuery({ organizationId, query: memberQuery }, { skip: !organizationId });
+  const { data: rolesResult } = useGetRolesQuery({ organizationId }, { skip: !organizationId || !canManage });
   const {
     data: invitationsResult,
     isError: invitationsError,
     isFetching: invitationsFetching,
-    refetch: refetchInvitations
+    refetch: refetchInvitations,
   } = useGetInvitationsQuery(
     { organizationId },
-    { skip: !organizationId || !canManage || activeTab !== 'invitations' }
-  )
-  const [createInvitation, { isLoading: invitePending }] =
-    useCreateInvitationMutation()
-  const [cancelInvitation, { isLoading: cancelPending }] =
-    useCancelInvitationMutation()
-  const [updateMemberRole, { isLoading: rolePending }] =
-    useUpdateMemberRoleMutation()
-  const [updateMemberStatus, { isLoading: statusPending }] =
-    useUpdateMemberStatusMutation()
-  const [removeMember, { isLoading: removePending }] = useRemoveMemberMutation()
-  const memberMutationPending = rolePending || statusPending || removePending
+    { skip: !organizationId || !canManage || activeTab !== 'invitations' },
+  );
+  const [createInvitation, { isLoading: invitePending }] = useCreateInvitationMutation();
+  const [cancelInvitation, { isLoading: cancelPending }] = useCancelInvitationMutation();
+  const [updateMemberRole, { isLoading: rolePending }] = useUpdateMemberRoleMutation();
+  const [updateMemberStatus, { isLoading: statusPending }] = useUpdateMemberStatusMutation();
+  const [removeMember, { isLoading: removePending }] = useRemoveMemberMutation();
+  const memberMutationPending = rolePending || statusPending || removePending;
 
-  const members = membersResult?.data ?? []
-  const roles = useMemo(() => rolesResult?.data ?? [], [rolesResult?.data])
+  const members = membersResult?.data ?? [];
+  const roles = useMemo(() => rolesResult?.data ?? [], [rolesResult?.data]);
   const memberRoleOptions = useMemo(
     () =>
       roles.filter(
         (candidate): candidate is OrganizationRoleSummary & { id: string } =>
-          Boolean(candidate.id) && !candidate.isOwner
+          Boolean(candidate.id) && !candidate.isOwner,
       ),
-    [roles]
-  )
-  const invitationRoleOptions = useMemo(
-    () => getInvitationRoleOptions(memberRoleOptions),
-    [memberRoleOptions]
-  )
-  const defaultInviteRoleId = getDefaultInvitationRoleId(
-    invitationRoleOptions
-  )
+    [roles],
+  );
+  const invitationRoleOptions = useMemo(() => getInvitationRoleOptions(memberRoleOptions), [memberRoleOptions]);
+  const defaultInviteRoleId = getDefaultInvitationRoleId(invitationRoleOptions);
 
   useEffect(() => {
-    if (!defaultInviteRoleId) return
-    setInviteValues(values => {
-      const rows = values.rows ?? []
-      if (!rows.some(row => !row.roleId)) return values
+    if (!defaultInviteRoleId) return;
+    setInviteValues((values) => {
+      const rows = values.rows ?? [];
+      if (!rows.some((row) => !row.roleId)) return values;
       return {
-        rows: rows.map(row =>
-          row.roleId ? row : { ...row, roleId: defaultInviteRoleId }
-        )
-      }
-    })
-  }, [defaultInviteRoleId, setInviteValues])
-  const invitations = invitationsResult ?? []
-  const allVisibleSelected =
-    members.length > 0 &&
-    members.every(member => selectedIds.includes(member.id))
-  const someVisibleSelected = members.some(member =>
-    selectedIds.includes(member.id)
-  )
+        rows: rows.map((row) => (row.roleId ? row : { ...row, roleId: defaultInviteRoleId })),
+      };
+    });
+  }, [defaultInviteRoleId, setInviteValues]);
+  const invitations = invitationsResult ?? [];
+  const allVisibleSelected = members.length > 0 && members.every((member) => selectedIds.includes(member.id));
+  const someVisibleSelected = members.some((member) => selectedIds.includes(member.id));
 
   const addInviteRow = () => {
-    const id = `invite-${nextInviteRowId.current}`
-    nextInviteRowId.current += 1
+    const id = `invite-${nextInviteRowId.current}`;
+    nextInviteRowId.current += 1;
     inviteForm.insertListItem('rows', {
       id,
       email: '',
-      roleId: defaultInviteRoleId
-    })
-  }
+      roleId: defaultInviteRoleId,
+    });
+  };
 
   const submitInvitations = async ({ rows }: InviteRowsFormValues) => {
-    if (!organizationId || !canManage) return
-    if (!invitationRoleOptions.length) return
+    if (!organizationId || !canManage) return;
+    if (!invitationRoleOptions.length) return;
 
     try {
       const results = await Promise.all(
-        rows.map(row =>
+        rows.map((row) =>
           createInvitation({
             organizationId,
             email: row.email.trim(),
-            roleId: row.roleId || defaultInviteRoleId
-          }).unwrap()
-        )
-      )
+            roleId: row.roleId || defaultInviteRoleId,
+          }).unwrap(),
+        ),
+      );
 
       setInviteLinks(
         results.map((result, index) => ({
           email: rows[index]?.email.trim() || result.invitation.email,
-          url: `${window.location.origin}/invitations/${result.token}`
-        }))
-      )
-      inviteForm.setValues({ rows: [{ ...INITIAL_INVITE_ROW, id: 'invite-0' }] })
-      setCopiedInviteLink(null)
-      inviteForm.resetDirty()
-      notifications.show({ message: t('inviteSuccess'), color: 'teal' })
+          url: `${window.location.origin}/invitations/${result.token}`,
+        })),
+      );
+      inviteForm.setValues({ rows: [{ ...INITIAL_INVITE_ROW, id: 'invite-0' }] });
+      setCopiedInviteLink(null);
+      inviteForm.resetDirty();
+      notifications.show({ message: t('inviteSuccess'), color: 'teal' });
     } catch {
-      notifications.show({ message: t('inviteFailed'), color: 'red' })
+      notifications.show({ message: t('inviteFailed'), color: 'red' });
     }
-  }
+  };
 
   const resendInvitation = async (invitation: OrganizationInvitation) => {
-    if (!organizationId || !invitation.email || !invitation.role.id) return
+    if (!organizationId || !invitation.email || !invitation.role.id) return;
 
     try {
       const result = await createInvitation({
         organizationId,
         email: invitation.email,
-        roleId: invitation.role.id
-      }).unwrap()
-      setInviteLinks(links => [
+        roleId: invitation.role.id,
+      }).unwrap();
+      setInviteLinks((links) => [
         ...links,
         {
           email: invitation.email,
-          url: `${window.location.origin}/invitations/${result.token}`
-        }
-      ])
-      setCopiedInviteLink(null)
-      notifications.show({ message: t('resendSuccess'), color: 'teal' })
+          url: `${window.location.origin}/invitations/${result.token}`,
+        },
+      ]);
+      setCopiedInviteLink(null);
+      notifications.show({ message: t('resendSuccess'), color: 'teal' });
     } catch {
-      notifications.show({ message: t('resendFailed'), color: 'red' })
+      notifications.show({ message: t('resendFailed'), color: 'red' });
     }
-  }
+  };
 
   const cancelPendingInvitation = async (invitation: OrganizationInvitation) => {
-    if (
-      !organizationId ||
-      !window.confirm(t('cancelConfirm', { email: invitation.email }))
-    ) {
-      return
+    if (!organizationId || !window.confirm(t('cancelConfirm', { email: invitation.email }))) {
+      return;
     }
 
     try {
       await cancelInvitation({
         organizationId,
-        invitationId: invitation.id
-      }).unwrap()
-      notifications.show({ message: t('cancelSuccess'), color: 'teal' })
+        invitationId: invitation.id,
+      }).unwrap();
+      notifications.show({ message: t('cancelSuccess'), color: 'teal' });
     } catch {
-      notifications.show({ message: t('cancelFailed'), color: 'red' })
+      notifications.show({ message: t('cancelFailed'), color: 'red' });
     }
-  }
+  };
 
   const copyInviteLink = async (url: string) => {
     try {
-      await navigator.clipboard.writeText(url)
-      setCopiedInviteLink(url)
+      await navigator.clipboard.writeText(url);
+      setCopiedInviteLink(url);
     } catch {
-      notifications.show({ message: t('copyInviteFailed'), color: 'red' })
+      notifications.show({ message: t('copyInviteFailed'), color: 'red' });
     }
-  }
+  };
 
-  const runMemberAction = async (
-    member: OrganizationMember,
-    action: () => Promise<unknown>
-  ) => {
-    setMemberActionId(member.id)
+  const runMemberAction = async (member: OrganizationMember, action: () => Promise<unknown>) => {
+    setMemberActionId(member.id);
     try {
-      await action()
-      notifications.show({ message: t('actionSuccess'), color: 'teal' })
+      await action();
+      notifications.show({ message: t('actionSuccess'), color: 'teal' });
     } catch {
-      notifications.show({ message: t('actionFailed'), color: 'red' })
+      notifications.show({ message: t('actionFailed'), color: 'red' });
     } finally {
-      setMemberActionId(null)
+      setMemberActionId(null);
     }
-  }
+  };
 
   const changeRole = (member: OrganizationMember, roleId: string) => {
-    if (!organizationId || member.role.isOwner) return
+    if (!organizationId || member.role.isOwner) return;
     void runMemberAction(member, () =>
       updateMemberRole({
         organizationId,
         userId: member.id,
-        roleId
-      }).unwrap()
-    )
-  }
+        roleId,
+      }).unwrap(),
+    );
+  };
 
   const changeStatus = (member: OrganizationMember) => {
-    if (!organizationId) return
+    if (!organizationId) return;
     void runMemberAction(member, () =>
       updateMemberStatus({
         organizationId,
         userId: member.id,
-        active: !member.isActive
-      }).unwrap()
-    )
-  }
+        active: !member.isActive,
+      }).unwrap(),
+    );
+  };
 
   const remove = (member: OrganizationMember) => {
-    if (
-      !organizationId ||
-      !window.confirm(t('removeConfirm', { name: member.name }))
-    ) {
-      return
+    if (!organizationId || !window.confirm(t('removeConfirm', { name: member.name }))) {
+      return;
     }
-    void runMemberAction(member, () =>
-      removeMember({ organizationId, userId: member.id }).unwrap()
-    )
-  }
+    void runMemberAction(member, () => removeMember({ organizationId, userId: member.id }).unwrap());
+  };
 
   const toggleAll = () => {
     if (allVisibleSelected) {
-      setSelectedIds(ids =>
-        ids.filter(id => !members.some(member => member.id === id))
-      )
-      return
+      setSelectedIds((ids) => ids.filter((id) => !members.some((member) => member.id === id)));
+      return;
     }
-    setSelectedIds(ids =>
-      Array.from(new Set([...ids, ...members.map(member => member.id)]))
-    )
-  }
+    setSelectedIds((ids) => Array.from(new Set([...ids, ...members.map((member) => member.id)])));
+  };
 
   const toggleSelected = (id: string) => {
-    setSelectedIds(ids =>
-      ids.includes(id)
-        ? ids.filter(selectedId => selectedId !== id)
-        : [...ids, id]
-    )
-  }
+    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((selectedId) => selectedId !== id) : [...ids, id]));
+  };
 
   return (
     <Box className={classes.page}>
@@ -395,49 +348,31 @@ export default function OrganizationMembersPage() {
                 <Box className={classes.inviteRows}>
                   {inviteForm.values.rows.map((row, index) => (
                     <Box className={classes.inviteRow} key={row.id}>
-                    <TextInput
-                      label={t('emailAddress')}
-                      placeholder={t('emailPlaceholder')}
-                      type='email'
-                      required
-                      {...inviteForm.getInputProps(
-                        'rows.' + index + '.email'
-                      )}
-                    />
-                    <Select
-                      label={t('role')}
-                      {...inviteForm.getInputProps(
-                        'rows.' + index + '.roleId'
-                      )}
-                      value={row.roleId || defaultInviteRoleId || null}
-                      data={invitationRoleOptions.map(role => ({
-                        value: role.id,
-                        label: role.name
-                      }))}
-                      onChange={value =>
-                        inviteForm.setFieldValue(
-                          'rows.' + index + '.roleId',
-                          value ?? ''
-                        )
-                      }
-                    />
+                      <TextInput
+                        label={t('emailAddress')}
+                        placeholder={t('emailPlaceholder')}
+                        type='email'
+                        required
+                        {...inviteForm.getInputProps(`rows.${index}.email`)}
+                      />
+                      <Select
+                        label={t('role')}
+                        {...inviteForm.getInputProps(`rows.${index}.roleId`)}
+                        value={row.roleId || defaultInviteRoleId || null}
+                        data={invitationRoleOptions.map((role) => ({
+                          value: role.id,
+                          label: role.name,
+                        }))}
+                        onChange={(value) => inviteForm.setFieldValue(`rows.${index}.roleId`, value ?? '')}
+                      />
                     </Box>
                   ))}
                 </Box>
                 <Group className={classes.inviteActions} justify='space-between'>
-                  <Button
-                    type='button'
-                    variant='default'
-                    leftSection={<IconPlus size={16} />}
-                    onClick={addInviteRow}
-                  >
+                  <Button type='button' variant='default' leftSection={<IconPlus size={16} />} onClick={addInviteRow}>
                     {t('addMore')}
                   </Button>
-                  <Button
-                    type='submit'
-                    leftSection={<IconUserPlus size={16} />}
-                    loading={invitePending}
-                  >
+                  <Button type='submit' leftSection={<IconUserPlus size={16} />} loading={invitePending}>
                     {t('invite')}
                   </Button>
                 </Group>
@@ -447,13 +382,8 @@ export default function OrganizationMembersPage() {
                   <Text size='sm' fw={600}>
                     {t('inviteLink')}
                   </Text>
-                  {inviteLinks.map(link => (
-                    <Group
-                      key={link.url}
-                      gap='xs'
-                      wrap='nowrap'
-                      align='flex-start'
-                    >
+                  {inviteLinks.map((link) => (
+                    <Group key={link.url} gap='xs' wrap='nowrap' align='flex-start'>
                       <IconExternalLink size={16} />
                       <Text className={classes.inviteLink} size='sm'>
                         {link.email ? `${link.email}: ` : ''}
@@ -463,18 +393,10 @@ export default function OrganizationMembersPage() {
                         type='button'
                         variant='subtle'
                         size='xs'
-                        leftSection={
-                          copiedInviteLink === link.url ? (
-                            <IconCheck size={14} />
-                          ) : (
-                            <IconCopy size={14} />
-                          )
-                        }
+                        leftSection={copiedInviteLink === link.url ? <IconCheck size={14} /> : <IconCopy size={14} />}
                         onClick={() => void copyInviteLink(link.url)}
                       >
-                        {copiedInviteLink === link.url
-                          ? t('copiedInviteLink')
-                          : t('copyInviteLink')}
+                        {copiedInviteLink === link.url ? t('copiedInviteLink') : t('copyInviteLink')}
                       </Button>
                     </Group>
                   ))}
@@ -482,14 +404,8 @@ export default function OrganizationMembersPage() {
               ) : null}
             </>
           ) : (
-            <Alert
-              color='gray'
-              icon={<IconAlertCircle size={18} />}
-              variant='light'
-            >
-              {activeOrganization?.type === 'PERSONAL'
-                ? t('personalWorkspaceNotice')
-                : t('invitePermissionNotice')}
+            <Alert color='gray' icon={<IconAlertCircle size={18} />} variant='light'>
+              {activeOrganization?.type === 'PERSONAL' ? t('personalWorkspaceNotice') : t('invitePermissionNotice')}
             </Alert>
           )}
         </Stack>
@@ -500,20 +416,12 @@ export default function OrganizationMembersPage() {
         </Group>
       </Paper>
 
-      <Tabs
-        className={classes.tabs}
-        value={activeTab}
-        onChange={value => value && setActiveTab(value as MembersTab)}
-      >
+      <Tabs className={classes.tabs} value={activeTab} onChange={(value) => value && setActiveTab(value as MembersTab)}>
         <Tabs.List className={classes.tabsList}>
           <Tabs.Tab className={classes.tab} value='members'>
             {t('teamMembers')}
           </Tabs.Tab>
-          <Tabs.Tab
-            className={classes.tab}
-            value='invitations'
-            disabled={!canManage}
-          >
+          <Tabs.Tab className={classes.tab} value='invitations' disabled={!canManage}>
             {t('pendingInvitations')}
           </Tabs.Tab>
         </Tabs.List>
@@ -524,7 +432,7 @@ export default function OrganizationMembersPage() {
               <TextInput
                 placeholder={t('filterPlaceholder')}
                 value={search}
-                onChange={event => setSearch(event.currentTarget.value)}
+                onChange={(event) => setSearch(event.currentTarget.value)}
                 leftSection={<IconSearch size={16} />}
                 aria-label={t('filterPlaceholder')}
               />
@@ -532,14 +440,12 @@ export default function OrganizationMembersPage() {
                 value={roleFilter}
                 data={[
                   { value: 'all', label: t('allRoles') },
-                  ...roles.map(role => ({
+                  ...roles.map((role) => ({
                     value: role.id,
-                    label: role.name
-                  }))
+                    label: role.name,
+                  })),
                 ]}
-                onChange={value =>
-                  setRoleFilter((value as MemberRoleFilter) ?? 'all')
-                }
+                onChange={(value) => setRoleFilter((value as MemberRoleFilter) ?? 'all')}
                 aria-label={t('allRoles')}
               />
               <Select
@@ -547,22 +453,18 @@ export default function OrganizationMembersPage() {
                 data={[
                   { value: 'all', label: t('allStatuses') },
                   { value: 'active', label: t('active') },
-                  { value: 'inactive', label: t('inactive') }
+                  { value: 'inactive', label: t('inactive') },
                 ]}
-                onChange={value =>
-                  setStatus((value as MemberStatusFilter) ?? 'all')
-                }
+                onChange={(value) => setStatus((value as MemberStatusFilter) ?? 'all')}
                 aria-label={t('allStatuses')}
               />
               <Select
                 value={sortDirection}
                 data={[
                   { value: 'desc', label: `${t('date')} ↓` },
-                  { value: 'asc', label: `${t('date')} ↑` }
+                  { value: 'asc', label: `${t('date')} ↑` },
                 ]}
-                onChange={value =>
-                  setSortDirection((value as 'asc' | 'desc') ?? 'desc')
-                }
+                onChange={(value) => setSortDirection((value as 'asc' | 'desc') ?? 'desc')}
                 leftSection={<IconCalendar size={16} />}
                 aria-label={t('date')}
               />
@@ -600,9 +502,7 @@ export default function OrganizationMembersPage() {
                           <th>
                             <Checkbox
                               checked={allVisibleSelected}
-                              indeterminate={
-                                !allVisibleSelected && someVisibleSelected
-                              }
+                              indeterminate={!allVisibleSelected && someVisibleSelected}
                               onChange={toggleAll}
                               aria-label='เลือกสมาชิกทั้งหมด'
                             />
@@ -615,10 +515,8 @@ export default function OrganizationMembersPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {members.map(member => {
-                          const rowPending =
-                            memberActionId === member.id &&
-                            memberMutationPending
+                        {members.map((member) => {
+                          const rowPending = memberActionId === member.id && memberMutationPending;
                           return (
                             <tr key={member.id}>
                               <td>
@@ -629,51 +527,31 @@ export default function OrganizationMembersPage() {
                                 />
                               </td>
                               <td>
-                                <Group
-                                  className={classes.memberIdentity}
-                                  gap='sm'
-                                  wrap='nowrap'
-                                >
+                                <Group className={classes.memberIdentity} gap='sm' wrap='nowrap'>
                                   <Avatar radius='xl' size={34}>
                                     {getInitial(member.name)}
                                   </Avatar>
                                   <Stack gap={0}>
                                     <Text fw={600}>{member.name}</Text>
-                                    <Text
-                                      className={classes.memberEmail}
-                                      size='sm'
-                                    >
+                                    <Text className={classes.memberEmail} size='sm'>
                                       {member.email ?? '-'}
                                     </Text>
                                   </Stack>
                                 </Group>
                               </td>
                               <td>
-                                <Badge variant='light'>
-                                  {member.role.name}
-                                </Badge>
+                                <Badge variant='light'>{member.role.name}</Badge>
                               </td>
                               <td>
                                 <Badge
                                   color={member.isActive ? 'teal' : 'gray'}
                                   variant='light'
-                                  leftSection={
-                                    member.isActive ? (
-                                      <IconCheck size={12} />
-                                    ) : undefined
-                                  }
+                                  leftSection={member.isActive ? <IconCheck size={12} /> : undefined}
                                 >
-                                  {member.isActive
-                                    ? t('active')
-                                    : t('inactive')}
+                                  {member.isActive ? t('active') : t('inactive')}
                                 </Badge>
                               </td>
-                              <td>
-                                {format.dateTime(
-                                  new Date(member.createdAt),
-                                  'date'
-                                )}
-                              </td>
+                              <td>{format.dateTime(new Date(member.createdAt), 'date')}</td>
                               <td>
                                 {canManage ? (
                                   <Menu shadow='md' position='bottom-end'>
@@ -688,18 +566,11 @@ export default function OrganizationMembersPage() {
                                     </Menu.Target>
                                     <Menu.Dropdown>
                                       {!member.role.isOwner
-                                        ? memberRoleOptions.map(roleOption => (
+                                        ? memberRoleOptions.map((roleOption) => (
                                             <Menu.Item
                                               key={roleOption.id}
-                                              disabled={
-                                                member.role.id === roleOption.id
-                                              }
-                                              onClick={() =>
-                                                changeRole(
-                                                  member,
-                                                  roleOption.id
-                                                )
-                                              }
+                                              disabled={member.role.id === roleOption.id}
+                                              onClick={() => changeRole(member, roleOption.id)}
                                             >
                                               {roleOption.name}
                                             </Menu.Item>
@@ -707,17 +578,10 @@ export default function OrganizationMembersPage() {
                                         : null}
                                       {!member.role.isOwner ? (
                                         <>
-                                          <Menu.Item
-                                            onClick={() => changeStatus(member)}
-                                          >
-                                            {member.isActive
-                                              ? t('suspend')
-                                              : t('activate')}
+                                          <Menu.Item onClick={() => changeStatus(member)}>
+                                            {member.isActive ? t('suspend') : t('activate')}
                                           </Menu.Item>
-                                          <Menu.Item
-                                            color='red'
-                                            onClick={() => remove(member)}
-                                          >
+                                          <Menu.Item color='red' onClick={() => remove(member)}>
                                             {t('remove')}
                                           </Menu.Item>
                                         </>
@@ -727,15 +591,12 @@ export default function OrganizationMembersPage() {
                                 ) : null}
                               </td>
                             </tr>
-                          )
+                          );
                         })}
                       </tbody>
                     </Table>
                   </Box>
-                  <Group
-                    className={classes.tableFooter}
-                    justify='space-between'
-                  >
+                  <Group className={classes.tableFooter} justify='space-between'>
                     <Text size='sm' c='dimmed'>
                       {membersResult?.total ?? members.length} รายการ
                     </Text>
@@ -747,12 +608,7 @@ export default function OrganizationMembersPage() {
                   </Group>
                 </>
               ) : (
-                <Stack
-                  className={classes.emptyState}
-                  align='center'
-                  justify='center'
-                  gap='xs'
-                >
+                <Stack className={classes.emptyState} align='center' justify='center' gap='xs'>
                   <IconUserPlus size={28} stroke={1.5} />
                   <Text c='dimmed'>{t('noMembers')}</Text>
                 </Stack>
@@ -785,33 +641,28 @@ export default function OrganizationMembersPage() {
                   <Loader size='sm' />
                 </Center>
               ) : invitations.length ? (
-                invitations.map(invitation => (
+                invitations.map((invitation) => (
                   <Box className={classes.invitationRow} key={invitation.id}>
                     <Stack className={classes.invitationEmail} gap={2}>
                       <Text fw={600}>{invitation.email}</Text>
                       <Text size='sm' c='dimmed'>
-                        {t('inviteLink')} ·{' '}
-                        {format.dateTime(
-                          new Date(invitation.createdAt),
-                          'date'
-                        )}
+                        {t('inviteLink')} · {format.dateTime(new Date(invitation.createdAt), 'date')}
                       </Text>
                     </Stack>
                     <Badge variant='light'>{invitation.role.name}</Badge>
                     <Text size='sm' c='dimmed'>
-                      {t('expiresAt')}{' '}
-                      {format.dateTime(new Date(invitation.expiresAt), 'date')}
+                      {t('expiresAt')} {format.dateTime(new Date(invitation.expiresAt), 'date')}
                     </Text>
                     <Group gap='xs' justify='flex-end'>
                       {invitation.role.id ? (
-                      <Button
-                        size='compact-sm'
-                        variant='subtle'
-                        loading={invitePending}
-                        onClick={() => void resendInvitation(invitation)}
-                      >
-                        {t('resend')}
-                      </Button>
+                        <Button
+                          size='compact-sm'
+                          variant='subtle'
+                          loading={invitePending}
+                          onClick={() => void resendInvitation(invitation)}
+                        >
+                          {t('resend')}
+                        </Button>
                       ) : null}
                       <Button
                         size='compact-sm'
@@ -826,12 +677,7 @@ export default function OrganizationMembersPage() {
                   </Box>
                 ))
               ) : (
-                <Stack
-                  className={classes.emptyState}
-                  align='center'
-                  justify='center'
-                  gap='xs'
-                >
+                <Stack className={classes.emptyState} align='center' justify='center' gap='xs'>
                   <IconUserPlus size={28} stroke={1.5} />
                   <Text c='dimmed'>{t('noInvitations')}</Text>
                 </Stack>
@@ -841,5 +687,5 @@ export default function OrganizationMembersPage() {
         </Tabs.Panel>
       </Tabs>
     </Box>
-  )
+  );
 }

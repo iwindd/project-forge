@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ForbiddenError,
-  NotFoundError,
-} from '../../../../common/errors/application-error.js';
+import { ForbiddenError, NotFoundError } from '../../../../common/errors/application-error.js';
 import { ProjectStatus } from '../../domain/project.js';
 import { RestoreProjectUseCase } from './restore-project-use-case.js';
 
@@ -84,10 +81,7 @@ describe('RestoreProjectUseCase', () => {
         archivedAt: null,
       }),
     );
-    expect(organizations.requireProjectManager).toHaveBeenCalledWith(
-      'actor-id',
-      'organization-id',
-    );
+    expect(organizations.requireProjectManager).toHaveBeenCalledWith('actor-id', 'organization-id');
     expect(audit.record).toHaveBeenCalledOnce();
     expect(audit.record).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -140,17 +134,13 @@ describe('RestoreProjectUseCase', () => {
     expect(first.status).toBe(ProjectStatus.ACTIVE);
     expect(second.status).toBe(ProjectStatus.ACTIVE);
     expect(audit.record).toHaveBeenCalledOnce();
-    expect(audit.record).toHaveBeenCalledWith(
-      expect.objectContaining({ requestId: 'first-request' }),
-    );
+    expect(audit.record).toHaveBeenCalledWith(expect.objectContaining({ requestId: 'first-request' }));
   });
 
   it('throws NotFoundError when the project does not exist', async () => {
     const { useCase, audit } = setup(null);
 
-    await expect(
-      useCase.execute('actor-id', 'organization-id', 'project-id'),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(useCase.execute('actor-id', 'organization-id', 'project-id')).rejects.toBeInstanceOf(NotFoundError);
     expect(audit.record).not.toHaveBeenCalled();
   });
 
@@ -160,12 +150,10 @@ describe('RestoreProjectUseCase', () => {
       new ForbiddenError('Project management access is required'),
     );
 
-    const error = await useCase
-      .execute('actor-id', 'organization-id', 'project-id')
-      .then(
-        () => null,
-        (caught: unknown) => caught,
-      );
+    const error = await useCase.execute('actor-id', 'organization-id', 'project-id').then(
+      () => null,
+      (caught: unknown) => caught,
+    );
 
     expect(error).toBeInstanceOf(ForbiddenError);
     expect(error).toMatchObject({ code: 'FORBIDDEN', status: 403 });

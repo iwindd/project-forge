@@ -1,19 +1,11 @@
-'use client'
+'use client';
 
-import {
-  Anchor,
-  Badge,
-  Box,
-  Collapse,
-  Stack,
-  Text,
-  UnstyledButton
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import { IconChevronRight } from '@tabler/icons-react'
-import { useTranslations } from 'next-intl'
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { Anchor, Badge, Box, Collapse, Stack, Text, UnstyledButton } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { IconChevronRight } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import {
   checkActiveChildren,
   formatNotificationCount,
@@ -26,35 +18,29 @@ import {
   useNotifications,
   type NavGroup,
   type NavItem,
-  type SidebarNavigationMode
-} from './navigation-utils'
-import classes from './sidebar-nav-content.module.css'
+  type SidebarNavigationMode,
+} from './navigation-utils';
+import classes from './sidebar-nav-content.module.css';
 
 type SidebarNavContentProps = {
-  onNavigateAction?: () => void
-  navigationMode?: SidebarNavigationMode
+  onNavigateAction?: () => void;
+  navigationMode?: SidebarNavigationMode;
+};
+
+function getNavigationLabel(item: { label: string; labelKey?: string }, translate: ReturnType<typeof useTranslations>) {
+  return item.labelKey ? translate(item.labelKey) : item.label;
 }
 
-function getNavigationLabel(
-  item: { label: string; labelKey?: string },
-  translate: ReturnType<typeof useTranslations>
-) {
-  return item.labelKey ? translate(item.labelKey) : item.label
-}
-
-export default function SidebarNavContent({
-  onNavigateAction,
-  navigationMode = 'app'
-}: SidebarNavContentProps) {
-  const notifications = useNotifications()
-  const groups = useNavigationGroups(navigationMode)
-  const t = useTranslations('Navigation')
-  const { organizationSlug } = useParams<{ organizationSlug?: string }>()
-  const routeParams = organizationSlug ? { organizationSlug } : {}
+export default function SidebarNavContent({ onNavigateAction, navigationMode = 'app' }: SidebarNavContentProps) {
+  const notifications = useNotifications();
+  const groups = useNavigationGroups(navigationMode);
+  const t = useTranslations('Navigation');
+  const { organizationSlug } = useParams<{ organizationSlug?: string }>();
+  const routeParams = organizationSlug ? { organizationSlug } : {};
 
   return (
     <Stack className={classes.sidebarScrollContent} gap={0} pb='xl'>
-      {groups.map(group => (
+      {groups.map((group) => (
         <SidebarGroup
           key={group.id}
           group={group}
@@ -65,7 +51,7 @@ export default function SidebarNavContent({
         />
       ))}
     </Stack>
-  )
+  );
 }
 
 function SidebarGroup({
@@ -73,31 +59,22 @@ function SidebarGroup({
   notifications,
   translate,
   onNavigateAction,
-  routeParams
+  routeParams,
 }: {
-  group: NavGroup
-  notifications: Readonly<Record<string, number>>
-  translate: ReturnType<typeof useTranslations>
-  onNavigateAction?: () => void
-  routeParams: { organizationSlug?: string }
+  group: NavGroup;
+  notifications: Readonly<Record<string, number>>;
+  translate: ReturnType<typeof useTranslations>;
+  onNavigateAction?: () => void;
+  routeParams: { organizationSlug?: string };
 }) {
-  const [opened, { toggle }] = useDisclosure(true)
+  const [opened, { toggle }] = useDisclosure(true);
 
   return (
     <Box>
       {!group.hideHeading && (
-        <UnstyledButton
-          onClick={toggle}
-          className={classes.groupHeadingButton}
-          aria-expanded={opened}
-        >
+        <UnstyledButton onClick={toggle} className={classes.groupHeadingButton} aria-expanded={opened}>
           <div className={classes.groupHeadingIconWrapper}>
-            <IconChevronRight
-              size={14}
-              stroke={2.5}
-              className={classes.groupHeadingChevron}
-              data-expanded={opened}
-            />
+            <IconChevronRight size={14} stroke={2.5} className={classes.groupHeadingChevron} data-expanded={opened} />
           </div>
           <Text className={classes.groupHeadingText} size='xs' fw='400'>
             {getNavigationLabel(group, translate)}
@@ -121,7 +98,7 @@ function SidebarGroup({
         </Stack>
       </Collapse>
     </Box>
-  )
+  );
 }
 
 function SidebarItem({
@@ -131,36 +108,27 @@ function SidebarItem({
   isLast = false,
   onNavigateAction,
   translate,
-  routeParams
+  routeParams,
 }: {
-  item: NavItem
-  notifications: Readonly<Record<string, number>>
-  level: number
-  isLast?: boolean
-  onNavigateAction?: () => void
-  translate: ReturnType<typeof useTranslations>
-  routeParams: { organizationSlug?: string }
+  item: NavItem;
+  notifications: Readonly<Record<string, number>>;
+  level: number;
+  isLast?: boolean;
+  onNavigateAction?: () => void;
+  translate: ReturnType<typeof useTranslations>;
+  routeParams: { organizationSlug?: string };
 }) {
-  const IconComponent = item.icon
-  const hasChildren = isParentItem(item)
-  const isActiveRoute = useIsRouteActive()
-  const isSelfActive = isLinkItem(item) ? isActiveRoute(item.routeName) : false
-  const isChildActive = hasChildren
-    ? checkActiveChildren(item.items, isActiveRoute)
-    : false
-  const isActive = isSelfActive || isChildActive
-  const [opened, { toggle }] = useDisclosure(
-    isActive || Boolean(hasChildren && item.defaultOpened)
-  )
-  const notificationCount = getNotificationCount(
-    notifications,
-    item.notification
-  )
-  const itemClass = level > 1 ? classes.nestedItem : classes.navbarItem
+  const IconComponent = item.icon;
+  const hasChildren = isParentItem(item);
+  const isActiveRoute = useIsRouteActive();
+  const isSelfActive = isLinkItem(item) ? isActiveRoute(item.routeName) : false;
+  const isChildActive = hasChildren ? checkActiveChildren(item.items, isActiveRoute) : false;
+  const isActive = isSelfActive || isChildActive;
+  const [opened, { toggle }] = useDisclosure(isActive || Boolean(hasChildren && item.defaultOpened));
+  const notificationCount = getNotificationCount(notifications, item.notification);
+  const itemClass = level > 1 ? classes.nestedItem : classes.navbarItem;
   const wrapperClass =
-    level > 1
-      ? `${classes.nestedItemWrapper} ${isLast ? classes.lastNestedItemWrapper : ''}`
-      : classes.itemWrapper
+    level > 1 ? `${classes.nestedItemWrapper} ${isLast ? classes.lastNestedItemWrapper : ''}` : classes.itemWrapper;
 
   if (hasChildren) {
     return (
@@ -181,12 +149,7 @@ function SidebarItem({
           <Text size='sm' fw={500} style={{ flexGrow: 1 }}>
             {getNavigationLabel(item, translate)}
           </Text>
-          <IconChevronRight
-            size={16}
-            stroke={1.8}
-            className={classes.chevron}
-            data-opened={opened}
-          />
+          <IconChevronRight size={16} stroke={1.8} className={classes.chevron} data-opened={opened} />
         </UnstyledButton>
         <Collapse expanded={opened}>
           <div className={classes.nestedList}>
@@ -205,7 +168,7 @@ function SidebarItem({
           </div>
         </Collapse>
       </div>
-    )
+    );
   }
 
   const content = (
@@ -227,17 +190,12 @@ function SidebarItem({
         </Badge>
       )}
       {item.badge && (
-        <Badge
-          color={item.badge.color ?? 'cyan'}
-          variant='light'
-          size='xs'
-          className={classes.badge}
-        >
+        <Badge color={item.badge.color ?? 'cyan'} variant='light' size='xs' className={classes.badge}>
           {item.badge.label}
         </Badge>
       )}
     </>
-  )
+  );
 
   if (!isLinkItem(item)) {
     return (
@@ -252,7 +210,7 @@ function SidebarItem({
           {content}
         </UnstyledButton>
       </div>
-    )
+    );
   }
 
   return (
@@ -269,5 +227,5 @@ function SidebarItem({
         {content}
       </Anchor>
     </div>
-  )
+  );
 }

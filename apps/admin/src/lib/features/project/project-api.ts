@@ -1,78 +1,64 @@
-import { api } from '@/lib/api/api'
-import {
-  parseProjectListResponse,
-  parseProjectResponse
-} from './project-schemas'
+import { api } from '@/lib/api/api';
+import { parseProjectListResponse, parseProjectResponse } from './project-schemas';
 import type {
   ArchiveProjectInput,
   CreateProjectInput,
   Project,
   RestoreProjectInput,
-  UpdateProjectInput
-} from './types'
+  UpdateProjectInput,
+} from './types';
 
 export const projectApi = api.injectEndpoints({
-  endpoints: builder => ({
+  endpoints: (builder) => ({
     getProjects: builder.query<Project[], { organizationId: string }>({
-      query: ({ organizationId }) =>
-        `organizations/${encodeURIComponent(organizationId)}/projects`,
+      query: ({ organizationId }) => `organizations/${encodeURIComponent(organizationId)}/projects`,
       transformResponse: parseProjectListResponse,
-      providesTags: (_result, _error, { organizationId }) => [
-        { type: 'Projects', id: organizationId }
-      ]
+      providesTags: (_result, _error, { organizationId }) => [{ type: 'Projects', id: organizationId }],
     }),
     createProject: builder.mutation<{ project: Project }, CreateProjectInput>({
       query: ({ organizationId, ...body }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/projects`,
         method: 'POST',
-        body
+        body,
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId }) => [
-        { type: 'Projects', id: organizationId }
-      ]
+      invalidatesTags: (_result, _error, { organizationId }) => [{ type: 'Projects', id: organizationId }],
     }),
     updateProject: builder.mutation<{ project: Project }, UpdateProjectInput>({
       query: ({ organizationId, projectId, ...body }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/projects/${encodeURIComponent(projectId)}`,
         method: 'PATCH',
-        body
+        body,
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId }) => [
-        { type: 'Projects', id: organizationId }
-      ]
+      invalidatesTags: (_result, _error, { organizationId }) => [{ type: 'Projects', id: organizationId }],
     }),
     archiveProject: builder.mutation<{ project: Project }, ArchiveProjectInput>({
       query: ({ organizationId, projectId, reason }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/projects/${encodeURIComponent(projectId)}/archive`,
         method: 'POST',
-        body: { reason }
+        body: { reason },
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId }) => [
-        { type: 'Projects', id: organizationId }
-      ]
+      invalidatesTags: (_result, _error, { organizationId }) => [{ type: 'Projects', id: organizationId }],
     }),
     restoreProject: builder.mutation<{ project: Project }, RestoreProjectInput>({
       query: ({ organizationId, projectId, reason }) => ({
         url: `organizations/${encodeURIComponent(organizationId)}/projects/${encodeURIComponent(projectId)}/restore`,
         method: 'POST',
-        body: { reason }
+        body: { reason },
       }),
       transformResponse: parseProjectResponse,
-      invalidatesTags: (_result, _error, { organizationId }) => [
-        { type: 'Projects', id: organizationId }
-      ]
-    })
+      invalidatesTags: (_result, _error, { organizationId }) => [{ type: 'Projects', id: organizationId }],
+    }),
   }),
-  overrideExisting: false
-})
+  overrideExisting: false,
+});
 
 export const {
   useArchiveProjectMutation,
   useCreateProjectMutation,
   useGetProjectsQuery,
   useRestoreProjectMutation,
-  useUpdateProjectMutation
-} = projectApi
+  useUpdateProjectMutation,
+} = projectApi;

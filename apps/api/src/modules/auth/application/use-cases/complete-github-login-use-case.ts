@@ -30,9 +30,9 @@ export class CompleteGithubLoginUseCase {
   ) {}
 
   async execute(code: string): Promise<{
-    principal: AuthenticatedPrincipal
-    sessionToken: string | null
-    organizationSlug: string | null
+    principal: AuthenticatedPrincipal;
+    sessionToken: string | null;
+    organizationSlug: string | null;
   }> {
     if (!code.trim()) throw new InvalidInputError('OAuth code is required');
     const result = await this.github.exchangeCode(code);

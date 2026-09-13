@@ -18,10 +18,7 @@ import {
   organizationProjectIdParamSchema,
   updateProjectSchema,
 } from './dto/project.schemas.js';
-import {
-  projectListResponseSchema,
-  projectResponseEnvelopeSchema,
-} from './dto/project-response.schemas.js';
+import { projectListResponseSchema, projectResponseEnvelopeSchema } from './dto/project-response.schemas.js';
 
 @Controller('organizations/:organizationId/projects')
 @UseGuards(SessionGuard)
@@ -36,15 +33,10 @@ export class ProjectsController {
   ) {}
 
   @Get()
-  async list(
-    @Principal() principal: AuthenticatedPrincipal,
-    @Param() rawParams: unknown,
-  ) {
+  async list(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
     const { organizationId } = organizationIdParamSchema.parse(rawParams);
     const projects = await this.listProjects.execute(principal.id, organizationId);
-    return projectListResponseSchema.parse(
-      apiSuccess(projects.map(serializeProject)),
-    );
+    return projectListResponseSchema.parse(apiSuccess(projects.map(serializeProject)));
   }
 
   @Post()
@@ -55,24 +47,17 @@ export class ProjectsController {
     @Req() request: Request,
   ) {
     const { organizationId } = organizationIdParamSchema.parse(rawParams);
-    const project = await this.createProject.execute(
-      principal.id,
-      organizationId,
-      createProjectSchema.parse(body),
-      { requestId: getRequestId(request) },
-    );
-    return projectResponseEnvelopeSchema.parse(
-      apiSuccess({ project: serializeProject(project) }),
-    );
+    const project = await this.createProject.execute(principal.id, organizationId, createProjectSchema.parse(body), {
+      requestId: getRequestId(request),
+    });
+    return projectResponseEnvelopeSchema.parse(apiSuccess({ project: serializeProject(project) }));
   }
 
   @Get(':id')
   async get(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown) {
     const { organizationId, id } = organizationProjectIdParamSchema.parse(rawParams);
     const project = await this.getProject.execute(principal.id, organizationId, id);
-    return projectResponseEnvelopeSchema.parse(
-      apiSuccess({ project: serializeProject(project) }),
-    );
+    return projectResponseEnvelopeSchema.parse(apiSuccess({ project: serializeProject(project) }));
   }
 
   @Patch(':id')
@@ -90,9 +75,7 @@ export class ProjectsController {
       updateProjectSchema.parse(body),
       { requestId: getRequestId(request) },
     );
-    return projectResponseEnvelopeSchema.parse(
-      apiSuccess({ project: serializeProject(project) }),
-    );
+    return projectResponseEnvelopeSchema.parse(apiSuccess({ project: serializeProject(project) }));
   }
 
   // Archive and restore are actions on an existing project, so they answer 200 with the updated
@@ -111,9 +94,7 @@ export class ProjectsController {
       requestId: getRequestId(request),
       reason,
     });
-    return projectResponseEnvelopeSchema.parse(
-      apiSuccess({ project: serializeProject(project) }),
-    );
+    return projectResponseEnvelopeSchema.parse(apiSuccess({ project: serializeProject(project) }));
   }
 
   @Post(':id/restore')
@@ -130,9 +111,7 @@ export class ProjectsController {
       requestId: getRequestId(request),
       reason,
     });
-    return projectResponseEnvelopeSchema.parse(
-      apiSuccess({ project: serializeProject(project) }),
-    );
+    return projectResponseEnvelopeSchema.parse(apiSuccess({ project: serializeProject(project) }));
   }
 }
 

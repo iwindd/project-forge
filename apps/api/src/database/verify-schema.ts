@@ -199,9 +199,7 @@ async function verifySchema() {
     ] as const;
     const nullableRequiredColumns = requiredNotNullColumns
       .filter(([table, column]) =>
-        columnRows.some(
-          (row) => row.table_name === table && row.column_name === column && row.is_nullable !== 'NO',
-        ),
+        columnRows.some((row) => row.table_name === table && row.column_name === column && row.is_nullable !== 'NO'),
       )
       .map(([table, column]) => `${table}.${column}`);
     if (nullableRequiredColumns.length) {
@@ -314,9 +312,7 @@ async function verifySchema() {
       [seedOrganizationSlug],
     );
     const seededRoleCodes = new Set(seededRoleRows.map((row) => row.code));
-    const missingSeededRoleCodes = ['OWNER', 'ADMIN', 'MEMBER'].filter(
-      (code) => !seededRoleCodes.has(code),
-    );
+    const missingSeededRoleCodes = ['OWNER', 'ADMIN', 'MEMBER'].filter((code) => !seededRoleCodes.has(code));
     if (missingSeededRoleCodes.length) {
       throw new Error(`Seed organization roles missing: ${missingSeededRoleCodes.join(', ')}`);
     }
@@ -343,7 +339,9 @@ async function verifySchema() {
       [seedUserId, seedOrganizationSlug],
     );
     if (seededOwners.length !== 1) {
-      throw new Error(`Seed organization verification expected one active Owner membership, found ${seededOwners.length}`);
+      throw new Error(
+        `Seed organization verification expected one active Owner membership, found ${seededOwners.length}`,
+      );
     }
 
     const seededConnections = await rows(

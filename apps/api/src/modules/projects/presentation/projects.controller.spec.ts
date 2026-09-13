@@ -44,9 +44,7 @@ function createController() {
 }
 
 function useCaseMock(controller: ProjectsController, name: string) {
-  return vi.mocked(
-    (controller as unknown as Record<string, { execute: ReturnType<typeof vi.fn> }>)[name].execute,
-  );
+  return vi.mocked((controller as unknown as Record<string, { execute: ReturnType<typeof vi.fn> }>)[name].execute);
 }
 
 describe('ProjectsController', () => {
@@ -68,9 +66,16 @@ describe('ProjectsController', () => {
     await expect(controller.list(principal, { organizationId })).resolves.toEqual({
       data: [expect.objectContaining({ id: projectId })],
     });
-    await expect(controller.create(principal, { organizationId }, {
-      githubUrl: project.githubUrl,
-    }, request())).resolves.toEqual({
+    await expect(
+      controller.create(
+        principal,
+        { organizationId },
+        {
+          githubUrl: project.githubUrl,
+        },
+        request(),
+      ),
+    ).resolves.toEqual({
       data: { project: expect.objectContaining({ createdAt: now.toISOString() }) },
     });
     await expect(controller.get(principal, { organizationId, id: projectId })).resolves.toEqual({
@@ -133,9 +138,9 @@ describe('ProjectsController', () => {
     const restore = useCaseMock(controller, 'restoreProject');
     restore.mockRejectedValue(new ConflictError('Archived projects cannot be updated'));
 
-    await expect(
-      controller.restore(principal, { organizationId, id: projectId }, {}, request()),
-    ).rejects.toMatchObject({ code: 'CONFLICT', status: 409 });
+    await expect(controller.restore(principal, { organizationId, id: projectId }, {}, request())).rejects.toMatchObject(
+      { code: 'CONFLICT', status: 409 },
+    );
   });
 
   it('passes the request ID into create and update', async () => {

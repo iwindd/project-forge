@@ -17,10 +17,7 @@ import { GetProjectUseCase } from '../application/use-cases/get-project-use-case
 import { ListProjectsUseCase } from '../application/use-cases/list-projects-use-case.js';
 import { RestoreProjectUseCase } from '../application/use-cases/restore-project-use-case.js';
 import { UpdateProjectUseCase } from '../application/use-cases/update-project-use-case.js';
-import {
-  DUPLICATE_REPOSITORY_CONFLICT_MESSAGE,
-  PROJECT_REPOSITORY,
-} from '../application/ports/project.repository.js';
+import { DUPLICATE_REPOSITORY_CONFLICT_MESSAGE, PROJECT_REPOSITORY } from '../application/ports/project.repository.js';
 import type { ProjectRepository } from '../application/ports/project.repository.js';
 import { ProjectStatus } from '../domain/project.js';
 import type { ProjectRecord } from '../domain/project.js';
@@ -97,24 +94,13 @@ describe('projects HTTP contracts', () => {
     findByOrganizationId: async (scopedOrganizationId: string) =>
       records.filter((record) => record.organizationId === scopedOrganizationId),
     findByOrganizationAndId: async (scopedOrganizationId: string, id: string) =>
-      records.find(
-        (record) => record.organizationId === scopedOrganizationId && record.id === id,
-      ) ?? null,
+      records.find((record) => record.organizationId === scopedOrganizationId && record.id === id) ?? null,
     findByOrganizationAndGithubUrl: async (scopedOrganizationId: string, githubUrl: string) =>
-      records.find(
-        (record) => record.organizationId === scopedOrganizationId && record.githubUrl === githubUrl,
-      ) ?? null,
-    transitionStatus: async ({
-      organizationId: scopedOrganizationId,
-      id,
-      from,
-      to,
-      archivedAt,
-      updatedAt,
-    }) => {
+      records.find((record) => record.organizationId === scopedOrganizationId && record.githubUrl === githubUrl) ??
+      null,
+    transitionStatus: async ({ organizationId: scopedOrganizationId, id, from, to, archivedAt, updatedAt }) => {
       const index = records.findIndex(
-        (candidate) =>
-          candidate.organizationId === scopedOrganizationId && candidate.id === id,
+        (candidate) => candidate.organizationId === scopedOrganizationId && candidate.id === id,
       );
       if (index === -1) return null;
       const record = records[index];
@@ -138,9 +124,7 @@ describe('projects HTTP contracts', () => {
   const security = { record: vi.fn(async () => undefined) };
   const unitOfWork = { run: vi.fn(async <T>(work: () => Promise<T>) => work()) };
   const authenticator = {
-    principalFromToken: vi.fn(async (token: string | undefined) =>
-      token === 'valid-session' ? principal : null,
-    ),
+    principalFromToken: vi.fn(async (token: string | undefined) => (token === 'valid-session' ? principal : null)),
   };
 
   function authenticatedHeaders(requestId: string): Record<string, string> {
@@ -229,9 +213,7 @@ describe('projects HTTP contracts', () => {
       requestId: 'projects-422-validation',
     });
     expect(body.error.details).toEqual({
-      issues: expect.arrayContaining([
-        expect.objectContaining({ path: ['githubUrl'] }),
-      ]),
+      issues: expect.arrayContaining([expect.objectContaining({ path: ['githubUrl'] })]),
     });
     expect(records).toHaveLength(2);
     expect(audit.record).not.toHaveBeenCalled();
@@ -294,13 +276,10 @@ describe('projects HTTP contracts', () => {
       },
     });
 
-    organizations.requireProjectAccess.mockRejectedValueOnce(
-      new NotFoundError('Organization was not found'),
-    );
-    const organizationResponse = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects`,
-      { headers: authenticatedHeaders('projects-404-organization') },
-    );
+    organizations.requireProjectAccess.mockRejectedValueOnce(new NotFoundError('Organization was not found'));
+    const organizationResponse = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects`, {
+      headers: authenticatedHeaders('projects-404-organization'),
+    });
     const organizationBody = (await organizationResponse.json()) as {
       error: Record<string, unknown>;
     };
@@ -334,14 +313,11 @@ describe('projects HTTP contracts', () => {
       },
     });
 
-    const duplicateResponse = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects`,
-      {
-        method: 'POST',
-        headers: jsonHeaders('projects-409-duplicate'),
-        body: JSON.stringify({ githubUrl: 'https://github.com/acme/demo' }),
-      },
-    );
+    const duplicateResponse = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects`, {
+      method: 'POST',
+      headers: jsonHeaders('projects-409-duplicate'),
+      body: JSON.stringify({ githubUrl: 'https://github.com/acme/demo' }),
+    });
     const duplicateBody = await duplicateResponse.json();
 
     expect(duplicateResponse.status).toBe(409);
@@ -370,10 +346,9 @@ describe('projects HTTP contracts', () => {
       ]),
     );
 
-    const getResponse = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${archivedProjectId}`,
-      { headers: authenticatedHeaders('projects-archived-get') },
-    );
+    const getResponse = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects/${archivedProjectId}`, {
+      headers: authenticatedHeaders('projects-archived-get'),
+    });
     const getBody = await getResponse.json();
 
     expect(getResponse.status).toBe(200);
@@ -389,14 +364,11 @@ describe('projects HTTP contracts', () => {
   });
 
   it('applies a single-field PATCH without resetting the fields the client omitted', async () => {
-    const response = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
-      {
-        method: 'PATCH',
-        headers: jsonHeaders('projects-patch-single-field'),
-        body: JSON.stringify({ nodeVersion: '22.0.0' }),
-      },
-    );
+    const response = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`, {
+      method: 'PATCH',
+      headers: jsonHeaders('projects-patch-single-field'),
+      body: JSON.stringify({ nodeVersion: '22.0.0' }),
+    });
     const body = (await response.json()) as { data: { project: Record<string, unknown> } };
 
     expect(response.status).toBe(200);
@@ -429,14 +401,11 @@ describe('projects HTTP contracts', () => {
   });
 
   it('leaves the project unchanged for an empty-body PATCH', async () => {
-    const response = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
-      {
-        method: 'PATCH',
-        headers: jsonHeaders('projects-patch-empty'),
-        body: JSON.stringify({}),
-      },
-    );
+    const response = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`, {
+      method: 'PATCH',
+      headers: jsonHeaders('projects-patch-empty'),
+      body: JSON.stringify({}),
+    });
 
     expect(response.status).toBe(200);
 
@@ -464,14 +433,11 @@ describe('projects HTTP contracts', () => {
   });
 
   it('does not rewrite the project name from the repository name on a branch-only PATCH', async () => {
-    const response = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
-      {
-        method: 'PATCH',
-        headers: jsonHeaders('projects-patch-branch-only'),
-        body: JSON.stringify({ sourceBranch: 'release-2' }),
-      },
-    );
+    const response = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`, {
+      method: 'PATCH',
+      headers: jsonHeaders('projects-patch-branch-only'),
+      body: JSON.stringify({ sourceBranch: 'release-2' }),
+    });
 
     expect(response.status).toBe(200);
 
@@ -485,14 +451,11 @@ describe('projects HTTP contracts', () => {
   });
 
   it('records a differing before/after for a repository-only PATCH', async () => {
-    const response = await fetch(
-      `${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`,
-      {
-        method: 'PATCH',
-        headers: jsonHeaders('projects-patch-repository-only'),
-        body: JSON.stringify({ githubUrl: 'https://github.com/acme/renamed-demo' }),
-      },
-    );
+    const response = await fetch(`${baseUrl}/api/v1/organizations/${organizationId}/projects/${activeProjectId}`, {
+      method: 'PATCH',
+      headers: jsonHeaders('projects-patch-repository-only'),
+      body: JSON.stringify({ githubUrl: 'https://github.com/acme/renamed-demo' }),
+    });
     const body = (await response.json()) as { data: { project: Record<string, unknown> } };
 
     expect(response.status).toBe(200);

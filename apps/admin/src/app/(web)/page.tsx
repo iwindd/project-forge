@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
-import { getApplicationEntryPath } from '@/lib/application-entry'
-import { getOrganizations } from '@/servers/organization/queries/get-organizations'
+import { auth } from '@/auth';
+import { getApplicationEntryPath } from '@/lib/application-entry';
+import { getOrganizations } from '@/servers/organization/queries/get-organizations';
 import { redirect } from 'next/navigation';
 
 export default async function HomePage() {
@@ -10,6 +10,6 @@ export default async function HomePage() {
     redirect('/login');
   }
 
-  const organizations = await getOrganizations()
-  redirect(getApplicationEntryPath(organizations))
+  const organizations = await getOrganizations();
+  redirect(getApplicationEntryPath(organizations));
 }
