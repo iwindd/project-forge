@@ -43,6 +43,8 @@ describe('ListGithubIssuesUseCase', () => {
     github.listIssues = vi.fn().mockRejectedValue(new ExternalServiceError('GitHub issues lookup failed'));
     const useCase = new ListGithubIssuesUseCase(connections, cipher, github);
 
-    await expect(useCase.execute({ userId: 'user-1', page: 1, pageSize: 25 })).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(useCase.execute({ userId: 'user-1', page: 1, pageSize: 25 })).rejects.toBeInstanceOf(
+      ExternalServiceError,
+    );
   });
 });
