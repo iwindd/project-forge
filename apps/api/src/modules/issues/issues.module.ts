@@ -8,9 +8,6 @@ import { IssuesController } from './presentation/issues.controller.js';
 @Module({
   imports: [AuthModule],
   controllers: [IssuesController],
-  providers: [
-    { provide: GITHUB_ISSUES, useClass: GithubIssuesAdapter },
-    ListGithubIssuesUseCase,
-  ],
+  providers: [{ provide: GITHUB_ISSUES, useClass: GithubIssuesAdapter }, ListGithubIssuesUseCase],
 })
 export class IssuesModule {}
