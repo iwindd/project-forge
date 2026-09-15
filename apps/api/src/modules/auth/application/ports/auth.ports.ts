@@ -29,6 +29,7 @@ export interface TokenHasherPort {
 
 export interface SecretCipherPort {
   encrypt(value: string): string;
+  decrypt(value: string): string;
 }
 
 export interface GithubOAuthPort {
