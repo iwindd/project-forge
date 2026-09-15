@@ -47,7 +47,8 @@ export class GithubIssuesAdapter implements GithubIssuesPort {
             return typeof name === 'string' ? [name] : [];
           }),
           assignees: assignees.flatMap((assignee) => {
-            const login = typeof assignee === 'object' && assignee !== null ? (assignee as Record<string, unknown>).login : null;
+            const login =
+              typeof assignee === 'object' && assignee !== null ? (assignee as Record<string, unknown>).login : null;
             return typeof login === 'string' ? [login] : [];
           }),
           updatedAt: typeof issue.updated_at === 'string' ? issue.updated_at : '',
