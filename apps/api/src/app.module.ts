@@ -12,6 +12,7 @@ import { UsersModule } from './modules/users/users.module.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 import { ProfileModule } from './modules/profile/profile.module.js';
 import { IssuesModule } from './modules/issues/issues.module.js';
+import { PullRequestsModule } from './modules/pull-requests/pull-requests.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { IssuesModule } from './modules/issues/issues.module.js';
     UsersModule,
     OrganizationsModule,
     ProfileModule,
+    PullRequestsModule,
     ProjectsModule,
     IssuesModule,
     HealthModule,
