@@ -20,15 +20,18 @@ export class AesSecretCipherAdapter implements SecretCipherPort {
 
   decrypt(value: string): string {
     if (!this.config.sessionSecret) throw new ConfigurationError('SESSION_SECRET is not configured');
-    const [version, ivValue, tagValue, ciphertextValue] = value.split('.');
-    if (version !== 'v1' || !ivValue || !tagValue || !ciphertextValue) {
-      throw new ConfigurationError('Encrypted secret has an invalid format');
+    try {
+      const [version, encodedIv, encodedTag, encodedCiphertext] = value.split('.');
+      if (version !== 'v1' || !encodedIv || !encodedTag || !encodedCiphertext) throw new Error('Invalid ciphertext');
+      const decipher = createDecipheriv(
+        'aes-256-gcm',
+        createHash('sha256').update(this.config.sessionSecret).digest(),
+        Buffer.from(encodedIv, 'base64url'),
+      );
+      decipher.setAuthTag(Buffer.from(encodedTag, 'base64url'));
+      return Buffer.concat([decipher.update(Buffer.from(encodedCiphertext, 'base64url')), decipher.final()]).toString('utf8');
+    } catch {
+      throw new ConfigurationError('Stored connection credentials could not be decrypted');
     }
-    const key = createHash('sha256').update(this.config.sessionSecret).digest();
-    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivValue, 'base64url'));
-    decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
-    return Buffer.concat([decipher.update(Buffer.from(ciphertextValue, 'base64url')), decipher.final()]).toString(
-      'utf8',
-    );
   }
 }
