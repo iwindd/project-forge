@@ -2,7 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NotFoundError } from '../../../../common/errors/application-error.js';
 import { EntityManager } from '@mikro-orm/core';
 import { SECRET_CIPHER, GITHUB_PULL_REQUESTS } from '../../../auth/application/ports/auth.ports.js';
-import type { GithubPullRequestPage, GithubPullRequestPort, SecretCipherPort } from '../../../auth/application/ports/auth.ports.js';
+import type {
+  GithubPullRequestPage,
+  GithubPullRequestPort,
+  SecretCipherPort,
+} from '../../../auth/application/ports/auth.ports.js';
 import { ConnectionOrmEntity } from '../../../auth/infrastructure/persistence/connection.orm-entity.js';
 
 @Injectable()
@@ -18,6 +22,11 @@ export class ListConnectedPullRequestsUseCase {
     if (!connection?.accessTokenCiphertext || !connection.providerUsername) {
       throw new NotFoundError('A GitHub connection was not found');
     }
-    return this.github.list(this.cipher.decrypt(connection.accessTokenCiphertext), connection.providerUsername, page, perPage);
+    return this.github.list(
+      this.cipher.decrypt(connection.accessTokenCiphertext),
+      connection.providerUsername,
+      page,
+      perPage,
+    );
   }
 }

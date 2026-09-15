@@ -13,7 +13,10 @@ export class PullRequestsController {
 
   @Get()
   async list(@Principal() principal: AuthenticatedPrincipal, @Query() query: unknown) {
-    const result = await this.listPullRequests.execute(principal.id, ...Object.values(pullRequestListQuerySchema.parse(query)) as [number, number]);
+    const result = await this.listPullRequests.execute(
+      principal.id,
+      ...(Object.values(pullRequestListQuerySchema.parse(query)) as [number, number]),
+    );
     return pullRequestListResponseSchema.parse(apiSuccess(result));
   }
 }
