@@ -6,14 +6,12 @@ describe('ListConnectedPullRequestsUseCase', () => {
   it('resolves only the authenticated user GitHub connection and never returns its token', async () => {
     const github = { list: vi.fn().mockResolvedValue({ items: [], page: 1, perPage: 20, hasNextPage: false }) };
     const em = {
-      findOne: vi
-        .fn()
-        .mockResolvedValue({
-          userId: 'user-1',
-          provider: 'GITHUB',
-          providerUsername: 'forge',
-          accessTokenCiphertext: 'cipher',
-        }),
+      findOne: vi.fn().mockResolvedValue({
+        userId: 'user-1',
+        provider: 'GITHUB',
+        providerUsername: 'forge',
+        accessTokenCiphertext: 'cipher',
+      }),
     };
     const useCase = new ListConnectedPullRequestsUseCase(
       em as never,
