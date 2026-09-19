@@ -60,18 +60,19 @@ export class MikroOrmUserRepository implements UserRepository {
           updatedAt: user.updatedAt,
         }),
       );
-      return;
+    } else {
+      entity.githubUserId = user.githubUserId;
+      entity.githubLogin = user.githubLogin;
+      entity.name = user.name;
+      entity.avatarUrl = user.avatarUrl;
+      entity.role = user.role;
+      entity.accessStatus = user.accessStatus;
+      entity.isActive = user.isActive;
+      entity.createdAt = user.createdAt;
+      entity.updatedAt = user.updatedAt;
+      this.em.persist(entity);
     }
-    entity.githubUserId = user.githubUserId;
-    entity.githubLogin = user.githubLogin;
-    entity.name = user.name;
-    entity.avatarUrl = user.avatarUrl;
-    entity.role = user.role;
-    entity.accessStatus = user.accessStatus;
-    entity.isActive = user.isActive;
-    entity.createdAt = user.createdAt;
-    entity.updatedAt = user.updatedAt;
-    this.em.persist(entity);
+    await this.em.flush();
   }
 }
 
