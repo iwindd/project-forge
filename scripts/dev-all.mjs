@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const isWindows = process.platform === 'win32';
@@ -36,6 +37,41 @@ function readEnvFile(path) {
 
 if (!existsSync(cloudflaredConfig)) {
   throw new Error(`Cloudflare config not found: ${cloudflaredConfig}`);
+}
+
+function assertAddressAvailable(port, host) {
+  return new Promise((resolveAddress, rejectAddress) => {
+    const server = createServer();
+    const onError = (error) => {
+      server.close();
+      if (error.code === 'EADDRINUSE') {
+        rejectAddress(
+          new Error(
+            `[preflight] Port ${port} is already in use. Stop the existing Project Forge process before running pnpm dev:all.`,
+          ),
+        );
+        return;
+      }
+      if (host === '::' && error.code === 'EADDRNOTAVAIL') {
+        resolveAddress();
+        return;
+      }
+      rejectAddress(error);
+    };
+    server.once('error', onError);
+    server.listen({ host, port }, () => {
+      server.close(resolveAddress);
+    });
+  });
+}
+
+async function assertPortAvailable(port) {
+  await assertAddressAvailable(port, '0.0.0.0');
+  await assertAddressAvailable(port, '::');
+}
+
+async function preflight() {
+  await Promise.all([assertPortAvailable(5050), assertPortAvailable(5051)]);
 }
 
 const apiEnv = { ...readEnvFile(resolve(root, '.env')), ...process.env };
@@ -109,6 +145,8 @@ async function shutdown(code = 0) {
 
 process.once('SIGINT', () => void shutdown(0));
 process.once('SIGTERM', () => void shutdown(0));
+
+await preflight();
 
 start('api', pnpmCommand, ['--filter', '@project-forge/api', 'dev'], apiEnv);
 start('admin', pnpmCommand, [
