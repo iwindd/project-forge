@@ -3,6 +3,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  allowedDevOrigins: ['forge.iwindd.dev'],
   experimental: {
     // Keep static-generation workers stable on the Windows build environment.
     cpus: 4,
