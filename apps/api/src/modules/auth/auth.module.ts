@@ -66,6 +66,13 @@ import { OrganizationService } from '../organizations/application/organization.s
     SessionGuard,
     AdminGuard,
   ],
-  exports: [SessionGuard, AdminGuard, SESSION_AUTHENTICATOR, ProfileConnectionRepository, SECRET_CIPHER],
+  exports: [
+    SessionGuard,
+    AdminGuard,
+    SecurityModule,
+    SESSION_AUTHENTICATOR,
+    ProfileConnectionRepository,
+    SECRET_CIPHER,
+  ],
 })
 export class AuthModule {}
