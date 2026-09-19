@@ -53,3 +53,49 @@ _Avoid_: Project role, project ownership
 **Manage Organization**:
 The organization permission governing membership, invitations, and organization-role administration.
 _Avoid_: Manage project
+
+## Hermes runtime and project work
+
+**Hermes Gateway Connection**:
+A User-owned connection to the Hermes runtime that provides Profiles and Sessions for that User. It is independent of Organization ownership.
+_Avoid_: Organization gateway, Agent connection
+
+**Personal Agent**:
+A User-owned Agent backed by a real Hermes Profile on one Hermes Gateway Connection. The User may select the same Personal Agent in any Project they can access.
+_Avoid_: Organization Agent, Project Agent
+
+**Hermes Session**:
+A conversation and execution context owned by Hermes and referenced by Project Forge for authorization, navigation, and optional Project work association.
+_Avoid_: Project Forge transcript
+
+**Personal Chat**:
+A Hermes Session used as normal personal Agent conversation without Feature, Ticket, or Project confirmation gates.
+_Avoid_: Unmanaged Project work
+
+**Registered Workspace**:
+A Project's approved local repository location, resolved server-side from an opaque identifier before Project Work can inspect or mutate files.
+_Avoid_: Browser path, arbitrary workspace
+
+**Project Work**:
+Agent activity associated with a Project and Registered Workspace and governed by Project Forge's Feature, Spec, Ticket, Plan, and implementation confirmations.
+_Avoid_: Personal Chat
+
+**Feature**:
+A proposed Project outcome that moves through requirements discovery and Spec review before it can produce Project Tickets.
+_Avoid_: Workflow
+
+**Project Ticket**:
+An approved, verifiable slice of Project Work produced from a confirmed Spec and Ticket Draft.
+_Avoid_: Draft issue, Workflow task
+
+**Agent Run**:
+One durable execution of a Personal Agent associated with a Hermes Session and optionally a Project, Feature, or Project Ticket.
+_Avoid_: Workflow
+
+**Interactive Request**:
+A question or permission request raised by Hermes during a Session and answered through a typed Project Forge interface while preserving the originating request identity.
+_Avoid_: Chat message (when the interaction expects a structured response)
+
+**Product Confirmation**:
+An explicit User decision that advances Project Forge state, such as Confirm Spec, Confirm Tickets, Confirm Plan, or Implement. It is distinct from a Hermes tool approval.
+_Avoid_: Tool approval
