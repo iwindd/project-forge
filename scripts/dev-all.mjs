@@ -49,14 +49,27 @@ for (const key of ['SESSION_SECRET', 'AUTH_SECRET']) {
 const children = new Map();
 let shuttingDown = false;
 
+function quoteCmdArg(value) {
+  const text = String(value);
+  if (!/[\s"&|<>^]/.test(text)) return text;
+  return `"${text.replace(/["^]/g, '^$&')}"`;
+}
+
+function spawnProcess(command, args, options) {
+  if (isWindows && /\.(cmd|bat)$/i.test(command)) {
+    const commandLine = [command, ...args].map(quoteCmdArg).join(' ');
+    return spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', commandLine], options);
+  }
+  return spawn(command, args, options);
+}
+
 function start(name, command, args, env = process.env) {
   console.log(`[${name}] starting`);
-  const child = spawn(command, args, {
+  const child = spawnProcess(command, args, {
     cwd: root,
     env,
     stdio: 'inherit',
     windowsHide: false,
-    shell: isWindows,
   });
   children.set(name, child);
   child.once('error', (error) => {
@@ -101,13 +114,7 @@ start('api', pnpmCommand, ['--filter', '@project-forge/api', 'dev'], apiEnv);
 start('admin', pnpmCommand, [
   '--filter',
   '@project-forge/admin',
-  'exec',
-  'next',
   'dev',
-  '--hostname',
-  '0.0.0.0',
-  '--port',
-  '5051',
 ], process.env);
 start('cloudflared', cloudflaredCommand, [
   '--config',
