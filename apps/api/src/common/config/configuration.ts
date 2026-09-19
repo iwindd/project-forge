@@ -17,6 +17,35 @@ const environmentSchema = z.object({
   GITHUB_CALLBACK_URL: z.string().url().default('http://localhost:5050/api/v1/auth/github/callback'),
   GITHUB_SCOPES: z.string().default('read:user user:email'),
   ADMIN_GITHUB_IDS: z.string().default(''),
+  HERMES_COMMAND: z.string().trim().min(1).default('hermes'),
+  HERMES_GATEWAY_URL: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z
+      .string()
+      .url()
+      .refine(
+        (value) => value.startsWith('ws://') || value.startsWith('wss://'),
+        'HERMES_GATEWAY_URL must use ws:// or wss://',
+      )
+      .optional(),
+  ),
+  HERMES_GATEWAY_HOST: z.string().trim().min(1).default('127.0.0.1'),
+  HERMES_GATEWAY_PORT: z.coerce.number().int().min(1).max(65535).default(9119),
+  HERMES_GATEWAY_PATH: z.string().regex(/^\//).default('/api/ws'),
+  HERMES_GATEWAY_TOKEN: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().min(1).optional(),
+  ),
+  HERMES_AUTOSTART: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  HERMES_ISOLATED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  HERMES_CONNECT_TIMEOUT_MS: z.coerce.number().int().min(250).max(120_000).default(10_000),
+  HERMES_START_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(15_000),
 });
 
 export function validateEnvironment(environment: Record<string, unknown>) {
