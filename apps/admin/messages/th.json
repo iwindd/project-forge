@@ -63,6 +63,31 @@
     "greeting": "สวัสดี!",
     "welcome": "ยินดีต้อนรับกลับเข้าสู่ระบบจัดการเว็บไซต์"
   },
+  "HermesRuntime": {
+    "title": "Hermes Runtime",
+    "description": "ตรวจสอบการเชื่อมต่อ Hermes ของเครื่องที่กำลังรัน Project Forge",
+    "loading": "กำลังตรวจสอบ Hermes...",
+    "loadFailed": "ไม่สามารถอ่านสถานะ Hermes ได้",
+    "retry": "ลองใหม่",
+    "refresh": "ตรวจสอบอีกครั้ง",
+    "connect": "เชื่อมต่อ Hermes",
+    "connectFailed": "การเชื่อมต่อ Hermes ไม่สำเร็จ",
+    "endpoint": "ปลายทาง: {host}:{port}",
+    "version": "เวอร์ชัน {version}",
+    "capabilities": "ความสามารถที่ตรวจพบ {count} รายการ",
+    "states": {
+      "unconfigured": "ยังไม่ได้เชื่อมต่อ",
+      "detecting": "กำลังตรวจสอบ",
+      "starting": "กำลังเริ่ม Hermes",
+      "connecting": "กำลังเชื่อมต่อ",
+      "negotiating": "กำลังตรวจสอบความสามารถ",
+      "ready": "พร้อมใช้งาน",
+      "missing": "ไม่พบ Hermes",
+      "incompatible": "เวอร์ชันไม่รองรับ",
+      "unhealthy": "เชื่อมต่อไม่ได้",
+      "port-conflict": "พอร์ตถูกใช้งาน"
+    }
+  },
   "Profile": {
     "title": "โปรไฟล์",
     "logging": "ประวัติการทำรายการ"

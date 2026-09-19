@@ -7,6 +7,7 @@ import { DatabaseModule } from './common/database/database.module.js';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { HermesRuntimeModule } from './modules/hermes-runtime/hermes-runtime.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
@@ -28,6 +29,7 @@ import { IssuesModule } from './modules/issues/issues.module.js';
     PullRequestsModule,
     ProjectsModule,
     IssuesModule,
+    HermesRuntimeModule,
     HealthModule,
   ],
 })
