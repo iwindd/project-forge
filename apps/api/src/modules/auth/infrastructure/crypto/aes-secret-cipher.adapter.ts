@@ -29,7 +29,9 @@ export class AesSecretCipherAdapter implements SecretCipherPort {
         Buffer.from(encodedIv, 'base64url'),
       );
       decipher.setAuthTag(Buffer.from(encodedTag, 'base64url'));
-      return Buffer.concat([decipher.update(Buffer.from(encodedCiphertext, 'base64url')), decipher.final()]).toString('utf8');
+      return Buffer.concat([decipher.update(Buffer.from(encodedCiphertext, 'base64url')), decipher.final()]).toString(
+        'utf8',
+      );
     } catch {
       throw new ConfigurationError('Stored connection credentials could not be decrypted');
     }
