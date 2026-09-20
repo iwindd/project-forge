@@ -2,6 +2,7 @@ import {
   IconFolders,
   IconHistory,
   IconLayoutDashboard,
+  IconRobot,
   IconUser,
   IconUsers,
   type TablerIcon,
@@ -83,6 +84,18 @@ export const organizationNavigation: AdminNavigationGroup[] = [
       routeItem('projects', {
         icon: IconFolders,
         labelKey: 'projects',
+      }),
+    ],
+  },
+  {
+    id: 'agents',
+    label: 'Agents',
+    labelKey: 'agents',
+    hideHeading: true,
+    items: [
+      routeItem('agents', {
+        icon: IconRobot,
+        labelKey: 'agents',
       }),
     ],
   },

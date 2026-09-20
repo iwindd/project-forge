@@ -243,6 +243,45 @@ const server = http.createServer((req, res) => {
         profile: null,
       }),
     );
+  if (path === 'hermes/agents' && req.method === 'GET')
+    return send(
+      req,
+      res,
+      200,
+      envelope({
+        agents: [
+          {
+            handle: 'shared-coder',
+            displayName: 'Shared Coder',
+            description: 'Shared local coding Agent',
+            isDefault: true,
+            model: 'gpt-5.6-luna',
+            provider: 'openai-codex',
+            skillCount: 3,
+            readiness: 'ready',
+            message: 'Ready to use',
+            action: 'use',
+            path: 'C:\\Users\\freew\\AppData\\Local\\hermes\\profiles\\shared-coder',
+          },
+          {
+            handle: 'offline-agent',
+            displayName: 'Offline Agent',
+            description: '',
+            isDefault: false,
+            model: 'gpt-5.6-luna',
+            provider: 'openai-codex',
+            skillCount: 0,
+            readiness: 'unavailable',
+            message: 'The configured provider is not available on this local runtime',
+            action: 'retry',
+          },
+        ],
+        runtime: { state: 'ready', message: 'Hermes is ready', action: null },
+        permissions: { canConfigure: true },
+        refreshedAt: '2026-09-20T00:00:00.000Z',
+        gatewayToken: 'must-not-reach-browser',
+      }),
+    );
   if (path === 'organizations') return send(req, res, 200, envelope([organization, secondOrganization]));
   if (path === 'profile' && req.method === 'GET') return send(req, res, 200, envelope({ profile, connections: [] }));
   if (path === 'profile' && req.method === 'PATCH') {
