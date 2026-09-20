@@ -110,6 +110,7 @@ const invitationTokens = new Map();
 const requestLog = [];
 const auditRecordsByScenario = new Map();
 let nextProjectId = 22;
+let sharedAgent = null;
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) });
 const errorEnvelope = (code, message, requestId) =>
   JSON.stringify({ error: { code, message, details: {}, requestId } });
@@ -234,7 +235,7 @@ const server = http.createServer((req, res) => {
           githubLogin: 'ada',
           name: 'Ada Lovelace',
           avatarUrl: null,
-          role: 'ADMIN',
+          role: scenario === 'regular-user' ? 'USER' : 'ADMIN',
           accessStatus: 'APPROVED',
           isActive: true,
           createdAt: profile.createdAt,
@@ -243,6 +244,59 @@ const server = http.createServer((req, res) => {
         profile: null,
       }),
     );
+  if (path === 'hermes/agents/options' && req.method === 'GET')
+    return send(
+      req,
+      res,
+      200,
+      envelope({
+        models: [{ provider: 'openai-codex', name: 'OpenAI Codex', models: ['gpt-5.6-luna'] }],
+        skills: ['skill-a'],
+        toolsets: [{ name: 'coding', label: 'Coding', description: 'Coding tools', toolCount: 4 }],
+        runtime: { state: 'ready', message: 'Hermes is ready', action: null },
+        refreshedAt: '2026-09-20T00:00:00.000Z',
+      }),
+    );
+  if (path === 'hermes/agents' && req.method === 'POST')
+    return readJson(req, (input) => {
+      sharedAgent = {
+        handle: input.handle,
+        displayName: input.displayName,
+        description: input.description,
+        isDefault: false,
+        model: input.model,
+        provider: input.provider,
+        skillCount: input.skills?.length ?? 0,
+        hasAvatar: Boolean(input.avatar),
+        readiness: 'ready',
+        message: 'Ready to use',
+        action: 'use',
+      };
+      send(
+        req,
+        res,
+        200,
+        envelope({
+          handle: input.handle,
+          status: 'ready',
+          agent: sharedAgent,
+          sections: {
+            identity: { status: 'applied' },
+            role: { status: 'applied' },
+            personality: { status: 'applied' },
+            model: { status: 'applied' },
+            skills: { status: 'applied' },
+            toolsets: { status: 'applied' },
+            avatar: { status: input.avatar ? 'applied' : 'skipped' },
+            readback: { status: 'applied' },
+            runtime: { status: 'applied' },
+            audit: { status: 'applied' },
+          },
+          requiresConfirmation: false,
+          refreshedAt: '2026-09-20T00:00:00.000Z',
+        }),
+      );
+    });
   if (path === 'hermes/agents' && req.method === 'GET')
     return send(
       req,
@@ -258,6 +312,7 @@ const server = http.createServer((req, res) => {
             model: 'gpt-5.6-luna',
             provider: 'openai-codex',
             skillCount: 3,
+            hasAvatar: false,
             readiness: 'ready',
             message: 'Ready to use',
             action: 'use',
@@ -271,13 +326,15 @@ const server = http.createServer((req, res) => {
             model: 'gpt-5.6-luna',
             provider: 'openai-codex',
             skillCount: 0,
+            hasAvatar: false,
             readiness: 'unavailable',
             message: 'The configured provider is not available on this local runtime',
             action: 'retry',
           },
+          ...(sharedAgent ? [sharedAgent] : []),
         ],
         runtime: { state: 'ready', message: 'Hermes is ready', action: null },
-        permissions: { canConfigure: true },
+        permissions: { canConfigure: scenario !== 'regular-user' },
         refreshedAt: '2026-09-20T00:00:00.000Z',
         gatewayToken: 'must-not-reach-browser',
       }),

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuditModule } from '../../common/audit/audit.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { HermesRuntimeService } from './application/hermes-runtime.service.js';
 import {
@@ -14,6 +15,8 @@ import { HermesProcessManager } from './infrastructure/hermes-process.manager.js
 import { HermesAgentsController } from './presentation/hermes-agents.controller.js';
 import { HermesRuntimeController } from './presentation/hermes-runtime.controller.js';
 import { ListSharedAgentsUseCase } from './application/use-cases/list-shared-agents-use-case.js';
+import { GetSharedAgentOptionsUseCase } from './application/use-cases/get-shared-agent-options-use-case.js';
+import { CreateSharedAgentUseCase } from './application/use-cases/create-shared-agent-use-case.js';
 
 export function buildHermesRuntimeConfig(config: ConfigService): HermesRuntimeConfig {
   const configuredEndpoint = config.get<string>('HERMES_GATEWAY_URL')?.trim() || undefined;
@@ -44,7 +47,7 @@ const gatewayFactory: HermesGatewayFactory = ({ endpoint, token, connectTimeoutM
   new HermesGatewayClient(endpoint, token, connectTimeoutMs);
 
 @Module({
-  imports: [ConfigModule, AuthModule],
+  imports: [ConfigModule, AuthModule, AuditModule],
   controllers: [HermesRuntimeController, HermesAgentsController],
   providers: [
     {
@@ -63,6 +66,8 @@ const gatewayFactory: HermesGatewayFactory = ({ endpoint, token, connectTimeoutM
     },
     HermesRuntimeService,
     ListSharedAgentsUseCase,
+    GetSharedAgentOptionsUseCase,
+    CreateSharedAgentUseCase,
   ],
   exports: [HermesRuntimeService],
 })
