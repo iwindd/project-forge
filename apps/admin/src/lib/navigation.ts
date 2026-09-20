@@ -1,7 +1,7 @@
 import {
   IconFolders,
   IconHistory,
-  IconLayoutDashboard,
+  IconMessageCircle2,
   IconRobot,
   IconUser,
   IconUsers,
@@ -65,14 +65,14 @@ function routeItem(routeName: string, options: RouteItemOptions = {}): AdminNavi
 
 export const organizationNavigation: AdminNavigationGroup[] = [
   {
-    id: 'overview',
-    label: 'ภาพรวม',
-    labelKey: 'overview',
+    id: 'chat',
+    label: 'Chat',
+    labelKey: 'chat',
     hideHeading: true,
     items: [
-      routeItem('overview', {
-        icon: IconLayoutDashboard,
-        labelKey: 'overview',
+      routeItem('chat', {
+        icon: IconMessageCircle2,
+        labelKey: 'chat',
       }),
     ],
   },
@@ -101,22 +101,22 @@ export const organizationNavigation: AdminNavigationGroup[] = [
   },
   {
     id: 'audit',
-    label: 'ประวัติการทำรายการ',
-    labelKey: 'auditLogs',
+    label: 'Activity',
+    labelKey: 'activity',
     hideHeading: true,
     permissionKey: 'manageOrganization',
     items: [
       routeItem('auditLogs', {
         icon: IconHistory,
-        labelKey: 'auditLogs',
+        labelKey: 'activity',
         permissionKey: 'manageOrganization',
       }),
     ],
   },
   {
     id: 'settings',
-    label: 'ตั้งค่า',
-    labelKey: 'settings',
+    label: 'Administration',
+    labelKey: 'administration',
     permissionKey: 'manageOrganization',
     items: [
       routeItem('settings.members', {

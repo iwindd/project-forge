@@ -45,6 +45,7 @@ export const API_TAG_TYPES = [
   'Profile',
   'HermesRuntime',
   'HermesAgents',
+  'HermesSessions',
   'SecurityLogs',
 ] as const;
 

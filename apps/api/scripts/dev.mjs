@@ -27,7 +27,7 @@ const initialExitCode = await new Promise((resolveExit) => {
 if (initialExitCode !== 0) process.exit(initialExitCode);
 
 const compiler = runPackage(['exec', 'tsc', '-p', 'tsconfig.json', '--watch', '--preserveWatchOutput']);
-const server = spawnProcess(process.execPath, ['--watch', 'dist/src/main.js']);
+const server = spawnProcess(process.execPath, ['--watch', '--watch-path=dist', 'dist/src/main.js']);
 let stopping = false;
 
 function stop(code = 0) {

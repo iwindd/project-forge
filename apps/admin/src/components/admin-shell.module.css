@@ -1,8 +1,5 @@
-:global(:root) {
-  --admin-sidebar-width: 260px;
-}
-
 .appShell {
+  --admin-sidebar-width: 260px;
   --admin-header-height: 58px;
   --app-shell-border-color: var(--mantine-color-default-border);
   --shell-main-bg-color: var(--mantine-color-body);
@@ -41,6 +38,8 @@
 }
 
 .header {
+  position: relative;
+  z-index: 201 !important;
   --app-shell-border-color: var(--nav-surface-border-color) !important;
   background: var(--nav-header-bg-color);
   backdrop-filter: blur(20px);

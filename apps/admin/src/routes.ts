@@ -7,6 +7,12 @@ const organizationAppRoutes = ROUTER({
     navigationLabelKey: 'overview',
     hiddenBreadcrumb: true,
   },
+  chat: {
+    path: '/:organizationSlug/chat',
+    label: 'Chat',
+    navigationLabelKey: 'chat',
+    hiddenBreadcrumb: true,
+  },
   projects: {
     path: '/:organizationSlug/projects',
     label: 'โปรเจกต์',

@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import 'reflect-metadata';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module.js';
+import { HermesChatGateway } from './modules/hermes-runtime/presentation/hermes-chat.gateway.js';
 import { PublicErrorFilter } from './common/errors/public-error.filter.js';
 
 loadEnv({ path: resolve(process.cwd(), '.env') });
@@ -28,3 +29,4 @@ app.enableCors({
 });
 app.useGlobalFilters(new PublicErrorFilter());
 await app.listen(config.getOrThrow<number>('API_PORT'), '0.0.0.0');
+app.get(HermesChatGateway).attach(app.getHttpServer());

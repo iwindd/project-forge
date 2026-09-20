@@ -28,6 +28,7 @@ export function AdminShell({
   children: ReactNode;
 }>) {
   const [mobileOpened, mobileHandlers] = useDisclosure(false);
+  const [sidebarCollapsed, sidebarHandlers] = useDisclosure(false);
   const [settingsOpened, settingsHandlers] = useDisclosure(false);
   const [scroll, scrollTo] = useWindowScroll();
 
@@ -39,7 +40,7 @@ export function AdminShell({
       navbar={{
         width: SIDEBAR_WIDTH,
         breakpoint: 'sm',
-        collapsed: { mobile: true },
+        collapsed: { mobile: true, desktop: sidebarCollapsed },
       }}
       className={classes.appShell}
     >
@@ -47,11 +48,13 @@ export function AdminShell({
         <AdminHeader
           mobileOpened={mobileOpened}
           onToggleMobileAction={mobileHandlers.toggle}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebarAction={sidebarHandlers.toggle}
           onOpenSettingsAction={settingsHandlers.open}
         />
       </AppShell.Header>
 
-      <AppShell.Navbar className={classes.navbar}>
+      <AppShell.Navbar id='project-forge-sidebar' className={classes.navbar}>
         <SidebarDefault user={user} organizationSlug={organizationSlug} navigationMode={navigationMode} />
       </AppShell.Navbar>
 

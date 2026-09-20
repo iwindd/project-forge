@@ -16,6 +16,7 @@ const canonicalTables = [
   'projects',
   'audit_logs',
   'user_security_logs',
+  'hermes_sessions',
 ] as const;
 
 const obsoleteTables = ['access_requests', 'oauth_accounts', 'project_members'] as const;
@@ -34,6 +35,12 @@ const canonicalColumns = [
   ['organization_members', 'role_id'],
   ['organization_invitations', 'email'],
   ['organization_invitations', 'role_id'],
+  ['hermes_sessions', 'user_id'],
+  ['hermes_sessions', 'agent_handle'],
+  ['hermes_sessions', 'hermes_session_id'],
+  ['hermes_sessions', 'closed_at'],
+  ['hermes_sessions', 'created_at'],
+  ['hermes_sessions', 'updated_at'],
 ] as const;
 
 const foreignKeyConstraints = [
@@ -54,6 +61,7 @@ const foreignKeyConstraints = [
   'audit_logs_target_user_id_fk',
   'user_security_logs_organization_id_fk',
   'user_security_logs_user_id_fk',
+  'hermes_sessions_user_id_fk',
 ] as const;
 
 const uniqueConstraints = [
@@ -69,6 +77,7 @@ const uniqueConstraints = [
   'organization_invitations_token_hash_unique',
   'sessions_token_hash_unique',
   'projects_organization_id_github_url_unique',
+  'hermes_sessions_agent_handle_hermes_session_id_unique',
 ] as const;
 
 const checkConstraints = [
@@ -104,6 +113,7 @@ const canonicalIndexes = [
   'audit_logs_created_at_index',
   'user_security_logs_organization_id_created_at_index',
   'user_security_logs_user_id_created_at_index',
+  'hermes_sessions_user_id_updated_at_index',
 ] as const;
 
 const obsoleteIndexes = [
