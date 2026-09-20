@@ -62,6 +62,7 @@ describe('ListSharedAgentsUseCase', () => {
           model: 'gpt-5.6-luna',
           provider: 'openai-codex',
           skillCount: 12,
+          hasAvatar: false,
           readiness: 'ready',
           message: 'Ready to use',
           action: 'use',

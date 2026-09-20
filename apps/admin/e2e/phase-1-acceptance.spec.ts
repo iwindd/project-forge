@@ -180,6 +180,57 @@ test('shared Agent roster is available across Organizations without exposing ser
   expect(browserErrors).toEqual([]);
 });
 
+test('Platform Admin can create a shared Agent through the validated Hermes configuration flow', async ({ page }) => {
+  await signedIn(page);
+  await page.goto('/acme/agents');
+  await expect(page.getByRole('heading', { name: 'Shared Local Agents' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'สร้าง Agent' }).click();
+  await expect(page.getByText('สร้าง Shared Local Agent')).toBeVisible();
+  await page.getByLabel('Handle').fill('workflow-agent');
+  await page.getByLabel('ชื่อที่แสดง').fill('Workflow Agent');
+  await page.getByLabel('บทบาท').fill('Workflow builder');
+  await page.getByLabel('คำอธิบาย').fill('Created through the shared Agent administration flow');
+  await page.getByLabel('Personality').fill('You are a careful workflow implementation assistant.');
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'workflow-agent.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+  });
+
+  const requestPromise = page.waitForRequest(
+    (request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/v1/hermes/agents',
+  );
+  await page.getByRole('button', { name: 'สร้างและตรวจสอบ Agent' }).click();
+  const request = await requestPromise;
+  const requestBody = request.postDataJSON() as Record<string, unknown>;
+  expect(requestBody).toMatchObject({
+    handle: 'workflow-agent',
+    displayName: 'Workflow Agent',
+    provider: 'openai-codex',
+    model: 'gpt-5.6-luna',
+    skills: [],
+    toolsets: [],
+  });
+  expect(requestBody.avatar).toMatch(/^data:image\/png;base64,/);
+  expect(JSON.stringify(requestBody)).not.toContain('token');
+  expect(JSON.stringify(requestBody)).not.toContain('C:\\Users\\freew');
+
+  await expect(page.getByText('Workflow Agent')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Workflow Agent')).toBeVisible();
+  await expect(page.locator('[data-agent-handle="workflow-agent"]')).toHaveAttribute('data-readiness', 'ready');
+  await expect(page.locator('[data-agent-handle="workflow-agent"]')).toHaveAttribute('data-has-avatar', 'true');
+});
+
+test('regular authenticated Users can discover shared Agents without configuration controls', async ({ page }) => {
+  await signedIn(page, 'regular-user');
+  await page.goto('/acme/agents');
+  await expect(page.getByText('Shared Coder')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'สร้าง Agent' })).toHaveCount(0);
+  await expect(page.getByText(/การตั้งค่าจำกัดเฉพาะ Platform Admin/)).toBeVisible();
+});
+
 test('project creation and archive lifecycle have no agent or repository side effects', async ({ page }) => {
   await signedIn(page, 'project-side-effects');
 

@@ -15,6 +15,7 @@ const profileSchema = z.object({
   description: z.string().optional().default(''),
   display_name: z.string().optional().default(''),
   skill_count: z.number().int().nonnegative().optional().default(0),
+  has_avatar: z.boolean().optional().default(false),
 });
 
 const profileListResponseSchema = z.object({
@@ -41,6 +42,7 @@ export type SharedLocalAgent = {
   model: string | null;
   provider: string | null;
   skillCount: number;
+  hasAvatar: boolean;
   readiness: SharedAgentReadiness;
   message: string;
   action: SharedAgentAction;
@@ -134,6 +136,7 @@ export class ListSharedAgentsUseCase {
       model,
       provider,
       skillCount: profile.skill_count,
+      hasAvatar: profile.has_avatar,
       ...readiness,
     };
   }

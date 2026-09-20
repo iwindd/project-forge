@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
+import { json } from 'express';
 import { config as loadEnv } from 'dotenv';
 import { resolve } from 'node:path';
 import 'reflect-metadata';
@@ -10,7 +11,8 @@ import { PublicErrorFilter } from './common/errors/public-error.filter.js';
 loadEnv({ path: resolve(process.cwd(), '.env') });
 loadEnv({ path: resolve(process.cwd(), '../../.env') });
 
-const app = await NestFactory.create(AppModule);
+const app = await NestFactory.create(AppModule, { bodyParser: false });
+app.use(json({ limit: '3mb' }));
 const config = app.get(ConfigService);
 app.setGlobalPrefix('api/v1');
 app.use(cookieParser());
