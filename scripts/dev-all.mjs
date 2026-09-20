@@ -13,9 +13,14 @@ const cloudflaredFallback = isWindows
   : 'cloudflared';
 const cloudflaredCommand = process.env.CLOUDFLARED_COMMAND ||
   (existsSync(cloudflaredFallback) ? cloudflaredFallback : 'cloudflared');
+const projectForgeTunnelId = 'd64d4f65-0c68-4f23-9a41-a0360a2e898c';
 const cloudflaredConfig = resolve(
   root,
-  process.env.CLOUDFLARED_CONFIG || '.scratch/cloudflared/config.yml',
+  process.env.CLOUDFLARED_CONFIG || 'infra/cloudflared/config.yml',
+);
+const cloudflaredCredentials = resolve(
+  process.env.CLOUDFLARED_CREDENTIALS_FILE ||
+    resolve(process.env.USERPROFILE || process.env.HOME || root, '.cloudflared', `${projectForgeTunnelId}.json`),
 );
 
 function readEnvFile(path) {
@@ -37,6 +42,12 @@ function readEnvFile(path) {
 
 if (!existsSync(cloudflaredConfig)) {
   throw new Error(`Cloudflare config not found: ${cloudflaredConfig}`);
+}
+if (!existsSync(cloudflaredCredentials)) {
+  throw new Error(
+    `Cloudflare tunnel credentials not found: ${cloudflaredCredentials}. ` +
+      'Keep the credentials JSON outside the repository and set CLOUDFLARED_CREDENTIALS_FILE when needed.',
+  );
 }
 
 function assertAddressAvailable(port, host) {
@@ -154,13 +165,20 @@ start('admin', pnpmCommand, [
   '@project-forge/admin',
   'dev',
 ], process.env);
-start('cloudflared', cloudflaredCommand, [
-  '--config',
-  cloudflaredConfig,
-  'tunnel',
-  'run',
-  'project-forge',
-], process.env);
+start(
+  'cloudflared',
+  cloudflaredCommand,
+  [
+    '--config',
+    cloudflaredConfig,
+    'tunnel',
+    'run',
+    '--credentials-file',
+    cloudflaredCredentials,
+    'project-forge',
+  ],
+  process.env,
+);
 
 console.log('Project Forge is starting:');
 console.log('  Web:    https://forge.iwindd.dev/login');
