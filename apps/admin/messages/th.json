@@ -43,6 +43,7 @@
   "Navigation": {
     "overview": "ภาพรวม",
     "projects": "โปรเจกต์",
+    "agents": "Agents",
     "content": "จัดการเนื้อหา",
     "system": "ระบบ",
     "dashboard": "แดชบอร์ด",
@@ -86,6 +87,51 @@
       "incompatible": "เวอร์ชันไม่รองรับ",
       "unhealthy": "เชื่อมต่อไม่ได้",
       "port-conflict": "พอร์ตถูกใช้งาน"
+    }
+  },
+  "SharedAgents": {
+    "title": "Shared Local Agents",
+    "subtitle": "รายการ Agent จาก Hermes Runtime ที่ใช้ร่วมกันทั้งแอป",
+    "loading": "กำลังโหลดรายการ Agent...",
+    "loadFailed": "ไม่สามารถโหลดรายการ Agent ได้",
+    "retry": "ลองใหม่",
+    "refresh": "รีเฟรชรายการ",
+    "runtimeTitle": "Hermes Runtime ยังไม่พร้อม",
+    "permissionTitle": "สิทธิ์การตั้งค่า Agent",
+    "platformAdminNotice": "Platform Admin สามารถจัดการการตั้งค่า Agent ได้ ส่วนผู้ใช้อื่นใช้ Agent ได้อย่างเดียว",
+    "userNotice": "Agent เป็นทรัพยากรร่วม ผู้ใช้ที่เข้าสู่ระบบสามารถเลือกใช้ได้ แต่การตั้งค่าจำกัดเฉพาะ Platform Admin",
+    "empty": "ยังไม่พบ Shared Local Agent จาก Hermes Runtime",
+    "selectedTitle": "เลือก Agent แล้ว",
+    "selectedDescription": "เลือก {name} สำหรับการใช้งานในขั้นตอนถัดไป",
+    "model": "โมเดล: {model}",
+    "skills": "Skills {count} รายการ",
+    "notConfigured": "ยังไม่ได้ตั้งค่า",
+    "use": "เลือกใช้ Agent",
+    "selected": "เลือกอยู่",
+    "notReady": "ยังไม่พร้อมใช้",
+    "readiness": {
+      "ready": "พร้อมใช้งาน",
+      "unavailable": "ยังใช้งานไม่ได้",
+      "incompatible": "ไม่รองรับ",
+      "incomplete-configuration": "ตั้งค่าไม่ครบ"
+    },
+    "agentMessages": {
+      "ready": "พร้อมใช้งานสำหรับผู้ใช้ทุกคน",
+      "unavailable": "Provider ของ Agent ยังไม่พร้อมบน Runtime นี้",
+      "incompatible": "Agent นี้ต้องใช้ความสามารถที่ Runtime ไม่รองรับ",
+      "incomplete-configuration": "Agent นี้ยังขาดการตั้งค่าโมเดลหรือ Provider"
+    },
+    "runtimeStates": {
+      "unconfigured": "ยังไม่ได้เชื่อมต่อ Hermes",
+      "detecting": "กำลังตรวจสอบ Hermes",
+      "starting": "กำลังเริ่ม Hermes",
+      "connecting": "กำลังเชื่อมต่อ Hermes",
+      "negotiating": "กำลังตรวจสอบความสามารถของ Hermes",
+      "ready": "Hermes พร้อมใช้งาน",
+      "missing": "ไม่พบ Hermes CLI",
+      "incompatible": "Hermes Runtime ไม่รองรับ",
+      "unhealthy": "Hermes Runtime ไม่พร้อมใช้งาน",
+      "port-conflict": "พอร์ต Hermes ถูกใช้งานอยู่"
     }
   },
   "Profile": {

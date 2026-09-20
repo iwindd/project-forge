@@ -11,7 +11,9 @@ import {
 } from './domain/hermes-runtime.types.js';
 import { HermesGatewayClient } from './infrastructure/hermes-gateway.client.js';
 import { HermesProcessManager } from './infrastructure/hermes-process.manager.js';
+import { HermesAgentsController } from './presentation/hermes-agents.controller.js';
 import { HermesRuntimeController } from './presentation/hermes-runtime.controller.js';
+import { ListSharedAgentsUseCase } from './application/use-cases/list-shared-agents-use-case.js';
 
 export function buildHermesRuntimeConfig(config: ConfigService): HermesRuntimeConfig {
   const configuredEndpoint = config.get<string>('HERMES_GATEWAY_URL')?.trim() || undefined;
@@ -43,7 +45,7 @@ const gatewayFactory: HermesGatewayFactory = ({ endpoint, token, connectTimeoutM
 
 @Module({
   imports: [ConfigModule, AuthModule],
-  controllers: [HermesRuntimeController],
+  controllers: [HermesRuntimeController, HermesAgentsController],
   providers: [
     {
       provide: HERMES_RUNTIME_CONFIG,
@@ -60,6 +62,7 @@ const gatewayFactory: HermesGatewayFactory = ({ endpoint, token, connectTimeoutM
       useValue: gatewayFactory,
     },
     HermesRuntimeService,
+    ListSharedAgentsUseCase,
   ],
   exports: [HermesRuntimeService],
 })

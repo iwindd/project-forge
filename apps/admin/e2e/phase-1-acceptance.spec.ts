@@ -138,6 +138,33 @@ test('organization navigation preserves the current section when switching organ
   await expect(page.getByText('Beta Organization').first()).toBeVisible();
 });
 
+test('shared Agent roster is available across Organizations without exposing server-only metadata', async ({
+  page,
+}) => {
+  await signedIn(page);
+  const rosterRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'GET' && request.url().includes('/api/v1/hermes/agents')) {
+      rosterRequests.push(new URL(request.url()).pathname);
+    }
+  });
+
+  await page.goto('/acme/agents');
+  await expect(page.getByRole('heading', { name: 'Shared Local Agents' })).toBeVisible();
+  await expect(page.getByText('Shared Coder')).toBeVisible();
+  await expect(page.getByText('Offline Agent')).toBeVisible();
+  await expect(page.getByText('must-not-reach-browser')).toHaveCount(0);
+  await expect(page.getByText('C:\\Users\\freew')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'เลือกใช้ Agent' }).click();
+  await expect(page.getByText('เลือก Shared Coder สำหรับการใช้งานในขั้นตอนถัดไป')).toBeVisible();
+
+  await page.goto('/beta/agents');
+  await expect(page.getByText('Shared Coder')).toBeVisible();
+  await expect.poll(() => rosterRequests.length).toBe(2);
+  expect(rosterRequests).toEqual(['/api/v1/hermes/agents', '/api/v1/hermes/agents']);
+});
+
 test('project creation and archive lifecycle have no agent or repository side effects', async ({ page }) => {
   await signedIn(page, 'project-side-effects');
 

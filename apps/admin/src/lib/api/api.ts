@@ -100,6 +100,7 @@ export const api = createApi({
     'Projects',
     'Profile',
     'HermesRuntime',
+    'HermesAgents',
     'SecurityLogs',
   ],
   refetchOnMountOrArgChange: true,

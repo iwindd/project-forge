@@ -12,6 +12,11 @@ const organizationAppRoutes = ROUTER({
     label: 'โปรเจกต์',
     navigationLabelKey: 'projects',
   },
+  agents: {
+    path: '/:organizationSlug/agents',
+    label: 'Agents',
+    navigationLabelKey: 'agents',
+  },
   account: {
     path: '/account',
     label: 'บัญชีของฉัน',
