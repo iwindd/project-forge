@@ -89,9 +89,16 @@ export class HermesRuntimeService implements OnModuleDestroy {
   private async connectInternal(): Promise<HermesRuntimeStatus> {
     this.setStatus('detecting', 'Checking the local Hermes runtime', 'retry');
 
+    let gatewayToken: string | undefined;
+    try {
+      gatewayToken = this.config.endpointConfigured ? this.config.token : await this.processManager.resolveToken();
+    } catch {
+      return this.fail('unhealthy', 'Hermes gateway credentials could not be prepared', 'retry');
+    }
+
     let firstError: unknown = null;
     try {
-      const existing = await this.connectToEndpoint(this.config.endpoint, this.config.token);
+      const existing = await this.connectToEndpoint(this.config.endpoint, gatewayToken);
       return this.markReady(
         existing.client,
         existing.ready,

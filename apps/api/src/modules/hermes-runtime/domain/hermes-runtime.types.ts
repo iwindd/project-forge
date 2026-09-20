@@ -63,6 +63,7 @@ export type ManagedHermesProcess = {
 };
 
 export interface HermesProcessManagerPort {
+  resolveToken(): Promise<string | undefined>;
   detect(): Promise<HermesInstallation>;
   start(): Promise<ManagedHermesProcess>;
   stop(): Promise<void>;

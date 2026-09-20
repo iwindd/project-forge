@@ -1,5 +1,4 @@
 import { execFile as execFileCallback, spawn, type ChildProcess } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
 import { promisify } from 'node:util';
 import type {
   HermesInstallation,
@@ -7,6 +6,7 @@ import type {
   HermesRuntimeConfig,
   ManagedHermesProcess,
 } from '../domain/hermes-runtime.types.js';
+import { HermesGatewayTokenStore } from './hermes-gateway-token.store.js';
 
 const execFile = promisify(execFileCallback);
 
@@ -21,7 +21,15 @@ export class HermesProcessManager implements HermesProcessManagerPort {
   private child: ChildProcess | null = null;
   private token: string | null = null;
 
-  constructor(private readonly config: HermesRuntimeConfig) {}
+  constructor(
+    private readonly config: HermesRuntimeConfig,
+    private readonly tokenStore = new HermesGatewayTokenStore(),
+  ) {}
+
+  async resolveToken(): Promise<string | undefined> {
+    if (this.config.endpointConfigured) return this.config.token;
+    return this.tokenStore.resolve(this.config.token);
+  }
 
   async detect(): Promise<HermesInstallation> {
     try {
@@ -55,7 +63,8 @@ export class HermesProcessManager implements HermesProcessManagerPort {
     if (!installation.installed) throw new HermesNotInstalledError();
     if (!installation.compatible) throw new Error('Hermes CLI version could not be verified');
 
-    const token = this.config.token ?? randomBytes(32).toString('base64url');
+    const token = await this.resolveToken();
+    if (!token) throw new Error('Hermes gateway token could not be resolved');
     const args = [
       'serve',
       '--host',
