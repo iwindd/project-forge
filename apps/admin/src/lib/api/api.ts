@@ -35,6 +35,19 @@ export function getBrowserApiErrorMessage(error: unknown, fallback: string): str
   return parsed.success ? parsed.data.error.message : fallback;
 }
 
+export const API_TAG_TYPES = [
+  'AuditLogs',
+  'OrganizationMembers',
+  'OrganizationInvitations',
+  'OrganizationRoles',
+  'Organizations',
+  'Projects',
+  'Profile',
+  'HermesRuntime',
+  'HermesAgents',
+  'SecurityLogs',
+] as const;
+
 function normalizeApiError(error: FetchBaseQueryError, meta?: FetchBaseQueryMeta): BrowserApiError {
   const parsed = apiErrorResponseSchema.safeParse(error.data);
   if (parsed.success) return { ...error, data: parsed.data };
@@ -91,18 +104,7 @@ export const baseQuery: BaseQueryFn<string | FetchArgs, unknown, BrowserApiError
 export const api = createApi({
   reducerPath: 'api',
   baseQuery,
-  tagTypes: [
-    'AuditLogs',
-    'OrganizationMembers',
-    'OrganizationInvitations',
-    'OrganizationRoles',
-    'Organizations',
-    'Projects',
-    'Profile',
-    'HermesRuntime',
-    'HermesAgents',
-    'SecurityLogs',
-  ],
+  tagTypes: [...API_TAG_TYPES],
   refetchOnMountOrArgChange: true,
   refetchOnFocus: true,
   refetchOnReconnect: true,
