@@ -137,6 +137,10 @@ pnpm dev:all
 - The Admin app's `NEXT_PUBLIC_API_URL` must be same-origin when reviewed through
   the public tunnel. `localhost` on an iPad points to the iPad, not the development
   laptop.
+- A Nest provider whose constructor depends on an interface/type alias must use
+  `@Injectable()` plus an explicit class token such as `@Inject(HermesRuntimeService)`.
+  Startup can look healthy while the use case receives `undefined` and returns a 500;
+  keep an HTTP wiring test that instantiates the real provider.
 - Do not expose Hermes paths, tokens, provider credentials, raw gateway errors, or
   filesystem metadata in a browser response or user-facing error.
 - Stop the dev server before a production build; `.next` is a single-writer artifact.
