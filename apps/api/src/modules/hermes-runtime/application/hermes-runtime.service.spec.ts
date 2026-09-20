@@ -65,6 +65,7 @@ class FakeClient implements HermesGatewayClientPort {
 
 function manager(overrides: Partial<HermesProcessManagerPort> = {}): HermesProcessManagerPort {
   return {
+    resolveToken: vi.fn(async () => 'managed-token'),
     detect: vi.fn(async () => ({ installed: true, compatible: true, version: '0.21.3' })),
     start: vi.fn(async () => ({ child: {} as ManagedHermesProcess['child'], token: 'managed-token' })),
     stop: vi.fn(async () => undefined),
@@ -106,6 +107,11 @@ describe('HermesRuntimeService', () => {
 
     expect(process.detect).toHaveBeenCalledOnce();
     expect(process.start).toHaveBeenCalledOnce();
+    expect(factory).toHaveBeenNthCalledWith(1, {
+      endpoint: config.endpoint,
+      token: 'managed-token',
+      connectTimeoutMs: 500,
+    });
     expect(factory).toHaveBeenLastCalledWith({
       endpoint: config.endpoint,
       token: 'managed-token',
