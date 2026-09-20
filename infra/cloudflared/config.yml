@@ -1,0 +1,11 @@
+tunnel: d64d4f65-0c68-4f23-9a41-a0360a2e898c
+
+# The tunnel credentials JSON stays outside the repository under the user's
+# Cloudflare directory. scripts/dev-all.mjs supplies its path at runtime.
+ingress:
+  - hostname: forge.iwindd.dev
+    path: ^/api/.*
+    service: http://127.0.0.1:5050
+  - hostname: forge.iwindd.dev
+    service: http://127.0.0.1:5051
+  - service: http_status:404
