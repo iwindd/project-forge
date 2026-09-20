@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api } from '@/lib/api/api';
+import { API_TAG_TYPES, api } from '@/lib/api/api';
 import { hermesAgentsApi } from './hermes-agents-api';
 
 const roster = {
@@ -64,6 +64,10 @@ describe('shared Agent browser API contracts', () => {
     expect(request.url).toBe('http://localhost:5050/api/v1/hermes/agents');
     expect(request.method).toBe('GET');
     expect(request.credentials).toBe('include');
+  });
+
+  it('registers the cache tag used by the roster endpoint', () => {
+    expect(API_TAG_TYPES).toContain('HermesAgents');
   });
 
   it('rejects a roster that does not satisfy the safe readiness contract', async () => {

@@ -142,6 +142,15 @@ test('shared Agent roster is available across Organizations without exposing ser
   page,
 }) => {
   await signedIn(page);
+  const browserErrors: string[] = [];
+  const resourceErrors: string[] = [];
+  page.on('pageerror', (error) => browserErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' || message.type() === 'warning') browserErrors.push(message.text());
+  });
+  page.on('response', (response) => {
+    if (response.status() >= 400) resourceErrors.push(`${response.status()} ${response.url()}`);
+  });
   const rosterRequests: string[] = [];
   page.on('request', (request) => {
     if (request.method() === 'GET' && request.url().includes('/api/v1/hermes/agents')) {
@@ -149,7 +158,11 @@ test('shared Agent roster is available across Organizations without exposing ser
     }
   });
 
-  await page.goto('/acme/agents');
+  await page.goto('/acme');
+  const agentsNavLink = page.getByRole('link', { name: 'Agents', exact: true });
+  await expect(agentsNavLink).toBeVisible();
+  await agentsNavLink.click();
+  await expect(page).toHaveURL(/\/acme\/agents$/);
   await expect(page.getByRole('heading', { name: 'Shared Local Agents' })).toBeVisible();
   await expect(page.getByText('Shared Coder')).toBeVisible();
   await expect(page.getByText('Offline Agent')).toBeVisible();
@@ -163,6 +176,8 @@ test('shared Agent roster is available across Organizations without exposing ser
   await expect(page.getByText('Shared Coder')).toBeVisible();
   await expect.poll(() => rosterRequests.length).toBe(2);
   expect(rosterRequests).toEqual(['/api/v1/hermes/agents', '/api/v1/hermes/agents']);
+  expect(resourceErrors).toEqual([]);
+  expect(browserErrors).toEqual([]);
 });
 
 test('project creation and archive lifecycle have no agent or repository side effects', async ({ page }) => {

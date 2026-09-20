@@ -282,6 +282,23 @@ const server = http.createServer((req, res) => {
         gatewayToken: 'must-not-reach-browser',
       }),
     );
+  if (path === 'hermes/runtime' && req.method === 'GET')
+    return send(
+      req,
+      res,
+      200,
+      envelope({
+        state: 'ready',
+        endpoint: { host: '127.0.0.1', port: 9119, path: '/api/ws', managed: true },
+        version: '0.21.3',
+        capabilities: ['gateway.ping'],
+        backendEpoch: 'e2e-epoch',
+        serverRequests: 'legacy',
+        checkedAt: '2026-09-20T00:00:00.000Z',
+        message: 'Hermes is ready',
+        action: null,
+      }),
+    );
   if (path === 'organizations') return send(req, res, 200, envelope([organization, secondOrganization]));
   if (path === 'profile' && req.method === 'GET') return send(req, res, 200, envelope({ profile, connections: [] }));
   if (path === 'profile' && req.method === 'PATCH') {
@@ -316,7 +333,9 @@ const server = http.createServer((req, res) => {
   }
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/members')
     return send(req, res, 200, envelope(members, { page: 1, pageSize: 100, total: members.length, totalPages: 1 }));
-  if (path === 'organizations/00000000-0000-0000-0000-000000000001/roles')
+  const rolesPath = path.match(/^organizations\/([^/]+)\/roles$/);
+  if (rolesPath && req.method === 'GET' && [organization.id, secondOrganization.id].includes(rolesPath[1])) {
+    const scopedOrganization = rolesPath[1] === secondOrganization.id ? secondOrganization : organization;
     return send(
       req,
       res,
@@ -324,7 +343,7 @@ const server = http.createServer((req, res) => {
       envelope(
         [
           {
-            ...organization.role,
+            ...scopedOrganization.role,
             memberCount: members.length,
             invitationCount: 0,
           },
@@ -332,6 +351,7 @@ const server = http.createServer((req, res) => {
         { availablePermissions: [{ key: 'organization.manage' }, { key: 'project.manage' }] },
       ),
     );
+  }
   if (path === 'organizations/00000000-0000-0000-0000-000000000001/projects' && req.method === 'GET')
     return send(req, res, 200, envelope(projects.filter((project) => project.organizationId === organization.id)));
   if (path === 'organizations/00000000-0000-0000-0000-000000000002/projects' && req.method === 'GET')
