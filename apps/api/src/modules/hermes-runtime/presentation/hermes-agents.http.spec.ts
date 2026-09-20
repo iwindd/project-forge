@@ -7,6 +7,7 @@ import { SessionGuard } from '../../../common/auth/session.guard.js';
 import { PublicErrorFilter } from '../../../common/errors/public-error.filter.js';
 import { SECURITY_LOGGER } from '../../../common/security/security-log.port.js';
 import { AccessStatus, UserRole } from '../../users/domain/user.js';
+import { HermesRuntimeService } from '../application/hermes-runtime.service.js';
 import { ListSharedAgentsUseCase } from '../application/use-cases/list-shared-agents-use-case.js';
 import { HermesAgentsController } from './hermes-agents.controller.js';
 
@@ -50,9 +51,37 @@ describe('Hermes Agents HTTP contracts', () => {
   const authenticator = {
     principalFromToken: vi.fn(async (token: string | undefined) => (token === 'valid-session' ? principal : null)),
   };
-  const listSharedAgents = {
-    execute: vi.fn(async () => roster),
-  } as unknown as ListSharedAgentsUseCase;
+  const runtime = {
+    getStatus: vi.fn(() => ({
+      state: 'ready' as const,
+      endpoint: { host: '127.0.0.1', port: 9119, path: '/api/ws', managed: true },
+      version: '0.21.3',
+      capabilities: ['profiles.list'],
+      backendEpoch: 'test-epoch',
+      serverRequests: 'advertised' as const,
+      checkedAt: '2026-09-20T00:00:00.000Z',
+      message: 'Hermes is ready',
+      action: null,
+    })),
+    request: vi.fn(async (method: string) => {
+      if (method === 'profiles.list') {
+        return {
+          profiles: [
+            {
+              name: 'lyla',
+              display_name: 'Lyla',
+              description: 'Shared local coding Agent',
+              is_default: true,
+              model: 'gpt-5.6-luna',
+              provider: 'openai-codex',
+              skill_count: 12,
+            },
+          ],
+        };
+      }
+      return { ok: true };
+    }),
+  } as unknown as HermesRuntimeService;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -61,7 +90,8 @@ describe('Hermes Agents HTTP contracts', () => {
         SessionGuard,
         { provide: SESSION_AUTHENTICATOR, useValue: authenticator },
         { provide: SECURITY_LOGGER, useValue: security },
-        { provide: ListSharedAgentsUseCase, useValue: listSharedAgents },
+        { provide: HermesRuntimeService, useValue: runtime },
+        ListSharedAgentsUseCase,
       ],
     }).compile();
 
@@ -102,9 +132,11 @@ describe('Hermes Agents HTTP contracts', () => {
       headers: { cookie: 'pf_session=valid-session', 'x-request-id': 'hermes-agents-200' },
     });
     const body = await response.json();
+    const responseBody = body as { data: typeof roster };
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ data: roster });
-    expect(listSharedAgents.execute).toHaveBeenCalledWith({ canConfigure: false });
+    expect(body).toMatchObject({ data: { ...roster, refreshedAt: expect.any(String) } });
+    expect(responseBody.data.refreshedAt).toMatch(/^2026-09-20T/);
+    expect(runtime.request).toHaveBeenCalledWith('profiles.list', { include_sessions: false });
   });
 });

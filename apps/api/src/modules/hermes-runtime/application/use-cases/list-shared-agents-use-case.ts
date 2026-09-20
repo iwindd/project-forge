@@ -1,9 +1,10 @@
+import { Inject, Injectable } from '@nestjs/common';
 import {
   type HermesGatewayRpcError,
   HermesGatewayRpcError as HermesGatewayRpcErrorClass,
 } from '../../infrastructure/hermes-gateway.client.js';
 import type { HermesRuntimeAction, HermesRuntimeState } from '../../domain/hermes-runtime.types.js';
-import type { HermesRuntimeService } from '../hermes-runtime.service.js';
+import { HermesRuntimeService } from '../hermes-runtime.service.js';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -77,8 +78,9 @@ const SAFE_RUNTIME_MESSAGES: Partial<Record<HermesRuntimeState, string>> = {
   'port-conflict': 'The configured Hermes port is already used by another service',
 };
 
+@Injectable()
 export class ListSharedAgentsUseCase {
-  constructor(private readonly runtime: HermesRuntimeReader) {}
+  constructor(@Inject(HermesRuntimeService) private readonly runtime: HermesRuntimeReader) {}
 
   async execute(input: { canConfigure: boolean }): Promise<SharedAgentRoster> {
     const refreshedAt = new Date().toISOString();
