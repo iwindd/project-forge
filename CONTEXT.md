@@ -56,20 +56,20 @@ _Avoid_: Manage project
 
 ## Hermes runtime and project work
 
-**Hermes Gateway Connection**:
-A User-owned connection to the Hermes runtime that provides Profiles and Sessions for that User. It is independent of Organization ownership.
-_Avoid_: Organization gateway, Agent connection
+**Hermes Local Runtime**:
+The managed local Hermes runtime used by the Project Forge installation. It provides shared Profiles and User-scoped Sessions for the local application; runtime credentials and filesystem details remain server-side.
+_Avoid_: User-owned Gateway Connection, Organization gateway, Agent connection
 
-**Personal Agent**:
-A User-owned Agent backed by a real Hermes Profile on one Hermes Gateway Connection. The User may select the same Personal Agent in any Project they can access.
-_Avoid_: Organization Agent, Project Agent
+**Shared Local Agent**:
+A shared Agent backed by a real Hermes Profile on the Hermes Local Runtime. Every authenticated User can discover, select, and use the same Agent across Organizations and Projects. Only a Platform Admin may create, configure, enable, disable, or delete the Agent.
+_Avoid_: Personal Agent, Organization Agent, Project Agent
 
 **Hermes Session**:
-A conversation and execution context owned by Hermes and referenced by Project Forge for authorization, navigation, and optional Project work association.
-_Avoid_: Project Forge transcript
+A conversation and execution context owned by Hermes and scoped in Project Forge to the authenticated User; it may use a Shared Local Agent and may be associated with a Project, Feature, or Project Ticket.
+_Avoid_: Shared Chat Session, Project Forge transcript
 
 **Personal Chat**:
-A Hermes Session used as normal personal Agent conversation without Feature, Ticket, or Project confirmation gates.
+A Hermes Session used as a User normal conversation with a Shared Local Agent without Feature, Ticket, or Project confirmation gates.
 _Avoid_: Unmanaged Project work
 
 **Registered Workspace**:
@@ -89,7 +89,7 @@ An approved, verifiable slice of Project Work produced from a confirmed Spec and
 _Avoid_: Draft issue, Workflow task
 
 **Agent Run**:
-One durable execution of a Personal Agent associated with a Hermes Session and optionally a Project, Feature, or Project Ticket.
+One durable execution of a Shared Local Agent associated with an authenticated User, a Hermes Session, and optionally a Project, Feature, or Project Ticket.
 _Avoid_: Workflow
 
 **Interactive Request**:

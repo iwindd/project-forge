@@ -88,7 +88,7 @@ The Project Forge adapter authenticates and authorizes the User, maps browser co
 
 ## Chat modes
 
-- **Personal Chat:** create a native Hermes Session with the selected Personal Agent and Hermes' default working directory behavior. Project Forge does not apply Feature/Ticket gates.
+- **Personal Chat:** create a native Hermes Session with the selected Shared Local Agent and Hermes' default working directory behavior. Project Forge does not apply Feature/Ticket gates.
 - **Project Work:** create or resume a native Hermes Session bound server-side to a Registered Workspace and Project domain record. Project Forge applies Feature, Spec, Ticket, Plan, and Implement confirmation gates around native Hermes execution.
 
 ## DeepSeek Harness design reference

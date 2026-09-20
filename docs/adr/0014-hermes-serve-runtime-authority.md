@@ -10,9 +10,9 @@ Project Forge must become the primary browser interface for local Hermes use whi
 
 Project Forge connects server-side to `hermes serve` through the official TUI Gateway JSON-RPC/WebSocket protocol.
 
-Hermes remains authoritative for Profiles, Sessions, transcript history, model execution, tools, skills, memory, tool approvals, clarify prompts, secret/vault prompts, reasoning events, and tool events. Project Forge is authoritative for User authentication, Organization and Project access, Gateway Connection ownership, Registered Workspaces, Feature/Spec/Ticket/Plan lifecycle, implementation authorization, notifications, and audit records.
+Hermes remains authoritative for Profiles, Sessions, transcript history, model execution, tools, skills, memory, tool approvals, clarify prompts, secret/vault prompts, reasoning events, and tool events. Project Forge is authoritative for User authentication, Platform Admin authorization for shared Agent mutations, Organization and Project access, local runtime lifecycle, Registered Workspaces, Feature/Spec/Ticket/Plan lifecycle, implementation authorization, notifications, and audit records.
 
-A Hermes Gateway Connection and its Personal Agents belong to the User who runs the local installation, not to an Organization. The same Personal Agent may be selected in any Project that User can access. Sharing a Personal Agent with another User is not part of the first release.
+The managed Hermes runtime and its Shared Local Agents are application-level resources of the local Project Forge installation, not User-owned or Organization-owned resources. Every authenticated User may discover and use the same ready Agent in Projects they can access. Only Platform Admins may create or configure shared Agents; Sessions and Runs remain scoped to their authenticated User or Project.
 
 Project Forge supports two session modes:
 
@@ -30,4 +30,4 @@ Project Forge may start and monitor a local `hermes serve` process when Hermes i
 - Project Forge stores Session references and domain metadata, not a competing copy of Hermes transcript authority.
 - Tool permission and interaction semantics remain consistent with Hermes Desktop/TUI.
 - Feature and Ticket confirmations remain separate from Hermes tool approvals.
-- A remote-Gateway enrollment UX, Personal Agent sharing, and multiple active Gateway hosts per User can be added later without changing the first-release ownership model.
+- A remote-Gateway enrollment UX, per-User Agent namespaces, and multiple active Gateway hosts per local application remain deferred; shared local Agent discovery and use are part of the first release.
