@@ -43,7 +43,11 @@ export class HermesChatGateway implements OnModuleDestroy {
   private httpServer: HttpServer | null = null;
   private unsubscribeRuntime: (() => void) | null = null;
   private readonly clients = new Set<ClientState>();
-  private readonly onUpgrade = (request: IncomingMessage, socket: NodeJS.WritableStream & { destroy: () => void }, head: Buffer) => {
+  private readonly onUpgrade = (
+    request: IncomingMessage,
+    socket: NodeJS.WritableStream & { destroy: () => void },
+    head: Buffer,
+  ) => {
     this.withRequestContext(() => {
       void this.handleUpgrade(request, socket, head);
     });

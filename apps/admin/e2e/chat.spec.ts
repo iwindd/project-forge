@@ -68,7 +68,9 @@ test('re-attaches the Session and recovers the reply after a chat socket reconne
   await page.getByLabel('ข้อความ').fill('ทดสอบเชื่อมต่อใหม่');
   await page.getByRole('button', { name: 'ส่ง' }).click();
   await expect(page).toHaveURL(/\/hermes\/chat\/[0-9a-f-]+$/);
-  await expect(page.getByText('รับทราบหลังเชื่อมต่อใหม่ครับ: ทดสอบเชื่อมต่อใหม่', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('รับทราบหลังเชื่อมต่อใหม่ครับ: ทดสอบเชื่อมต่อใหม่', { exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(page.locator('[class*="userMessageRow"]')).toHaveCount(1);
 });
 

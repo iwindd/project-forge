@@ -7,10 +7,7 @@ import { useHermesChatTitles } from '@/components/hermes-chat-title-context';
 import { useGetSharedAgentsQuery } from '@/lib/features/hermes-agents/hermes-agents-api';
 import { useCreateHermesSessionMutation, useGetHermesSessionsQuery } from './hermes-sessions-api';
 import type { HermesSessionSummary } from './hermes-sessions-schemas';
-import {
-  useHermesChat,
-  type HermesChatFrame,
-} from './use-hermes-chat';
+import { useHermesChat, type HermesChatFrame } from './use-hermes-chat';
 import {
   canComposeChat,
   hydrateSnapshotMessages,
@@ -80,8 +77,8 @@ export function useHermesChatWorkspace() {
     sessions.find((session) => session.id === activeSessionId) ??
     (localSession?.id === activeSessionId ? localSession : null);
   const currentAgent = activeSessionId
-    ? readyAgents.find((agent) => agent.handle === selectedSession?.agentHandle) ?? null
-    : readyAgents.find((agent) => agent.handle === selectedAgentHandle) ?? readyAgents[0] ?? null;
+    ? (readyAgents.find((agent) => agent.handle === selectedSession?.agentHandle) ?? null)
+    : (readyAgents.find((agent) => agent.handle === selectedAgentHandle) ?? readyAgents[0] ?? null);
 
   useEffect(() => {
     const runtimeState = agentRoster?.runtime.state;
@@ -143,7 +140,10 @@ export function useHermesChatWorkspace() {
               message.localId === queuedMessage?.clientMessageId &&
               queuedMessage.sessionId === frame.session.sessionId,
           );
-          if (!optimisticUser || hydrated.some((message) => message.role === 'user' && message.text === optimisticUser.text)) {
+          if (
+            !optimisticUser ||
+            hydrated.some((message) => message.role === 'user' && message.text === optimisticUser.text)
+          ) {
             return hydrated;
           }
           return [...hydrated, optimisticUser];
@@ -190,7 +190,7 @@ export function useHermesChatWorkspace() {
       if (frame.type === 'assistant.delta') {
         setMessages((current) => {
           const last = current.at(-1);
-          if (!last || last.role !== 'assistant' || !last.streaming) {
+          if (last?.role !== 'assistant' || !last.streaming) {
             return [
               ...current,
               {
@@ -273,10 +273,7 @@ export function useHermesChatWorkspace() {
 
   useEffect(() => {
     if (!activeSessionId || !selectedSession || connectionState !== 'connected') return;
-    if (
-      attachedSessionId === activeSessionId &&
-      attachedConnectionGeneration === connectionGenerationRef.current
-    )
+    if (attachedSessionId === activeSessionId && attachedConnectionGeneration === connectionGenerationRef.current)
       return;
     if (
       attachRequestedSessionRef.current?.sessionId === activeSessionId &&
@@ -292,6 +289,7 @@ export function useHermesChatWorkspace() {
     }
   }, [activeSessionId, attach, attachedConnectionGeneration, attachedSessionId, connectionState, selectedSession]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryNonce intentionally replays the same pending message after a failed send.
   useEffect(() => {
     if (
       !pendingMessage ||

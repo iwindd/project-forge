@@ -78,9 +78,10 @@ describe('ListSharedAgentsUseCase', () => {
   it('uses the Hermes Desktop HTTP profile catalog without one runtime check per Agent', async () => {
     const request = vi.fn();
     const requestHttp = vi.fn(async () => ({ profiles: [{ ...profiles[0], path: 'must-not-leak' }] }));
-    const result = await new ListSharedAgentsUseCase(
-      { ...runtime(request as HermesRuntimeService['request']), requestHttp } as unknown as HermesRuntimeService,
-    ).execute({ canConfigure: false });
+    const result = await new ListSharedAgentsUseCase({
+      ...runtime(request as HermesRuntimeService['request']),
+      requestHttp,
+    } as unknown as HermesRuntimeService).execute({ canConfigure: false });
 
     expect(requestHttp).toHaveBeenCalledWith('/api/profiles');
     expect(request).not.toHaveBeenCalled();

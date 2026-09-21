@@ -329,7 +329,12 @@ const server = http.createServer((req, res) => {
     const attempts = (hermesCreateAttemptsByScenario.get(scenario) ?? 0) + 1;
     hermesCreateAttemptsByScenario.set(scenario, attempts);
     if (scenario === 'chat-create-retry' && attempts === 1) {
-      return send(req, res, 503, errorEnvelope('SERVICE_UNAVAILABLE', 'Session service unavailable', 'e2e-create-retry'));
+      return send(
+        req,
+        res,
+        503,
+        errorEnvelope('SERVICE_UNAVAILABLE', 'Session service unavailable', 'e2e-create-retry'),
+      );
     }
     return readJson(req, (input) => {
       const session = createHermesSession(scenario, input.agentHandle ?? 'shared-coder');
@@ -755,7 +760,12 @@ const handleWebSocketFrame = (client, frame) => {
     if (client.scenario === 'chat-reconnect' && session.inflight) {
       const reply = `รับทราบหลังเชื่อมต่อใหม่ครับ: ${session.inflight.user}`;
       session.inflight = null;
-      session.messages.push({ role: 'assistant', text: reply, timestamp: new Date().toISOString(), rowId: session.messages.length + 1 });
+      session.messages.push({
+        role: 'assistant',
+        text: reply,
+        timestamp: new Date().toISOString(),
+        rowId: session.messages.length + 1,
+      });
       session.preview = reply;
     }
     client.session = session;
@@ -803,7 +813,12 @@ const handleWebSocketFrame = (client, frame) => {
   setTimeout(() => {
     if (client.socket.destroyed) return;
     session.inflight = null;
-    session.messages.push({ role: 'assistant', text: reply, timestamp: new Date().toISOString(), rowId: session.messages.length + 1 });
+    session.messages.push({
+      role: 'assistant',
+      text: reply,
+      timestamp: new Date().toISOString(),
+      rowId: session.messages.length + 1,
+    });
     session.preview = reply;
     sendWebSocketFrame(client.socket, { type: 'assistant.delta', sessionId: session.id, text: secondChunk });
     sendWebSocketFrame(client.socket, {

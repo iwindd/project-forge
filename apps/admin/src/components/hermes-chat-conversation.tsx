@@ -129,8 +129,15 @@ export function HermesChatConversation({
         {messages.length ? (
           <Stack gap='lg' className={styles.messageStack}>
             {messages.map((message) => (
-              <div key={message.localId} className={message.role === 'user' ? styles.userMessageRow : styles.assistantMessageRow}>
-                <Paper className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} radius='lg' p='sm'>
+              <div
+                key={message.localId}
+                className={message.role === 'user' ? styles.userMessageRow : styles.assistantMessageRow}
+              >
+                <Paper
+                  className={message.role === 'user' ? styles.userMessage : styles.assistantMessage}
+                  radius='lg'
+                  p='sm'
+                >
                   <Text size='sm' className={styles.messageText}>
                     {message.text}
                     {message.streaming ? <span className={styles.cursor} aria-hidden='true' /> : null}

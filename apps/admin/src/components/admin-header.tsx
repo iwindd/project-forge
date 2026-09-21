@@ -40,10 +40,10 @@ export function AdminHeader({
   const currentRoute = routeTrail[routeTrail.length - 1];
   const activeSession = sessionId ? sessions.find((session) => session.id === sessionId) : null;
   const activeAgentName = sessionId
-    ? agentRoster?.agents.find((agent) => agent.handle === activeSession?.agentHandle)?.displayName ??
+    ? (agentRoster?.agents.find((agent) => agent.handle === activeSession?.agentHandle)?.displayName ??
       optimisticAgentNames[sessionId] ??
       activeSession?.agentHandle ??
-      null
+      null)
     : null;
   const optimisticTitle = sessionId ? optimisticTitles[sessionId] : undefined;
   const routeTitle = currentRoute

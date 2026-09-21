@@ -35,7 +35,11 @@ export function HermesSidebarSessions({ onNavigateAction }: { onNavigateAction?:
   const t = useTranslations('Chat');
   const pathname = usePathname();
   const router = useRouter();
-  const { data: sessions = [], isLoading, isError } = useGetHermesSessionsQuery(undefined, {
+  const {
+    data: sessions = [],
+    isLoading,
+    isError,
+  } = useGetHermesSessionsQuery(undefined, {
     refetchOnMountOrArgChange: 30,
   });
   const { data: agentRoster } = useGetSharedAgentsQuery(undefined, {
@@ -172,7 +176,11 @@ export function HermesSidebarSessions({ onNavigateAction }: { onNavigateAction?:
                   </Menu.Target>
                   <Menu.Dropdown>
                     <Menu.Item onClick={() => beginRename(session)}>{t('rename')}</Menu.Item>
-                    <Menu.Item color='red' leftSection={<IconArchive size={14} />} onClick={() => void closeSessionAction(session)}>
+                    <Menu.Item
+                      color='red'
+                      leftSection={<IconArchive size={14} />}
+                      onClick={() => void closeSessionAction(session)}
+                    >
                       {t('close')}
                     </Menu.Item>
                   </Menu.Dropdown>

@@ -127,9 +127,7 @@ export class HermesSessionService {
     }
 
     const summaries = await Promise.all(
-      [...recordsByAgent.entries()].map(([agentHandle, agentRecords]) =>
-        this.readSummaries(agentHandle, agentRecords),
-      ),
+      [...recordsByAgent.entries()].map(([agentHandle, agentRecords]) => this.readSummaries(agentHandle, agentRecords)),
     );
     return summaries.flat().sort((left, right) => {
       const leftTime = left.startedAt ? Date.parse(left.startedAt) : 0;
@@ -251,9 +249,7 @@ export class HermesSessionService {
     }
 
     const rows = new Map(
-      parsed.data.sessions
-        .filter((row) => typeof row.id === 'string')
-        .map((row) => [row.id as string, row]),
+      parsed.data.sessions.filter((row) => typeof row.id === 'string').map((row) => [row.id as string, row]),
     );
     return records
       .map((record) => projectSummary(record, rows.get(record.hermesSessionId)))
@@ -264,10 +260,7 @@ export class HermesSessionService {
       });
   }
 
-  private async readSummaries(
-    agentHandle: string,
-    records: HermesSessionRecord[],
-  ): Promise<HermesSessionSummary[]> {
+  private async readSummaries(agentHandle: string, records: HermesSessionRecord[]): Promise<HermesSessionSummary[]> {
     let rows: RawSessionRow[] = [];
     let activeRows: RawSessionRow[] = [];
     try {
@@ -301,7 +294,10 @@ export class HermesSessionService {
     });
   }
 
-  private projectSnapshot(record: HermesSessionRecord, raw: z.infer<typeof sessionResponseSchema>): HermesSessionSnapshot {
+  private projectSnapshot(
+    record: HermesSessionRecord,
+    raw: z.infer<typeof sessionResponseSchema>,
+  ): HermesSessionSnapshot {
     const info = raw.info;
     return {
       sessionId: record.id,
@@ -350,7 +346,11 @@ export function projectHermesEvent(event: HermesGatewayEvent, localSessionId: st
   return null;
 }
 
-function projectSummary(record: HermesSessionRecord, row?: RawSessionRow, activeRow?: RawSessionRow): HermesSessionSummary {
+function projectSummary(
+  record: HermesSessionRecord,
+  row?: RawSessionRow,
+  activeRow?: RawSessionRow,
+): HermesSessionSummary {
   const startedAt = toIsoTimestamp(row?.started_at) ?? record.createdAt.toISOString();
   const messageCount = numberValue(row?.message_count);
   const active = !record.closedAt && (row?.is_active === true || activeRow !== undefined);

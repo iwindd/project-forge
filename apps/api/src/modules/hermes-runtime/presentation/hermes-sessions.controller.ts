@@ -21,7 +21,9 @@ export class HermesSessionsController {
 
   @Get()
   async list(@Principal() principal: AuthenticatedPrincipal) {
-    return hermesSessionListResponseEnvelopeSchema.parse(apiSuccess({ sessions: await this.sessions.list(principal.id) }));
+    return hermesSessionListResponseEnvelopeSchema.parse(
+      apiSuccess({ sessions: await this.sessions.list(principal.id) }),
+    );
   }
 
   @Post()
@@ -30,9 +32,7 @@ export class HermesSessionsController {
     const { agentHandle } = createHermesSessionSchema.parse(rawBody);
     const attachment = await this.sessions.create(principal.id, agentHandle);
     const summary = await this.findSummary(principal.id, attachment.record.id, attachment);
-    return hermesSessionResponseEnvelopeSchema.parse(
-      apiSuccess({ session: summary, snapshot: attachment.snapshot }),
-    );
+    return hermesSessionResponseEnvelopeSchema.parse(apiSuccess({ session: summary, snapshot: attachment.snapshot }));
   }
 
   @Post(':id/resume')
@@ -41,18 +41,12 @@ export class HermesSessionsController {
     const { id } = hermesSessionIdParamSchema.parse(rawParams);
     const attachment = await this.sessions.attach(principal.id, id);
     const summary = await this.findSummary(principal.id, id, attachment);
-    return hermesSessionResponseEnvelopeSchema.parse(
-      apiSuccess({ session: summary, snapshot: attachment.snapshot }),
-    );
+    return hermesSessionResponseEnvelopeSchema.parse(apiSuccess({ session: summary, snapshot: attachment.snapshot }));
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  async rename(
-    @Principal() principal: AuthenticatedPrincipal,
-    @Param() rawParams: unknown,
-    @Body() rawBody: unknown,
-  ) {
+  async rename(@Principal() principal: AuthenticatedPrincipal, @Param() rawParams: unknown, @Body() rawBody: unknown) {
     const { id } = hermesSessionIdParamSchema.parse(rawParams);
     const { title } = renameHermesSessionSchema.parse(rawBody);
     await this.sessions.rename(principal.id, id, title);

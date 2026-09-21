@@ -61,9 +61,9 @@
   transition: opacity 120ms ease;
 }
 
+.sessionItemActive .sessionMenu,
 .sessionItem:hover .sessionMenu,
-.sessionItem:focus-within .sessionMenu,
-.sessionItemActive .sessionMenu {
+.sessionItem:focus-within .sessionMenu {
   opacity: 1;
 }
 

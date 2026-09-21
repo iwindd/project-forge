@@ -5,7 +5,12 @@ export const hermesSessionIdParamSchema = z.object({
 });
 
 export const createHermesSessionSchema = z.object({
-  agentHandle: z.string().trim().min(1).max(160).regex(/^[A-Za-z0-9_-]+$/),
+  agentHandle: z
+    .string()
+    .trim()
+    .min(1)
+    .max(160)
+    .regex(/^[A-Za-z0-9_-]+$/),
 });
 
 export const renameHermesSessionSchema = z.object({

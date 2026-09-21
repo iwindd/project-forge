@@ -43,13 +43,14 @@ export type HermesChatConnectionState = 'connecting' | 'connected' | 'offline';
 export function buildHermesChatUrl(apiOrigin = process.env.NEXT_PUBLIC_API_URL): string {
   const browserOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
   const browserUrl = browserOrigin ? new URL(browserOrigin) : null;
-  const configuredUrl = apiOrigin
-    ? new URL(apiOrigin, browserOrigin ?? 'http://localhost:5050')
-    : null;
+  const configuredUrl = apiOrigin ? new URL(apiOrigin, browserOrigin ?? 'http://localhost:5050') : null;
   const baseUrl =
-    browserUrl && configuredUrl && isLoopbackHostname(configuredUrl.hostname) && !isLoopbackHostname(browserUrl.hostname)
+    browserUrl &&
+    configuredUrl &&
+    isLoopbackHostname(configuredUrl.hostname) &&
+    !isLoopbackHostname(browserUrl.hostname)
       ? browserUrl
-      : configuredUrl ?? browserUrl ?? new URL('http://localhost:5050');
+      : (configuredUrl ?? browserUrl ?? new URL('http://localhost:5050'));
 
   const url = new URL(baseUrl.toString());
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';

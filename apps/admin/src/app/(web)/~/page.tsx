@@ -28,7 +28,9 @@ export default async function OrganizationPickerPage() {
   }
 
   const [organizations, t] = await Promise.all([getOrganizations(), getTranslations('OrganizationPicker')]);
-  const activeOrganizations = organizations.filter((organization) => !organization.status || organization.status === 'ACTIVE');
+  const activeOrganizations = organizations.filter(
+    (organization) => !organization.status || organization.status === 'ACTIVE',
+  );
   const preloadedState = await createPreloadedState({ user: session.user }, organizations);
 
   return (

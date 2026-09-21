@@ -42,7 +42,9 @@ export const hermesSessionSnapshotSchema = z
   })
   .strict();
 
-export const hermesSessionListResponseSchema = z.object({ sessions: z.array(hermesSessionSummarySchema).max(200) }).strict();
+export const hermesSessionListResponseSchema = z
+  .object({ sessions: z.array(hermesSessionSummarySchema).max(200) })
+  .strict();
 
 export const hermesSessionResponseSchema = z
   .object({ session: hermesSessionSummarySchema, snapshot: hermesSessionSnapshotSchema })

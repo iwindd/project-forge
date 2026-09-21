@@ -141,11 +141,12 @@ export class ListSharedAgentsUseCase {
     const provider = safeConfigurationLabel(profile.provider);
     const displayName = safeDisplayText(profile.display_name, profile.name);
     const description = safeDisplayText(profile.description, '');
-    const readiness = !model || !provider
-      ? this.incompleteConfiguration()
-      : useHttpReadApi
-        ? this.ready()
-        : await this.checkRuntime(profile.name);
+    const readiness =
+      !model || !provider
+        ? this.incompleteConfiguration()
+        : useHttpReadApi
+          ? this.ready()
+          : await this.checkRuntime(profile.name);
 
     return {
       handle: profile.name,

@@ -203,7 +203,12 @@ describe('HermesSessionService', () => {
     expect(requestHttp).toHaveBeenCalledTimes(1);
     expect(runtime.request.mock.calls.filter(([method]) => method === 'session.list')).toHaveLength(0);
     expect(runtime.request.mock.calls.filter(([method]) => method === 'session.active_list')).toHaveLength(0);
-    expect(result[0]).toMatchObject({ title: 'จาก Desktop API', preview: 'ผลลัพธ์จาก state.db', messageCount: 4, active: true });
+    expect(result[0]).toMatchObject({
+      title: 'จาก Desktop API',
+      preview: 'ผลลัพธ์จาก state.db',
+      messageCount: 4,
+      active: true,
+    });
   });
 
   it('batches Session summaries per Agent instead of repeating full runtime lists per Session', async () => {
@@ -334,7 +339,11 @@ describe('projectHermesEvent', () => {
   it('projects native runtime errors into a retryable browser-safe frame', () => {
     expect(
       projectHermesEvent(
-        { type: 'error', sessionId: 'live-session-1', payload: { message: 'provider unavailable', internalValue: '[REDACTED]' } },
+        {
+          type: 'error',
+          sessionId: 'live-session-1',
+          payload: { message: 'provider unavailable', internalValue: '[REDACTED]' },
+        },
         sessionId,
       ),
     ).toEqual({
