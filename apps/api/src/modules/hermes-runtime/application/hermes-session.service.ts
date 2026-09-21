@@ -281,6 +281,14 @@ export function projectHermesEvent(event: HermesGatewayEvent, localSessionId: st
       title: safeText(typeof payload.title === 'string' ? payload.title : '', 200),
     };
   }
+  if (event.type === 'error') {
+    return {
+      type: 'error',
+      code: 'MESSAGE_FAILED',
+      sessionId: localSessionId,
+      message: safeText(typeof payload.message === 'string' ? payload.message : 'Hermes turn failed', 500),
+    };
+  }
   return null;
 }
 

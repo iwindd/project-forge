@@ -68,6 +68,7 @@ type UseHermesChatOptions = {
 
 export function useHermesChat({ onFrameAction }: UseHermesChatOptions) {
   const [connectionState, setConnectionState] = useState<HermesChatConnectionState>('connecting');
+  const [connectionGeneration, setConnectionGeneration] = useState(0);
   const [lastErrorCode, setLastErrorCode] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,6 +88,7 @@ export function useHermesChat({ onFrameAction }: UseHermesChatOptions) {
     const socket = new WebSocket(buildHermesChatUrl());
     socketRef.current = socket;
     socket.onopen = () => {
+      setConnectionGeneration((current) => current + 1);
       setConnectionState('connected');
       setLastErrorCode(null);
     };
@@ -115,9 +117,26 @@ export function useHermesChat({ onFrameAction }: UseHermesChatOptions) {
 
   const sendFrame = useCallback((frame: Record<string, unknown>): boolean => {
     const socket = socketRef.current;
-    if (!socket || socket.readyState !== WebSocket.OPEN) return false;
-    socket.send(JSON.stringify(frame));
-    return true;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      if (socketRef.current === socket) setConnectionState('offline');
+      return false;
+    }
+
+    try {
+      socket.send(JSON.stringify(frame));
+      return true;
+    } catch {
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+        setConnectionState('offline');
+        try {
+          socket.close();
+        } catch {
+          // The close event will schedule the normal reconnect path.
+        }
+      }
+      return false;
+    }
   }, []);
 
   useEffect(() => {
@@ -150,7 +169,7 @@ export function useHermesChat({ onFrameAction }: UseHermesChatOptions) {
     [sendFrame],
   );
 
-  return { connectionState, lastErrorCode, attach, send, reconnect: connect };
+  return { connectionState, connectionGeneration, lastErrorCode, attach, send, reconnect: connect };
 }
 
 export type { HermesSessionSnapshot };

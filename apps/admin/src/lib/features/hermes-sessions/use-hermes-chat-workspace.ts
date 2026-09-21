@@ -11,7 +11,12 @@ import {
   useHermesChat,
   type HermesChatFrame,
 } from './use-hermes-chat';
-import { canComposeChat, hydrateSnapshotMessages, snapshotContainsAssistantReply } from './hermes-chat-workspace-utils';
+import {
+  canComposeChat,
+  hydrateSnapshotMessages,
+  snapshotContainsAssistantReply,
+  snapshotContainsUserMessage,
+} from './hermes-chat-workspace-utils';
 import type { LocalMessage } from '@/components/hermes-chat-types';
 import { getPath } from '@/routes';
 
@@ -52,14 +57,17 @@ export function useHermesChatWorkspace() {
   const [pendingFirstPrompt, setPendingFirstPrompt] = useState<string | null>(null);
   const [pendingMessage, setPendingMessage] = useState<PendingMessage | null>(null);
   const [attachedSessionId, setAttachedSessionId] = useState<string | null>(null);
+  const [attachedConnectionGeneration, setAttachedConnectionGeneration] = useState<number | null>(null);
   const [friendlyError, setFriendlyError] = useState<string | null>(null);
   const [retryMode, setRetryMode] = useState<RetryMode>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const previousRouteSessionIdRef = useRef<string | null>(routeSessionId);
-  const attachRequestedSessionRef = useRef<string | null>(null);
+  const attachRequestedSessionRef = useRef<{ sessionId: string; connectionGeneration: number } | null>(null);
   const pendingMessageRef = useRef<PendingMessage | null>(null);
   const sentMessageRef = useRef<string | null>(null);
+  const acceptedMessageRef = useRef<string | null>(null);
+  const connectionGenerationRef = useRef(0);
   const creatingFirstSessionRef = useRef(false);
 
   const readyAgents = useMemo(
@@ -90,7 +98,9 @@ export function useHermesChatWorkspace() {
     setPendingMessage(null);
     pendingMessageRef.current = null;
     sentMessageRef.current = null;
+    acceptedMessageRef.current = null;
     setAttachedSessionId(null);
+    setAttachedConnectionGeneration(null);
     attachRequestedSessionRef.current = null;
     setFriendlyError(null);
     setRetryMode(null);
@@ -100,6 +110,7 @@ export function useHermesChatWorkspace() {
     (frame: HermesChatFrame) => {
       if (frame.type === 'ready') {
         setAttachedSessionId(null);
+        setAttachedConnectionGeneration(null);
         attachRequestedSessionRef.current = null;
         return;
       }
@@ -120,16 +131,31 @@ export function useHermesChatWorkspace() {
           }
           return [...hydrated, optimisticUser];
         });
-        if (queuedMessage?.sessionId === frame.session.sessionId && snapshotContainsAssistantReply(frame.session, queuedMessage.text)) {
-          setPendingMessage(null);
-          pendingMessageRef.current = null;
-          sentMessageRef.current = null;
-          setRetryMode(null);
+        if (queuedMessage?.sessionId === frame.session.sessionId) {
+          if (snapshotContainsAssistantReply(frame.session, queuedMessage.text)) {
+            setPendingMessage(null);
+            pendingMessageRef.current = null;
+            sentMessageRef.current = null;
+            acceptedMessageRef.current = null;
+            setRetryMode(null);
+          } else if (snapshotContainsUserMessage(frame.session, queuedMessage.text)) {
+            sentMessageRef.current = queuedMessage.clientMessageId;
+            acceptedMessageRef.current = queuedMessage.clientMessageId;
+          } else if (acceptedMessageRef.current !== queuedMessage.clientMessageId) {
+            sentMessageRef.current = null;
+          }
         }
         setAttachedSessionId(frame.session.sessionId);
+        setAttachedConnectionGeneration(connectionGenerationRef.current);
         return;
       }
       if (activeSessionId && 'sessionId' in frame && frame.sessionId !== activeSessionId) return;
+      if (frame.type === 'message.accepted') {
+        if (frame.clientMessageId && frame.clientMessageId === pendingMessageRef.current?.clientMessageId) {
+          acceptedMessageRef.current = frame.clientMessageId;
+        }
+        return;
+      }
       if (frame.type === 'assistant.start') {
         setMessages((current) => [
           ...current,
@@ -165,25 +191,38 @@ export function useHermesChatWorkspace() {
         return;
       }
       if (frame.type === 'assistant.complete') {
+        const failed = frame.status !== 'complete' || !frame.text.trim();
         setMessages((current) => {
           const last = current.at(-1);
           if (last?.role === 'assistant' && last.streaming) {
-            return [...current.slice(0, -1), { ...last, text: frame.text || last.text, streaming: false }];
+            const text = frame.text || last.text;
+            return [...current.slice(0, -1), { ...last, text, streaming: false }];
           }
-          return [
-            ...current,
-            {
-              localId: `assistant-${Date.now()}`,
-              role: 'assistant',
-              text: frame.text,
-              timestamp: new Date().toISOString(),
-              rowId: null,
-            },
-          ];
+          if (frame.text) {
+            return [
+              ...current,
+              {
+                localId: `assistant-${Date.now()}`,
+                role: 'assistant',
+                text: frame.text,
+                timestamp: new Date().toISOString(),
+                rowId: null,
+              },
+            ];
+          }
+          return current;
         });
+        if (failed) {
+          if (pendingMessageRef.current) {
+            setRetryMode('send');
+            setFriendlyError(t('sendFailed'));
+          }
+          return;
+        }
         setPendingMessage(null);
         pendingMessageRef.current = null;
         sentMessageRef.current = null;
+        acceptedMessageRef.current = null;
         setRetryMode(null);
         return;
       }
@@ -202,7 +241,10 @@ export function useHermesChatWorkspace() {
   );
 
   const chat = useHermesChat({ onFrameAction: onFrame });
-  const { attach, connectionState, send } = chat;
+  const { attach, connectionGeneration, connectionState, send } = chat;
+  useEffect(() => {
+    connectionGenerationRef.current = connectionGeneration;
+  }, [connectionGeneration]);
   const canCompose = canComposeChat(currentAgent, connectionState);
   const hasInitialData = !agentsLoading && !sessionsLoading;
   const conversationMode: HermesChatConversationMode = !activeSessionId
@@ -214,28 +256,50 @@ export function useHermesChatWorkspace() {
         : 'not-found';
 
   useEffect(() => {
-    if (!activeSessionId || !selectedSession || connectionState !== 'connected' || attachedSessionId === activeSessionId) return;
-    if (attachRequestedSessionRef.current === activeSessionId) return;
-    attachRequestedSessionRef.current = activeSessionId;
-    attach(activeSessionId);
-  }, [activeSessionId, attach, attachedSessionId, connectionState, selectedSession]);
+    if (!activeSessionId || !selectedSession || connectionState !== 'connected') return;
+    if (
+      attachedSessionId === activeSessionId &&
+      attachedConnectionGeneration === connectionGenerationRef.current
+    )
+      return;
+    if (
+      attachRequestedSessionRef.current?.sessionId === activeSessionId &&
+      attachRequestedSessionRef.current.connectionGeneration === connectionGenerationRef.current
+    )
+      return;
+    attachRequestedSessionRef.current = {
+      sessionId: activeSessionId,
+      connectionGeneration: connectionGenerationRef.current,
+    };
+    if (!attach(activeSessionId)) {
+      attachRequestedSessionRef.current = null;
+    }
+  }, [activeSessionId, attach, attachedConnectionGeneration, attachedSessionId, connectionState, selectedSession]);
 
   useEffect(() => {
     if (
       !pendingMessage ||
       attachedSessionId !== pendingMessage.sessionId ||
+      attachedConnectionGeneration !== connectionGenerationRef.current ||
       connectionState !== 'connected' ||
       sentMessageRef.current === pendingMessage.clientMessageId
     )
       return;
     const sent = send(pendingMessage.sessionId, pendingMessage.text, pendingMessage.clientMessageId);
-    if (sent) sentMessageRef.current = pendingMessage.clientMessageId;
-  }, [attachedSessionId, connectionState, pendingMessage, retryNonce, send]);
+    if (sent) {
+      sentMessageRef.current = pendingMessage.clientMessageId;
+    } else {
+      sentMessageRef.current = null;
+      acceptedMessageRef.current = null;
+      attachRequestedSessionRef.current = null;
+    }
+  }, [attachedConnectionGeneration, attachedSessionId, connectionState, pendingMessage, retryNonce, send]);
 
   useEffect(() => {
     if (
       !pendingMessage ||
       attachedSessionId !== pendingMessage.sessionId ||
+      attachedConnectionGeneration !== connectionGenerationRef.current ||
       connectionState !== 'connected' ||
       sentMessageRef.current !== pendingMessage.clientMessageId
     )
@@ -250,7 +314,7 @@ export function useHermesChatWorkspace() {
       }
     }, 10_000);
     return () => clearTimeout(timer);
-  }, [attach, attachedSessionId, connectionState, pendingMessage]);
+  }, [attach, attachedConnectionGeneration, attachedSessionId, connectionState, pendingMessage]);
 
   const selectAgentAction = (value: string | null) => {
     if (activeSessionId) return;
@@ -292,9 +356,10 @@ export function useHermesChatWorkspace() {
       const result = await createSession({ agentHandle: currentAgent.handle }).unwrap();
       setLocalSessionId(result.session.id);
       setLocalSession(result.session);
-      setTitleAction(result.session.id, result.session.title || text);
+      setTitleAction(result.session.id, result.session.title || text, currentAgent.displayName);
       setMessages(hydrateSnapshotMessages(result.snapshot));
       setAttachedSessionId(null);
+      setAttachedConnectionGeneration(null);
       attachRequestedSessionRef.current = null;
       setPendingFirstPrompt(null);
       enqueueMessage(result.session.id, text, clientMessageId);
@@ -321,6 +386,7 @@ export function useHermesChatWorkspace() {
       setFriendlyError(null);
       setRetryMode(null);
       sentMessageRef.current = null;
+      acceptedMessageRef.current = null;
       setRetryNonce((current) => current + 1);
     }
   };

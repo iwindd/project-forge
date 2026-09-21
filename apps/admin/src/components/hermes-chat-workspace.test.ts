@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canComposeChat, snapshotContainsAssistantReply } from './hermes-chat-workspace';
+import { canComposeChat, snapshotContainsAssistantReply, snapshotContainsUserMessage } from './hermes-chat-workspace';
 
 describe('chat composer availability', () => {
   it('keeps the composer focusable while the chat transport reconnects', () => {
@@ -24,6 +24,23 @@ describe('chat snapshot reconciliation', () => {
           messageCount: 2,
           status: 'idle',
           inflight: null,
+        },
+        'Hi',
+      ),
+    ).toBe(true);
+  });
+
+  it('recognizes a persisted user prompt while its assistant turn is still inflight', () => {
+    expect(
+      snapshotContainsUserMessage(
+        {
+          sessionId: '770e8400-e29b-41d4-a716-446655440000',
+          agentHandle: 'lyla',
+          title: 'Friendly greeting',
+          messages: [],
+          messageCount: 0,
+          status: 'streaming',
+          inflight: { user: 'Hi', assistant: 'Hello', streaming: true, status: 'streaming' },
         },
         'Hi',
       ),

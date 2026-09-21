@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getHermesSessionDisplayTitle } from './hermes-session-title';
+import { getHermesChatHeaderTitle, getHermesSessionDisplayTitle } from './hermes-session-title';
 
 describe('getHermesSessionDisplayTitle', () => {
   it('prefers the Agent-generated title', () => {
@@ -12,5 +12,11 @@ describe('getHermesSessionDisplayTitle', () => {
 
   it('uses the provided fallback for a blank session', () => {
     expect(getHermesSessionDisplayTitle(null, 'Chat')).toBe('Chat');
+  });
+
+  it('adds the Agent display name as the AppHeader prefix', () => {
+    expect(getHermesChatHeaderTitle('Lyla', { title: 'ค้นหา hermes ด้วย web_search', preview: '' })).toBe(
+      'Lyla · ค้นหา hermes ด้วย web_search',
+    );
   });
 });

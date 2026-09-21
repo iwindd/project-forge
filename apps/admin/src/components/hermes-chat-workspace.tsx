@@ -8,7 +8,11 @@ import { useHermesChatWorkspace } from '@/lib/features/hermes-sessions/use-herme
 import { HermesChatConversation } from './hermes-chat-conversation';
 import styles from './hermes-chat-workspace.module.css';
 
-export { canComposeChat, snapshotContainsAssistantReply } from '@/lib/features/hermes-sessions/hermes-chat-workspace-utils';
+export {
+  canComposeChat,
+  snapshotContainsAssistantReply,
+  snapshotContainsUserMessage,
+} from '@/lib/features/hermes-sessions/hermes-chat-workspace-utils';
 
 export function HermesChatWorkspace() {
   const t = useTranslations('Chat');
@@ -19,7 +23,6 @@ export function HermesChatWorkspace() {
     refetchAgents,
     readyAgents,
     currentAgent,
-    selectedSession,
     conversationMode,
     messages,
     draft,
@@ -78,7 +81,6 @@ export function HermesChatWorkspace() {
       <HermesChatConversation
         mode={conversationMode}
         currentAgent={currentAgent}
-        selectedSession={selectedSession}
         readyAgents={readyAgents}
         messages={messages}
         draft={draft}

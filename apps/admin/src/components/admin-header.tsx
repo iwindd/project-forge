@@ -5,10 +5,11 @@ import { IconSettings } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useActiveRouteTrail } from '@/hooks';
+import { useGetSharedAgentsQuery } from '@/lib/features/hermes-agents/hermes-agents-api';
 import { useGetHermesSessionsQuery } from '@/lib/features/hermes-sessions/hermes-sessions-api';
 import { useHermesChatTitles } from './hermes-chat-title-context';
 import type { SidebarNavigationMode } from './navigation/navigation-utils';
-import { getHermesSessionDisplayTitle } from './hermes-session-title';
+import { getHermesChatHeaderTitle } from './hermes-session-title';
 import { AdminBrand } from './admin-brand';
 import classes from './admin-header.module.css';
 
@@ -25,13 +26,23 @@ export function AdminHeader({
 }) {
   const t = useTranslations('Navigation');
   const routeTrail = useActiveRouteTrail();
-  const { optimisticTitles } = useHermesChatTitles();
+  const { optimisticTitles, optimisticAgentNames } = useHermesChatTitles();
   const { sessionId } = useParams<{ sessionId?: string }>();
+  const shouldLoadHermesSessionData = navigationMode === 'hermes' && Boolean(sessionId);
   const { data: sessions = [] } = useGetHermesSessionsQuery(undefined, {
-    skip: navigationMode !== 'hermes' || !sessionId,
+    skip: !shouldLoadHermesSessionData,
+  });
+  const { data: agentRoster } = useGetSharedAgentsQuery(undefined, {
+    skip: !shouldLoadHermesSessionData,
   });
   const currentRoute = routeTrail[routeTrail.length - 1];
   const activeSession = sessionId ? sessions.find((session) => session.id === sessionId) : null;
+  const activeAgentName = sessionId
+    ? agentRoster?.agents.find((agent) => agent.handle === activeSession?.agentHandle)?.displayName ??
+      optimisticAgentNames[sessionId] ??
+      activeSession?.agentHandle ??
+      null
+    : null;
   const optimisticTitle = sessionId ? optimisticTitles[sessionId] : undefined;
   const routeTitle = currentRoute
     ? currentRoute.navigationLabelKey
@@ -40,7 +51,11 @@ export function AdminHeader({
     : '';
   const pageTitle =
     navigationMode === 'hermes' && sessionId
-      ? activeSession?.title.trim() || optimisticTitle || getHermesSessionDisplayTitle(activeSession, routeTitle || t('chat'))
+      ? getHermesChatHeaderTitle(
+          activeAgentName,
+          { title: activeSession?.title.trim() || optimisticTitle || '', preview: activeSession?.preview ?? '' },
+          routeTitle || t('chat'),
+        )
       : routeTitle;
 
   return (

@@ -748,6 +748,12 @@ const handleWebSocketFrame = (client, frame) => {
   if (frame.type === 'attach') {
     const session = hermesSessionsFor(client.scenario).find((candidate) => candidate.id === frame.sessionId);
     if (!session) return sendWebSocketFrame(client.socket, { type: 'error', code: 'SESSION_UNAVAILABLE' });
+    if (client.scenario === 'chat-reconnect' && session.inflight) {
+      const reply = `รับทราบหลังเชื่อมต่อใหม่ครับ: ${session.inflight.user}`;
+      session.inflight = null;
+      session.messages.push({ role: 'assistant', text: reply, timestamp: new Date().toISOString(), rowId: session.messages.length + 1 });
+      session.preview = reply;
+    }
     client.session = session;
     session.active = true;
     session.closedAt = null;
@@ -777,6 +783,10 @@ const handleWebSocketFrame = (client, frame) => {
     status: 'streaming',
   });
   sendWebSocketFrame(client.socket, { type: 'assistant.start', sessionId: session.id });
+  if (client.scenario === 'chat-reconnect' && sendAttempts === 1) {
+    setTimeout(() => client.socket.destroy(), 20);
+    return;
+  }
   const reply = `รับทราบครับ: ${text}`;
   const firstChunk = reply.slice(0, Math.ceil(reply.length / 2));
   const secondChunk = reply.slice(firstChunk.length);

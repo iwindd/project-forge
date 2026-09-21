@@ -113,7 +113,7 @@
     "closeFailed": "ปิดบทสนทนาไม่ได้",
     "reconnectRequired": "กำลังเชื่อมต่อใหม่ ลองอีกครั้ง",
     "runtimeNotReady": "กำลังเตรียม Hermes ให้พร้อมใช้งาน",
-    "empty": "เริ่มคุยกับ {agent}",
+    "empty": "เริ่มการสนทนาได้เลย",
     "noAgent": "ยังไม่มี Agent ที่พร้อมใช้งาน"
   },
   "HermesRuntime": {

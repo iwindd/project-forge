@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotFoundError } from '../../../common/errors/application-error.js';
 import type { HermesGatewayEvent } from '../domain/hermes-runtime.types.js';
-import { HermesSessionService } from './hermes-session.service.js';
+import { HermesSessionService, projectHermesEvent } from './hermes-session.service.js';
 import type { HermesSessionRepositoryPort } from './ports/hermes-session.repository.js';
 import type { HermesSessionRecord } from '../domain/hermes-session.types.js';
 
@@ -279,5 +279,21 @@ describe('HermesSessionService', () => {
       session_id: 'live-session-1',
     });
     expect(repository.markClosed).toHaveBeenCalledWith(userId, sessionId, expect.any(Date));
+  });
+});
+
+describe('projectHermesEvent', () => {
+  it('projects native runtime errors into a retryable browser-safe frame', () => {
+    expect(
+      projectHermesEvent(
+        { type: 'error', sessionId: 'live-session-1', payload: { message: 'provider unavailable', internalValue: '[REDACTED]' } },
+        sessionId,
+      ),
+    ).toEqual({
+      type: 'error',
+      code: 'MESSAGE_FAILED',
+      sessionId,
+      message: 'provider unavailable',
+    });
   });
 });

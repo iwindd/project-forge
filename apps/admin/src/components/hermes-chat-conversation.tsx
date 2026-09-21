@@ -2,10 +2,8 @@
 
 import {
   ActionIcon,
-  Avatar,
   Button,
   Center,
-  Divider,
   Group,
   Loader,
   Paper,
@@ -16,11 +14,10 @@ import {
   Textarea,
   Title,
 } from '@mantine/core';
-import { IconChevronDown, IconRobot, IconSend2, IconSparkles, IconX } from '@tabler/icons-react';
+import { IconChevronDown, IconSend2, IconSparkles, IconX } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import type { RefObject } from 'react';
 import type { SharedAgent } from '@/lib/features/hermes-agents/hermes-agents-schemas';
-import type { HermesSessionSummary } from '@/lib/features/hermes-sessions/hermes-sessions-schemas';
 import type { LocalMessage } from './hermes-chat-types';
 import styles from './hermes-chat-workspace.module.css';
 
@@ -29,7 +26,6 @@ type ConversationMode = 'new' | 'loading' | 'not-found' | 'active';
 type HermesChatConversationProps = {
   mode: ConversationMode;
   currentAgent: SharedAgent | null;
-  selectedSession: HermesSessionSummary | null;
   readyAgents: SharedAgent[];
   messages: LocalMessage[];
   draft: string;
@@ -48,7 +44,6 @@ type HermesChatConversationProps = {
 export function HermesChatConversation({
   mode,
   currentAgent,
-  selectedSession,
   readyAgents,
   messages,
   draft,
@@ -130,19 +125,6 @@ export function HermesChatConversation({
 
   return (
     <main className={styles.conversation}>
-      <Group className={styles.conversationHeader} justify='space-between' wrap='nowrap'>
-        <Group gap='sm' wrap='nowrap'>
-          <Avatar color='indigo' radius='xl' size='sm'>
-            <IconRobot size={16} />
-          </Avatar>
-          <Text size='sm' fw={600} truncate>
-            {currentAgent?.displayName ?? selectedSession?.agentHandle}
-          </Text>
-        </Group>
-        {selectedSession?.active ? <span className={styles.liveDot} aria-hidden='true' /> : null}
-      </Group>
-      <Divider />
-
       <ScrollArea className={styles.messages} type='auto' offsetScrollbars>
         {messages.length ? (
           <Stack gap='lg' className={styles.messageStack}>
@@ -162,7 +144,7 @@ export function HermesChatConversation({
             <Stack align='center' gap={4}>
               <IconSparkles size={26} stroke={1.4} />
               <Text size='sm' c='dimmed'>
-                {t('empty', { agent: currentAgent?.displayName ?? selectedSession?.agentHandle ?? '' })}
+                {t('empty')}
               </Text>
             </Stack>
           </Center>

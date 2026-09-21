@@ -39,18 +39,6 @@
   width: min(220px, 100%);
 }
 
-.conversationHeader {
-  min-height: 54px;
-  padding: 0.5rem 1rem;
-}
-
-.liveDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--mantine-color-teal-5);
-}
-
 .messages {
   min-height: 0;
   flex: 1;

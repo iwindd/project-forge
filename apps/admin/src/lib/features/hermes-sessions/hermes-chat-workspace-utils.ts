@@ -9,6 +9,13 @@ export function canComposeChat(currentAgent: SharedAgent | null, connectionState
   return Boolean(currentAgent) && transportAllowsDraft;
 }
 
+export function snapshotContainsUserMessage(snapshot: HermesSessionSnapshot, pendingText: string): boolean {
+  return (
+    snapshot.messages.some((message) => message.role === 'user' && message.text === pendingText) ||
+    snapshot.inflight?.user === pendingText
+  );
+}
+
 export function snapshotContainsAssistantReply(snapshot: HermesSessionSnapshot, pendingText: string): boolean {
   const pendingUserIndex = snapshot.messages.reduce(
     (lastIndex, message, index) => (message.role === 'user' && message.text === pendingText ? index : lastIndex),

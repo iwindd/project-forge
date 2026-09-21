@@ -30,19 +30,35 @@ test('Chat starts a native Session, streams a reply, and resumes history after r
   await page.getByLabel('ข้อความ').fill('ทดสอบแชต');
   await page.getByRole('button', { name: 'ส่ง' }).click();
   await expect(page).toHaveURL(/\/hermes\/chat\/[0-9a-f-]+$/);
-  await expect(page.locator('[class*="pageTitle"]')).toHaveText('ทดสอบแชต');
+  await expect(page.locator('[class*="pageTitle"]')).toHaveText('Shared Coder · ทดสอบแชต');
   await expect(page.getByText('รับทราบครับ: ทดสอบแชต', { exact: true }).last()).toBeVisible();
+  await expect(page.locator('[class*="conversationHeader"]')).toHaveCount(0);
+  await expect(page.locator('[class*="conversation"]')).not.toContainText('Shared Coder');
   await expect(page.locator('[class*="userMessageRow"]')).toHaveCount(1);
   await expect(page.locator('a[href^="/hermes/chat/"]', { hasText: 'ทดสอบแชต' })).toBeVisible();
   expect(documentLoadCount.value).toBe(0);
 
   await page.reload();
   await expect(page.getByText('รับทราบครับ: ทดสอบแชต', { exact: true }).last()).toBeVisible();
-  await expect(page.locator('[class*="pageTitle"]')).toHaveText('ทดสอบแชต');
+  await expect(page.locator('[class*="pageTitle"]')).toHaveText('Shared Coder · ทดสอบแชต');
   await expect(page.locator('[class*="userMessageRow"]')).toHaveCount(1);
   await expect(page.getByText('ทดสอบแชต', { exact: true }).first()).toBeVisible();
   expect(resourceErrors).toEqual([]);
   expect(browserErrors).toEqual([]);
+});
+
+test('re-attaches the Session and recovers the reply after a chat socket reconnects', async ({ page }) => {
+  await page.context().addCookies([
+    { name: 'pf_session', value: 'controlled-e2e-session', domain: '127.0.0.1', path: '/' },
+    { name: 'pf_e2e_scenario', value: 'chat-reconnect', domain: '127.0.0.1', path: '/' },
+  ]);
+
+  await page.goto('/hermes/chat');
+  await page.getByLabel('ข้อความ').fill('ทดสอบเชื่อมต่อใหม่');
+  await page.getByRole('button', { name: 'ส่ง' }).click();
+  await expect(page).toHaveURL(/\/hermes\/chat\/[0-9a-f-]+$/);
+  await expect(page.getByText('รับทราบหลังเชื่อมต่อใหม่ครับ: ทดสอบเชื่อมต่อใหม่', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('[class*="userMessageRow"]')).toHaveCount(1);
 });
 
 test('keeps the first prompt retryable when Session creation fails', async ({ page }) => {
