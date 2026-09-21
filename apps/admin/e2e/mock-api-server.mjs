@@ -319,7 +319,11 @@ const server = http.createServer((req, res) => {
       }),
     );
   if (path === 'hermes/sessions' && req.method === 'GET') {
-    return send(req, res, 200, envelope({ sessions: hermesSessionsFor(scenario).map(hermesSummary) }));
+    const body = envelope({ sessions: hermesSessionsFor(scenario).map(hermesSummary) });
+    if (scenario === 'chat-sessions-slow') {
+      return setTimeout(() => send(req, res, 200, body), 1_200);
+    }
+    return send(req, res, 200, body);
   }
   if (path === 'hermes/sessions' && req.method === 'POST') {
     const attempts = (hermesCreateAttemptsByScenario.get(scenario) ?? 0) + 1;

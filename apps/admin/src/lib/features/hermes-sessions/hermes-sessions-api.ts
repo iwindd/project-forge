@@ -12,6 +12,7 @@ export const hermesSessionsApi = api.injectEndpoints({
       query: () => 'hermes/sessions',
       transformResponse: (response: unknown) => parseHermesSessionList(response).sessions,
       providesTags: ['HermesSessions'],
+      keepUnusedDataFor: 300,
     }),
     createHermesSession: builder.mutation<HermesSessionResponse, { agentHandle: string }>({
       query: (body) => ({

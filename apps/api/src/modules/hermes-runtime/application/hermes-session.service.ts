@@ -101,8 +101,19 @@ export class HermesSessionService {
 
   async list(userId: string): Promise<HermesSessionSummary[]> {
     const records = await this.sessions.listForUser(userId);
-    const summaries = await Promise.all(records.map((record) => this.readSummary(record)));
-    return summaries.sort((left, right) => {
+    const recordsByAgent = new Map<string, HermesSessionRecord[]>();
+    for (const record of records) {
+      const agentRecords = recordsByAgent.get(record.agentHandle) ?? [];
+      agentRecords.push(record);
+      recordsByAgent.set(record.agentHandle, agentRecords);
+    }
+
+    const summaries = await Promise.all(
+      [...recordsByAgent.entries()].map(([agentHandle, agentRecords]) =>
+        this.readSummaries(agentHandle, agentRecords),
+      ),
+    );
+    return summaries.flat().sort((left, right) => {
       const leftTime = left.startedAt ? Date.parse(left.startedAt) : 0;
       const rightTime = right.startedAt ? Date.parse(right.startedAt) : 0;
       return rightTime - leftTime;
@@ -212,35 +223,41 @@ export class HermesSessionService {
     return record.createdAt.getTime() === record.updatedAt.getTime() && isRecord(error) && error.rpcCode === 4007;
   }
 
-  private async readSummary(record: HermesSessionRecord): Promise<HermesSessionSummary> {
+  private async readSummaries(
+    agentHandle: string,
+    records: HermesSessionRecord[],
+  ): Promise<HermesSessionSummary[]> {
+    let rows: RawSessionRow[] = [];
+    let activeRows: RawSessionRow[] = [];
     try {
       const raw = await this.runtime.request('session.list', {
-        profile: record.agentHandle,
+        profile: agentHandle,
         include_hidden: true,
         limit: 200,
       });
       const parsed = sessionListResponseSchema.safeParse(raw);
-      const row = parsed.success
-        ? parsed.data.sessions.find((candidate) => candidate.id === record.hermesSessionId)
-        : undefined;
-      let activeRow: RawSessionRow | undefined;
-      try {
-        const rawActive = await this.runtime.request('session.active_list', {
-          profile: record.agentHandle,
-        });
-        const parsedActive = activeSessionListResponseSchema.safeParse(rawActive);
-        activeRow = parsedActive.success
-          ? parsedActive.data.sessions.find(
-              (candidate) => candidate.session_key === record.hermesSessionId || candidate.id === record.hermesSessionId,
-            )
-          : undefined;
-      } catch {
-        activeRow = undefined;
-      }
-      return projectSummary(record, row, activeRow);
+      if (parsed.success) rows = parsed.data.sessions;
     } catch {
-      return projectSummary(record);
+      return records.map((record) => projectSummary(record));
     }
+
+    try {
+      const rawActive = await this.runtime.request('session.active_list', {
+        profile: agentHandle,
+      });
+      const parsedActive = activeSessionListResponseSchema.safeParse(rawActive);
+      if (parsedActive.success) activeRows = parsedActive.data.sessions;
+    } catch {
+      activeRows = [];
+    }
+
+    return records.map((record) => {
+      const row = rows.find((candidate) => candidate.id === record.hermesSessionId);
+      const activeRow = activeRows.find(
+        (candidate) => candidate.session_key === record.hermesSessionId || candidate.id === record.hermesSessionId,
+      );
+      return projectSummary(record, row, activeRow);
+    });
   }
 
   private projectSnapshot(record: HermesSessionRecord, raw: z.infer<typeof sessionResponseSchema>): HermesSessionSnapshot {

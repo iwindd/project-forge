@@ -35,8 +35,12 @@ export function HermesSidebarSessions({ onNavigateAction }: { onNavigateAction?:
   const t = useTranslations('Chat');
   const pathname = usePathname();
   const router = useRouter();
-  const { data: sessions = [], isLoading, isError } = useGetHermesSessionsQuery();
-  const { data: agentRoster } = useGetSharedAgentsQuery();
+  const { data: sessions = [], isLoading, isError } = useGetHermesSessionsQuery(undefined, {
+    refetchOnMountOrArgChange: 30,
+  });
+  const { data: agentRoster } = useGetSharedAgentsQuery(undefined, {
+    refetchOnMountOrArgChange: 30,
+  });
   const [renameSession] = useRenameHermesSessionMutation();
   const [closeSession] = useCloseHermesSessionMutation();
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);

@@ -47,6 +47,17 @@ test('Chat starts a native Session, streams a reply, and resumes history after r
   expect(browserErrors).toEqual([]);
 });
 
+test('renders New Chat while the slower conversation list finishes loading', async ({ page }) => {
+  await page.context().addCookies([
+    { name: 'pf_session', value: 'controlled-e2e-session', domain: '127.0.0.1', path: '/' },
+    { name: 'pf_e2e_scenario', value: 'chat-sessions-slow', domain: '127.0.0.1', path: '/' },
+  ]);
+
+  await page.goto('/hermes/chat');
+  await expect(page.getByRole('heading', { name: 'คุณกำลังคิดอะไรอยู่?' })).toBeVisible({ timeout: 1_500 });
+  await expect(page.getByText('กำลังโหลดบทสนทนา...', { exact: true })).toBeVisible();
+});
+
 test('re-attaches the Session and recovers the reply after a chat socket reconnects', async ({ page }) => {
   await page.context().addCookies([
     { name: 'pf_session', value: 'controlled-e2e-session', domain: '127.0.0.1', path: '/' },

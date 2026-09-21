@@ -36,11 +36,11 @@ export function HermesChatWorkspace() {
     submitAction,
     retryAction,
     dismissErrorAction,
-    hasInitialData,
+    hasAgentData,
   } = useHermesChatWorkspace();
 
   const error = agentError || sessionsError;
-  if (!hasInitialData) {
+  if (!hasAgentData) {
     return (
       <Center className={styles.loading}>
         <Loader size='sm' />

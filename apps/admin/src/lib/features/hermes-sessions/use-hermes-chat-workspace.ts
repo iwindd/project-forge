@@ -40,13 +40,13 @@ export function useHermesChatWorkspace() {
     error: agentError,
     isLoading: agentsLoading,
     refetch: refetchAgents,
-  } = useGetSharedAgentsQuery();
+  } = useGetSharedAgentsQuery(undefined, { refetchOnMountOrArgChange: 30 });
   const {
     data: sessions = [],
     error: sessionsError,
     isLoading: sessionsLoading,
     refetch: refetchSessions,
-  } = useGetHermesSessionsQuery();
+  } = useGetHermesSessionsQuery(undefined, { refetchOnMountOrArgChange: 30 });
   const [createSession, createState] = useCreateHermesSessionMutation();
   const [localSessionId, setLocalSessionId] = useState<string | null>(null);
   const [localSession, setLocalSession] = useState<HermesSessionSummary | null>(null);
@@ -68,6 +68,7 @@ export function useHermesChatWorkspace() {
   const sentMessageRef = useRef<string | null>(null);
   const acceptedMessageRef = useRef<string | null>(null);
   const connectionGenerationRef = useRef(0);
+  const runtimeRetryCountRef = useRef(0);
   const creatingFirstSessionRef = useRef(false);
 
   const readyAgents = useMemo(
@@ -81,6 +82,22 @@ export function useHermesChatWorkspace() {
   const currentAgent = activeSessionId
     ? readyAgents.find((agent) => agent.handle === selectedSession?.agentHandle) ?? null
     : readyAgents.find((agent) => agent.handle === selectedAgentHandle) ?? readyAgents[0] ?? null;
+
+  useEffect(() => {
+    const runtimeState = agentRoster?.runtime.state;
+    if (!agentRoster || runtimeState === 'ready' || agentsLoading) return;
+    if (runtimeRetryCountRef.current >= 5) return;
+
+    runtimeRetryCountRef.current += 1;
+    const retryTimer = window.setTimeout(() => {
+      void refetchAgents();
+    }, 1_000);
+    return () => window.clearTimeout(retryTimer);
+  }, [agentRoster, agentsLoading, refetchAgents]);
+
+  useEffect(() => {
+    if (agentRoster?.runtime.state === 'ready') runtimeRetryCountRef.current = 0;
+  }, [agentRoster?.runtime.state]);
 
   useEffect(() => {
     const previousRouteSessionId = previousRouteSessionIdRef.current;
@@ -246,7 +263,6 @@ export function useHermesChatWorkspace() {
     connectionGenerationRef.current = connectionGeneration;
   }, [connectionGeneration]);
   const canCompose = canComposeChat(currentAgent, connectionState);
-  const hasInitialData = !agentsLoading && !sessionsLoading;
   const conversationMode: HermesChatConversationMode = !activeSessionId
     ? 'new'
     : selectedSession
@@ -415,6 +431,6 @@ export function useHermesChatWorkspace() {
       setFriendlyError(null);
       setRetryMode(null);
     },
-    hasInitialData,
+    hasAgentData: !agentsLoading,
   };
 }

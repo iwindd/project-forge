@@ -177,6 +177,25 @@ describe('HermesSessionService', () => {
     expect(JSON.stringify(result)).not.toContain('cwd');
   });
 
+  it('batches Session summaries per Agent instead of repeating full runtime lists per Session', async () => {
+    const runtime = makeRuntime();
+    const secondRecord: HermesSessionRecord = {
+      ...record,
+      id: '880e8400-e29b-41d4-a716-446655440000',
+      hermesSessionId: 'stored-session-2',
+      createdAt: new Date('2026-09-20T11:00:00.000Z'),
+      updatedAt: new Date('2026-09-20T11:00:00.000Z'),
+    };
+    const repository = makeRepository({ listForUser: vi.fn(async () => [record, secondRecord]) });
+    const service = new HermesSessionService(runtime, repository, readyAgents);
+
+    const result = await service.list(userId);
+
+    expect(result).toHaveLength(2);
+    expect(runtime.request.mock.calls.filter(([method]) => method === 'session.list')).toHaveLength(1);
+    expect(runtime.request.mock.calls.filter(([method]) => method === 'session.active_list')).toHaveLength(1);
+  });
+
   it('rejects a session that is not owned by the authenticated User before touching Hermes', async () => {
     const runtime = makeRuntime();
     const repository = makeRepository();

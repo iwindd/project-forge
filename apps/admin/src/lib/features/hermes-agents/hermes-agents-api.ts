@@ -15,6 +15,7 @@ export const hermesAgentsApi = api.injectEndpoints({
       query: () => 'hermes/agents',
       transformResponse: parseSharedAgentRoster,
       providesTags: ['HermesAgents'],
+      keepUnusedDataFor: 300,
     }),
     getSharedAgentOptions: builder.query<SharedAgentOptions, void>({
       query: () => 'hermes/agents/options',

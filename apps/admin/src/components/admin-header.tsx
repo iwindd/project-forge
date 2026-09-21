@@ -31,9 +31,11 @@ export function AdminHeader({
   const shouldLoadHermesSessionData = navigationMode === 'hermes' && Boolean(sessionId);
   const { data: sessions = [] } = useGetHermesSessionsQuery(undefined, {
     skip: !shouldLoadHermesSessionData,
+    refetchOnMountOrArgChange: 30,
   });
   const { data: agentRoster } = useGetSharedAgentsQuery(undefined, {
     skip: !shouldLoadHermesSessionData,
+    refetchOnMountOrArgChange: 30,
   });
   const currentRoute = routeTrail[routeTrail.length - 1];
   const activeSession = sessionId ? sessions.find((session) => session.id === sessionId) : null;
