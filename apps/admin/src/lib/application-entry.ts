@@ -1,7 +1,5 @@
-import type { Organization } from './features/organization/types';
+import { getPath } from '@/routes';
 
-export function getApplicationEntryPath(organizations: readonly Pick<Organization, 'slug'>[]) {
-  const firstOrganization = organizations[0];
-
-  return firstOrganization ? `/${encodeURIComponent(firstOrganization.slug)}/chat` : '/account';
+export function getApplicationEntryPath() {
+  return getPath('organizationPicker');
 }

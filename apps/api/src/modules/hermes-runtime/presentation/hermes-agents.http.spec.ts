@@ -199,7 +199,7 @@ describe('Hermes Agents HTTP contracts', () => {
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({ data: { ...roster, refreshedAt: expect.any(String) } });
-    expect(responseBody.data.refreshedAt).toMatch(/^2026-09-20T/);
+    expect(responseBody.data.refreshedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     expect(runtime.request).toHaveBeenCalledWith('profiles.list', { include_sessions: false });
   });
 

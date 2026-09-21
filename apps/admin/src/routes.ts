@@ -1,27 +1,41 @@
 import { buildRouteUtility, ROUTER } from './lib/routing';
 
 const organizationAppRoutes = ROUTER({
+  organizationPicker: {
+    path: '/~',
+    label: 'เลือก Organization',
+    navigationLabelKey: 'organizationPicker',
+    hiddenBreadcrumb: true,
+  },
+  hermes: {
+    path: '/hermes',
+    label: 'Hermes',
+    hiddenBreadcrumb: true,
+    children: {
+      chat: {
+        path: '/hermes/chat',
+        label: 'Chat',
+        navigationLabelKey: 'chat',
+        hiddenBreadcrumb: true,
+      },
+      agents: {
+        path: '/hermes/agents',
+        label: 'Agents',
+        navigationLabelKey: 'agents',
+        hiddenBreadcrumb: true,
+      },
+    },
+  },
   overview: {
     path: '/:organizationSlug',
     label: 'ภาพรวม',
     navigationLabelKey: 'overview',
     hiddenBreadcrumb: true,
   },
-  chat: {
-    path: '/:organizationSlug/chat',
-    label: 'Chat',
-    navigationLabelKey: 'chat',
-    hiddenBreadcrumb: true,
-  },
   projects: {
     path: '/:organizationSlug/projects',
     label: 'โปรเจกต์',
     navigationLabelKey: 'projects',
-  },
-  agents: {
-    path: '/:organizationSlug/agents',
-    label: 'Agents',
-    navigationLabelKey: 'agents',
   },
   account: {
     path: '/account',

@@ -1,19 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { findRouteTrail, getPath } from './routes';
+import { findRouteTrail, getPath, getRoute } from './routes';
 
-describe('organization app routes', () => {
-  it('uses canonical user-scoped auth routes', () => {
+describe('Project Forge routes', () => {
+  it('uses canonical user-scoped auth and global entry routes', () => {
     expect(getPath('login')).toBe('/login');
+    expect(getPath('organizationPicker')).toBe('/~');
+    expect(getPath('hermes.chat')).toBe('/hermes/chat');
+    expect(getPath('hermes.agents')).toBe('/hermes/agents');
     expect(findRouteTrail('/admin/login')).toBeNull();
+    expect(findRouteTrail('/~')?.at(-1)?.name).toBe('organizationPicker');
+    expect(findRouteTrail('/hermes/chat')?.at(-1)?.name).toBe('hermes.chat');
+    expect(findRouteTrail('/hermes/agents')?.at(-1)?.name).toBe('hermes.agents');
   });
 
   it('keeps organization data routes explicitly scoped by slug', () => {
     expect(getPath('overview', { organizationSlug: 'acme' })).toBe('/acme');
     expect(getPath('auditLogs', { organizationSlug: 'acme' })).toBe('/acme/audit-logs');
-    expect(getPath('agents', { organizationSlug: 'acme' })).toBe('/acme/agents');
+    expect(getPath('projects', { organizationSlug: 'acme' })).toBe('/acme/projects');
     expect(findRouteTrail('/acme/audit-logs')?.at(-1)?.name).toBe('auditLogs');
-    expect(findRouteTrail('/acme/agents')?.at(-1)?.name).toBe('agents');
+    expect(findRouteTrail('/acme/projects')?.at(-1)?.name).toBe('projects');
     expect(findRouteTrail('/acme/profile')).toBeNull();
     expect(findRouteTrail('/acme/users')).toBeNull();
+  });
+
+  it('does not retain organization-scoped Chat or Agents routes', () => {
+    expect(() => getRoute('chat')).toThrow('Route not found: chat');
+    expect(() => getRoute('agents')).toThrow('Route not found: agents');
+    expect(findRouteTrail('/acme/chat')).toBeNull();
+    expect(findRouteTrail('/acme/agents')).toBeNull();
   });
 });

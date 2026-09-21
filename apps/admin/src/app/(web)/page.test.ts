@@ -32,21 +32,21 @@ describe('organization app entry route', () => {
     expect(mocks.getOrganizations).not.toHaveBeenCalled();
   });
 
-  it('enters the first available organization for an authenticated user', async () => {
+  it('enters the Organization Picker for an authenticated user', async () => {
     mocks.auth.mockResolvedValue({ user: { id: 'user-id' } });
-    mocks.getOrganizations.mockResolvedValue([{ id: 'organization-id', slug: 'acme' }]);
 
-    await expect(HomePage()).rejects.toThrow('redirect:/acme');
+    await expect(HomePage()).rejects.toThrow('redirect:/~');
 
-    expect(mocks.redirect).toHaveBeenCalledWith('/acme');
+    expect(mocks.redirect).toHaveBeenCalledWith('/~');
+    expect(mocks.getOrganizations).not.toHaveBeenCalled();
   });
 
-  it('keeps authenticated users without an organization on account', async () => {
+  it('keeps authenticated users without an organization on the Organization Picker', async () => {
     mocks.auth.mockResolvedValue({ user: { id: 'user-id' } });
-    mocks.getOrganizations.mockResolvedValue([]);
 
-    await expect(HomePage()).rejects.toThrow('redirect:/account');
+    await expect(HomePage()).rejects.toThrow('redirect:/~');
 
-    expect(mocks.redirect).toHaveBeenCalledWith('/account');
+    expect(mocks.redirect).toHaveBeenCalledWith('/~');
+    expect(mocks.getOrganizations).not.toHaveBeenCalled();
   });
 });

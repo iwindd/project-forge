@@ -1,7 +1,7 @@
 'use client';
 
 import { ActionIcon, Box, Burger, Group, Text, Tooltip } from '@mantine/core';
-import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings } from '@tabler/icons-react';
+import { IconSettings } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import { useActiveRouteTrail } from '@/hooks';
 import { AdminBrand } from './admin-brand';
@@ -10,14 +10,10 @@ import classes from './admin-header.module.css';
 export function AdminHeader({
   mobileOpened,
   onToggleMobileAction,
-  sidebarCollapsed,
-  onToggleSidebarAction,
   onOpenSettingsAction,
 }: {
   mobileOpened: boolean;
   onToggleMobileAction: () => void;
-  sidebarCollapsed: boolean;
-  onToggleSidebarAction: () => void;
   onOpenSettingsAction: () => void;
 }) {
   const t = useTranslations('Navigation');
@@ -43,24 +39,6 @@ export function AdminHeader({
         <Box hiddenFrom='sm'>
           <AdminBrand />
         </Box>
-        <Tooltip label={sidebarCollapsed ? t('expandSidebar') : t('collapseSidebar')}>
-          <ActionIcon
-            visibleFrom='sm'
-            variant='subtle'
-            radius='lg'
-            size='lg'
-            aria-controls='project-forge-sidebar'
-            aria-expanded={!sidebarCollapsed}
-            aria-label={sidebarCollapsed ? t('expandSidebar') : t('collapseSidebar')}
-            onClick={onToggleSidebarAction}
-          >
-            {sidebarCollapsed ? (
-              <IconLayoutSidebarLeftExpand style={{ width: '70%', height: '70%' }} stroke={1.5} />
-            ) : (
-              <IconLayoutSidebarLeftCollapse style={{ width: '70%', height: '70%' }} stroke={1.5} />
-            )}
-          </ActionIcon>
-        </Tooltip>
       </Group>
 
       <Text className={classes.pageTitle} size='sm' fw={600} truncate>

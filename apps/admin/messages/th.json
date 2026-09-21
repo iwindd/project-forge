@@ -42,6 +42,8 @@
   },
   "Navigation": {
     "chat": "Chat",
+    "hermes": "Hermes",
+    "organizationPicker": "เลือก Organization",
     "overview": "ภาพรวม",
     "projects": "โปรเจกต์",
     "agents": "Agents",
@@ -60,9 +62,27 @@
     "administration": "Administration",
     "openSettings": "เปิดการตั้งค่า",
     "openMenu": "เปิดเมนูหลัก",
-    "closeMenu": "ปิดเมนูหลัก",
-    "collapseSidebar": "ยุบเมนูด้านข้าง",
-    "expandSidebar": "ขยายเมนูด้านข้าง"
+    "closeMenu": "ปิดเมนูหลัก"
+  },
+  "OrganizationPicker": {
+    "title": "เลือก Organization",
+    "description": "เลือก Organization ที่ต้องการใช้งาน",
+    "personal": "ส่วนตัว",
+    "shared": "ทีม",
+    "emptyTitle": "ยังไม่มี Organization",
+    "emptyDescription": "บัญชีนี้ยังไม่มี Organization ที่พร้อมใช้งาน"
+  },
+  "OrganizationOverview": {
+    "personal": "Organization ส่วนตัว",
+    "shared": "Organization สำหรับทีม",
+    "personalSummary": "พื้นที่ส่วนตัวสำหรับจัดการโปรเจกต์และงานของคุณ",
+    "sharedSummary": "ภาพรวมพื้นที่ทำงานร่วมกันสำหรับทีมของคุณ",
+    "projects": "โปรเจกต์",
+    "projectsDescription": "ดูและจัดการโปรเจกต์ภายใน Organization",
+    "members": "สมาชิก",
+    "membersDescription": "จัดการสมาชิกและสิทธิ์การเข้าถึง",
+    "roles": "บทบาท",
+    "rolesDescription": "กำหนดบทบาทและ permission ของ Organization"
   },
   "Home": {
     "greeting": "สวัสดี!",

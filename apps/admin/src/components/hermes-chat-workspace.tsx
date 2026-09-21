@@ -1,34 +1,7 @@
 'use client';
 
-import {
-  ActionIcon,
-  Avatar,
-  Center,
-  Divider,
-  Group,
-  Loader,
-  Menu,
-  Paper,
-  ScrollArea,
-  Select,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-  Tooltip,
-} from '@mantine/core';
-import {
-  IconArchive,
-  IconChevronDown,
-  IconDots,
-  IconMessageCircle2,
-  IconPlus,
-  IconRefresh,
-  IconRobot,
-  IconSend2,
-  IconSparkles,
-  IconX,
-} from '@tabler/icons-react';
+import { ActionIcon, Center, Loader, Stack, Text } from '@mantine/core';
+import { IconMessageCircle2, IconRefresh, IconSparkles } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBrowserApiErrorMessage } from '@/lib/api/api';
@@ -40,19 +13,16 @@ import {
   useGetHermesSessionsQuery,
   useRenameHermesSessionMutation,
 } from '@/lib/features/hermes-sessions/hermes-sessions-api';
-import type {
-  HermesChatMessage,
-  HermesSessionSnapshot,
-  HermesSessionSummary,
-} from '@/lib/features/hermes-sessions/hermes-sessions-schemas';
+import type { HermesSessionSnapshot, HermesSessionSummary } from '@/lib/features/hermes-sessions/hermes-sessions-schemas';
 import {
   useHermesChat,
   type HermesChatConnectionState,
   type HermesChatFrame,
 } from '@/lib/features/hermes-sessions/use-hermes-chat';
+import { HermesChatConversation } from './hermes-chat-conversation';
+import { HermesChatSessionList } from './hermes-chat-session-list';
+import type { LocalMessage } from './hermes-chat-types';
 import styles from './hermes-chat-workspace.module.css';
-
-type LocalMessage = HermesChatMessage & { localId: string; streaming?: boolean };
 
 export function canComposeChat(currentAgent: SharedAgent | null, connectionState: HermesChatConnectionState): boolean {
   const transportAllowsDraft =
@@ -85,8 +55,6 @@ export function HermesChatWorkspace() {
   const [draft, setDraft] = useState('');
   const [pendingMessage, setPendingMessage] = useState<PendingMessage | null>(null);
   const [attachedSessionId, setAttachedSessionId] = useState<string | null>(null);
-  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
-  const [renameDraft, setRenameDraft] = useState('');
   const [friendlyError, setFriendlyError] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const attachRequestedSessionRef = useRef<string | null>(null);
@@ -262,6 +230,16 @@ export function HermesChatWorkspace() {
     attachRequestedSessionRef.current = null;
   };
 
+  const selectAgent = (value: string | null) => {
+    setSelectedAgentHandle(value);
+    if (value !== selectedSession?.agentHandle) {
+      setSelectedSessionId(null);
+      setMessages([]);
+      setAttachedSessionId(null);
+      attachRequestedSessionRef.current = null;
+    }
+  };
+
   const createNewSession = async (agent: SharedAgent | null = currentAgent) => {
     if (!agent || createState.isLoading) return;
     setFriendlyError(null);
@@ -312,20 +290,20 @@ export function HermesChatWorkspace() {
     setPendingMessage(nextPendingMessage);
   };
 
-  const handleRename = async (sessionId: string) => {
-    const title = renameDraft.trim();
-    if (!title) return;
+  const renameSessionAction = async (sessionId: string, title: string): Promise<boolean> => {
+    const normalizedTitle = title.trim();
+    if (!normalizedTitle) return false;
     try {
-      await renameSession({ sessionId, title }).unwrap();
-      setRenamingSessionId(null);
-      setRenameDraft('');
+      await renameSession({ sessionId, title: normalizedTitle }).unwrap();
       await refetchSessions();
+      return true;
     } catch {
       setFriendlyError(t('renameFailed'));
+      return false;
     }
   };
 
-  const handleClose = async (session: HermesSessionSummary) => {
+  const closeSessionAction = async (session: HermesSessionSummary) => {
     try {
       await closeSession(session.id).unwrap();
       if (selectedSessionId === session.id) {
@@ -377,189 +355,31 @@ export function HermesChatWorkspace() {
 
   return (
     <div className={messages.length === 0 ? `${styles.workspace} ${styles.workspaceEmpty}` : styles.workspace}>
-      <aside className={styles.sessionsPane} aria-label={t('sessions')}>
-        <Group justify='space-between' className={styles.sessionsHeader} wrap='nowrap'>
-          <Text fw={600}>{t('sessions')}</Text>
-          <Tooltip label={t('newChat')}>
-            <ActionIcon
-              aria-label={t('newChat')}
-              variant='subtle'
-              onClick={() => void createNewSession()}
-              loading={createState.isLoading}
-              disabled={!currentAgent}
-            >
-              <IconPlus size={18} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-        <ScrollArea className={styles.sessionList} type='auto' offsetScrollbars>
-          <Stack gap={4}>
-            {sessions.map((session) => (
-              <div
-                className={`${styles.sessionItem} ${selectedSessionId === session.id ? styles.sessionItemActive : ''}`}
-                key={session.id}
-              >
-                {renamingSessionId === session.id ? (
-                  <TextInput
-                    autoFocus
-                    size='xs'
-                    value={renameDraft}
-                    onChange={(event) => setRenameDraft(event.currentTarget.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') void handleRename(session.id);
-                      if (event.key === 'Escape') setRenamingSessionId(null);
-                    }}
-                    onBlur={() => void handleRename(session.id)}
-                    aria-label={t('rename')}
-                  />
-                ) : (
-                  <button type='button' className={styles.sessionButton} onClick={() => selectSession(session)}>
-                    <Group gap='xs' wrap='nowrap' align='flex-start'>
-                      <IconMessageCircle2 size={16} className={styles.sessionIcon} />
-                      <div className={styles.sessionText}>
-                        <Text size='sm' lineClamp={1} fw={selectedSessionId === session.id ? 600 : 400}>
-                          {session.title || t('untitled')}
-                        </Text>
-                        <Text size='xs' c='dimmed' lineClamp={1}>
-                          {session.preview || formatSessionDate(session.startedAt)}
-                        </Text>
-                      </div>
-                    </Group>
-                  </button>
-                )}
-                <Menu withinPortal position='bottom-end' shadow='sm'>
-                  <Menu.Target>
-                    <ActionIcon aria-label={t('sessionActions')} variant='subtle' size='sm' className={styles.sessionMenu}>
-                      <IconDots size={16} />
-                    </ActionIcon>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      onClick={() => {
-                        setRenamingSessionId(session.id);
-                        setRenameDraft(session.title || '');
-                      }}
-                    >
-                      {t('rename')}
-                    </Menu.Item>
-                    <Menu.Item color='red' leftSection={<IconArchive size={15} />} onClick={() => void handleClose(session)}>
-                      {t('close')}
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </div>
-            ))}
-          </Stack>
-        </ScrollArea>
-      </aside>
-
-      <main className={styles.conversation}>
-        <Group className={styles.conversationHeader} justify='space-between' wrap='nowrap'>
-          <Group gap='sm' wrap='nowrap'>
-            <Avatar color='indigo' radius='xl' size='sm'>
-              {currentAgent ? <IconRobot size={16} /> : <IconSparkles size={16} />}
-            </Avatar>
-            <Select
-              aria-label={t('agent')}
-              variant='unstyled'
-              size='sm'
-              value={currentAgent?.handle ?? null}
-              placeholder={t('chooseAgent')}
-              data={readyAgents.map((agent) => ({ value: agent.handle, label: agent.displayName }))}
-              onChange={(value) => {
-                setSelectedAgentHandle(value);
-                if (value !== selectedSession?.agentHandle) {
-                  setSelectedSessionId(null);
-                  setMessages([]);
-                  setAttachedSessionId(null);
-                  attachRequestedSessionRef.current = null;
-                }
-              }}
-              rightSection={<IconChevronDown size={15} />}
-              checkIconPosition='right'
-              allowDeselect={false}
-              className={styles.agentSelect}
-            />
-          </Group>
-          {selectedSession?.active ? <span className={styles.liveDot} aria-hidden='true' /> : null}
-        </Group>
-        <Divider />
-
-        <ScrollArea className={styles.messages} type='auto' offsetScrollbars viewportRef={undefined}>
-          {messages.length ? (
-            <Stack gap='lg' className={styles.messageStack}>
-              {messages.map((message) => (
-                <div key={message.localId} className={message.role === 'user' ? styles.userMessageRow : styles.assistantMessageRow}>
-                  <Paper
-                    className={message.role === 'user' ? styles.userMessage : styles.assistantMessage}
-                    radius='lg'
-                    p='sm'
-                  >
-                    <Text size='sm' className={styles.messageText}>
-                      {message.text}
-                      {message.streaming ? <span className={styles.cursor} aria-hidden='true' /> : null}
-                    </Text>
-                  </Paper>
-                </div>
-              ))}
-            </Stack>
-          ) : (
-            <Center className={styles.emptyConversation}>
-              <Stack align='center' gap={4}>
-                <IconSparkles size={26} stroke={1.4} />
-                <Text size='sm' c='dimmed'>
-                  {currentAgent ? t('empty', { agent: currentAgent.displayName }) : t('noAgent')}
-                </Text>
-              </Stack>
-            </Center>
-          )}
-        </ScrollArea>
-
-        <Stack gap='xs' className={styles.composerWrap}>
-          {friendlyError ? (
-            <Group justify='space-between' gap='xs' className={styles.inlineError} wrap='nowrap'>
-              <Text size='xs' c='red'>
-                {friendlyError}
-              </Text>
-              <ActionIcon aria-label={t('dismiss')} size='xs' variant='subtle' onClick={() => setFriendlyError(null)}>
-                <IconX size={14} />
-              </ActionIcon>
-            </Group>
-          ) : null}
-          <Paper withBorder radius='lg' className={styles.composer}>
-            <Textarea
-              ref={composerRef}
-              value={draft}
-              onChange={(event) => setDraft(event.currentTarget.value)}
-              placeholder={currentAgent ? t('composerPlaceholder') : t('noAgent')}
-              autosize
-              minRows={1}
-              maxRows={6}
-              variant='unstyled'
-              disabled={!canCompose}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  void submit();
-                }
-              }}
-              aria-label={t('composer')}
-            />
-            <Group justify='flex-end'>
-              <ActionIcon
-                aria-label={t('send')}
-                color='indigo'
-                variant='filled'
-                radius='xl'
-                onClick={() => void submit()}
-                disabled={!draft.trim() || !canCompose || Boolean(pendingMessage)}
-              >
-                <IconSend2 size={16} />
-              </ActionIcon>
-            </Group>
-          </Paper>
-        </Stack>
-      </main>
+      <HermesChatSessionList
+        sessions={sessions}
+        selectedSessionId={selectedSessionId}
+        canCreateNewChat={Boolean(currentAgent)}
+        newChatLoading={createState.isLoading}
+        selectSessionAction={selectSession}
+        newChatAction={() => void createNewSession()}
+        renameSessionAction={renameSessionAction}
+        closeSessionAction={(session) => void closeSessionAction(session)}
+      />
+      <HermesChatConversation
+        currentAgent={currentAgent}
+        selectedSession={selectedSession}
+        readyAgents={readyAgents}
+        messages={messages}
+        draft={draft}
+        canCompose={canCompose}
+        pendingMessage={Boolean(pendingMessage)}
+        friendlyError={friendlyError}
+        composerRef={composerRef}
+        selectAgentAction={selectAgent}
+        draftChangeAction={setDraft}
+        submitAction={() => void submit()}
+        dismissErrorAction={() => setFriendlyError(null)}
+      />
     </div>
   );
 }
@@ -608,13 +428,4 @@ function hydrateSnapshotMessages(snapshot: HermesSessionSnapshot): LocalMessage[
     }
   }
   return hydrated;
-}
-
-function formatSessionDate(value: string | null): string {
-  if (!value) return '';
-  try {
-    return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short' }).format(new Date(value));
-  } catch {
-    return '';
-  }
 }

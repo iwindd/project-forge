@@ -215,5 +215,5 @@ test('invited user accepts a controlled one-time invitation and enters the organ
   await join.click();
   await expect.poll(() => acceptedResponseStatus, { timeout: 30_000 }).toBe(200);
   await expect(page).toHaveURL(/\/acme$/);
-  await expect(page.getByText('Acme Organization')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Acme Organization' })).toBeVisible();
 });

@@ -65,18 +65,6 @@ function routeItem(routeName: string, options: RouteItemOptions = {}): AdminNavi
 
 export const organizationNavigation: AdminNavigationGroup[] = [
   {
-    id: 'chat',
-    label: 'Chat',
-    labelKey: 'chat',
-    hideHeading: true,
-    items: [
-      routeItem('chat', {
-        icon: IconMessageCircle2,
-        labelKey: 'chat',
-      }),
-    ],
-  },
-  {
     id: 'projects',
     label: 'โปรเจกต์',
     labelKey: 'projects',
@@ -84,18 +72,6 @@ export const organizationNavigation: AdminNavigationGroup[] = [
       routeItem('projects', {
         icon: IconFolders,
         labelKey: 'projects',
-      }),
-    ],
-  },
-  {
-    id: 'agents',
-    label: 'Agents',
-    labelKey: 'agents',
-    hideHeading: true,
-    items: [
-      routeItem('agents', {
-        icon: IconRobot,
-        labelKey: 'agents',
       }),
     ],
   },
@@ -128,6 +104,25 @@ export const organizationNavigation: AdminNavigationGroup[] = [
         icon: IconUsers,
         labelKey: 'roles',
         permissionKey: 'manageOrganization',
+      }),
+    ],
+  },
+];
+
+export const hermesNavigation: AdminNavigationGroup[] = [
+  {
+    id: 'hermes',
+    label: 'Hermes',
+    labelKey: 'hermes',
+    hideHeading: true,
+    items: [
+      routeItem('hermes.chat', {
+        icon: IconMessageCircle2,
+        labelKey: 'chat',
+      }),
+      routeItem('hermes.agents', {
+        icon: IconRobot,
+        labelKey: 'agents',
       }),
     ],
   },

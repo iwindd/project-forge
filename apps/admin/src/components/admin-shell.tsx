@@ -28,7 +28,6 @@ export function AdminShell({
   children: ReactNode;
 }>) {
   const [mobileOpened, mobileHandlers] = useDisclosure(false);
-  const [sidebarCollapsed, sidebarHandlers] = useDisclosure(false);
   const [settingsOpened, settingsHandlers] = useDisclosure(false);
   const [scroll, scrollTo] = useWindowScroll();
 
@@ -40,7 +39,7 @@ export function AdminShell({
       navbar={{
         width: SIDEBAR_WIDTH,
         breakpoint: 'sm',
-        collapsed: { mobile: true, desktop: sidebarCollapsed },
+        collapsed: { mobile: true },
       }}
       className={classes.appShell}
     >
@@ -48,13 +47,11 @@ export function AdminShell({
         <AdminHeader
           mobileOpened={mobileOpened}
           onToggleMobileAction={mobileHandlers.toggle}
-          sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebarAction={sidebarHandlers.toggle}
           onOpenSettingsAction={settingsHandlers.open}
         />
       </AppShell.Header>
 
-      <AppShell.Navbar id='project-forge-sidebar' className={classes.navbar}>
+      <AppShell.Navbar className={classes.navbar}>
         <SidebarDefault user={user} organizationSlug={organizationSlug} navigationMode={navigationMode} />
       </AppShell.Navbar>
 
@@ -84,12 +81,12 @@ export function AdminShell({
     </AppShell>
   );
 
-  if (navigationMode === 'account') {
+  if (navigationMode === 'account' || navigationMode === 'hermes') {
     return shell;
   }
 
   if (!organizationSlug || !organizationId) {
-    throw new Error('AdminShell requires organization scope outside account navigation mode');
+    throw new Error('AdminShell requires organization scope outside account or Hermes navigation mode');
   }
 
   return (

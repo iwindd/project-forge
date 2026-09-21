@@ -6,12 +6,13 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import classes from './sidebar-back-button.module.css';
 
-export function SidebarBackButton({ organizationSlug }: { organizationSlug?: string }) {
+export function SidebarBackButton({ organizationSlug, href }: { organizationSlug?: string; href?: string }) {
   const t = useTranslations('Common');
+  const targetHref = href ?? (organizationSlug ? `/${encodeURIComponent(organizationSlug)}` : '/');
 
   return (
     <Link
-      href={organizationSlug ? `/${encodeURIComponent(organizationSlug)}` : '/'}
+      href={targetHref}
       className={classes.control}
       aria-label={t('back')}
     >

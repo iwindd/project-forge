@@ -17,10 +17,7 @@ test('Chat starts a native Session, streams a reply, and resumes history after r
   ]);
   await page.setViewportSize({ width: 1180, height: 820 });
 
-  await page.goto('/acme/chat');
-  await expect(page.getByRole('button', { name: 'ยุบเมนูด้านข้าง' })).toBeVisible();
-  await page.getByRole('button', { name: 'ยุบเมนูด้านข้าง' }).click();
-  await expect(page.getByRole('button', { name: 'ขยายเมนูด้านข้าง' })).toBeVisible();
+  await page.goto('/hermes/chat');
   await expect(page.getByRole('combobox', { name: 'Agent' })).toHaveValue('Shared Coder');
   await expect(page.getByText('เริ่มคุยกับ Shared Coder')).toBeVisible();
 
@@ -37,13 +34,42 @@ test('Chat starts a native Session, streams a reply, and resumes history after r
   expect(browserErrors).toEqual([]);
 });
 
+test('keeps the Organization picker, Organization overview, and Hermes surfaces separate', async ({ page }) => {
+  await page.context().addCookies([
+    { name: 'pf_session', value: 'controlled-e2e-session', domain: '127.0.0.1', path: '/' },
+    { name: 'pf_e2e_scenario', value: 'route-boundary', domain: '127.0.0.1', path: '/' },
+  ]);
+
+  await page.goto('/~');
+  await expect(page.getByRole('heading', { name: 'เลือก Organization' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Acme Organization/ })).toHaveAttribute('href', '/acme');
+  await expect(page.getByRole('button', { name: 'ยุบเมนูด้านข้าง' })).toHaveCount(0);
+
+  await page.goto('/acme');
+  await expect(page.getByRole('heading', { name: 'Acme Organization' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'โปรเจกต์', exact: true })).toHaveAttribute('href', '/acme/projects');
+  await expect(page.getByRole('link', { name: 'Chat', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Agents', exact: true })).toHaveCount(0);
+
+  await page.goto('/hermes');
+  await expect(page).toHaveURL(/\/hermes\/chat$/);
+  await expect(page.getByLabel('ข้อความ')).toBeVisible();
+
+  await page.goto('/hermes/agents');
+  await expect(page.getByText('Shared Local Agents', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'กลับ' })).toHaveAttribute('href', '/~');
+
+  const legacyResponse = await page.goto('/acme/chat');
+  expect(legacyResponse?.status()).toBe(404);
+});
+
 test('Chat keeps long replies inside a scrollable message viewport', async ({ page }) => {
   await page.context().addCookies([
     { name: 'pf_session', value: 'controlled-e2e-session', domain: '127.0.0.1', path: '/' },
     { name: 'pf_e2e_scenario', value: 'chat-scroll', domain: '127.0.0.1', path: '/' },
   ]);
   await page.setViewportSize({ width: 1180, height: 620 });
-  await page.goto('/acme/chat');
+  await page.goto('/hermes/chat');
 
   await expect(page.getByText('เริ่มคุยกับ Shared Coder')).toBeVisible();
   await page.getByLabel('ข้อความ').fill('ข้อความยาว '.repeat(240));

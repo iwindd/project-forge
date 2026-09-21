@@ -1,6 +1,7 @@
 'use client';
 
 import { OrganizationSwitcher } from '@/lib/features/organization/organization-switcher';
+import { getPath } from '@/routes';
 import type { AdminUser } from '@/session';
 import { Box, ScrollArea } from '@mantine/core';
 import { useRef } from 'react';
@@ -23,7 +24,7 @@ export default function SidebarDefault({
   navigationMode?: SidebarNavigationMode;
   onNavigateAction?: () => void;
 }) {
-  const showBackButton = navigationMode === 'account';
+  const showBackButton = navigationMode === 'account' || navigationMode === 'hermes';
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ''}`;
@@ -31,7 +32,14 @@ export default function SidebarDefault({
   return (
     <aside className={classes.sidebar}>
       <div className={classes.sidebarHeader}>
-        {showBackButton ? <SidebarBackButton organizationSlug={organizationSlug} /> : <OrganizationSwitcher />}
+        {showBackButton ? (
+          <SidebarBackButton
+            organizationSlug={organizationSlug}
+            href={navigationMode === 'hermes' ? getPath('organizationPicker') : undefined}
+          />
+        ) : (
+          <OrganizationSwitcher />
+        )}
       </div>
 
       <NavigationScrollControls orientation='vertical' viewportRef={viewportRef}>

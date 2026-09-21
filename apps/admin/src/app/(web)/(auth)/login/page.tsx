@@ -1,6 +1,5 @@
 import { auth } from '@/auth';
 import { getApplicationEntryPath } from '@/lib/application-entry';
-import { getOrganizations } from '@/servers/organization/queries/get-organizations';
 import { Paper, Stack, Text, Title } from '@mantine/core';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -13,8 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { returnTo } = await searchParams;
 
   if (session?.user?.id) {
-    const organizations = await getOrganizations();
-    redirect(getApplicationEntryPath(organizations));
+    redirect(getApplicationEntryPath());
   }
 
   return (

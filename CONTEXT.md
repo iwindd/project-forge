@@ -38,6 +38,14 @@ _Avoid_: Workspace, tenant (unless the distinction is explicitly discussed)
 The organization under which a user is currently viewing or operating on data.
 _Avoid_: Active organization, session organization
 
+**Organization Surface**:
+The authenticated application surface for resources owned by or governed by an Organization; it requires an Organization Scope.
+_Avoid_: Hermes Surface, global workspace
+
+**Organization Picker**:
+An authenticated entry surface where a User chooses one of the Active Organizations available to them before entering an Organization Surface.
+_Avoid_: Organization Dashboard
+
 **Project**:
 A unit of work owned by exactly one organization.
 _Avoid_: Personal project, global project
@@ -56,6 +64,10 @@ _Avoid_: Manage project
 
 ## Hermes runtime and project work
 
+**Hermes Surface**:
+The authenticated application surface for observing and using the Hermes Local Runtime independently of an Organization Scope.
+_Avoid_: Organization Chat, Project Work
+
 **Hermes Local Runtime**:
 The managed local Hermes runtime used by the Project Forge installation. It provides shared Profiles and User-scoped Sessions for the local application; runtime credentials and filesystem details remain server-side.
 _Avoid_: User-owned Gateway Connection, Organization gateway, Agent connection
@@ -65,11 +77,11 @@ A shared Agent backed by a real Hermes Profile on the Hermes Local Runtime. Ever
 _Avoid_: Personal Agent, Organization Agent, Project Agent
 
 **Hermes Session**:
-A conversation and execution context owned by Hermes and scoped in Project Forge to the authenticated User; it may use a Shared Local Agent and may be associated with a Project, Feature, or Project Ticket.
+A conversation and execution context owned by Hermes and scoped in Project Forge to the authenticated User; it may be used from the Hermes Surface without an Organization Scope or associated with a Project, Feature, or Project Ticket.
 _Avoid_: Shared Chat Session, Project Forge transcript
 
 **Personal Chat**:
-A Hermes Session used as a User normal conversation with a Shared Local Agent without Feature, Ticket, or Project confirmation gates.
+A Hermes Session used by a User for normal conversation with a Shared Local Agent from the Hermes Surface, without an Organization, Feature, Ticket, or Project confirmation gate.
 _Avoid_: Unmanaged Project work
 
 **Registered Workspace**:

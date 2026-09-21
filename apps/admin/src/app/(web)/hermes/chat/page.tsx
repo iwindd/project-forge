@@ -1,5 +1,5 @@
 import { HermesChatWorkspace } from '@/components/hermes-chat-workspace';
 
-export default function ChatPage() {
+export default function HermesChatPage() {
   return <HermesChatWorkspace />;
 }
