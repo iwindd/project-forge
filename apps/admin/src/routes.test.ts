@@ -6,10 +6,14 @@ describe('Project Forge routes', () => {
     expect(getPath('login')).toBe('/login');
     expect(getPath('organizationPicker')).toBe('/~');
     expect(getPath('hermes.chat')).toBe('/hermes/chat');
+    expect(getPath('hermes.chat.session', { sessionId: '770e8400-e29b-41d4-a716-446655440000' })).toBe(
+      '/hermes/chat/770e8400-e29b-41d4-a716-446655440000',
+    );
     expect(getPath('hermes.agents')).toBe('/hermes/agents');
     expect(findRouteTrail('/admin/login')).toBeNull();
     expect(findRouteTrail('/~')?.at(-1)?.name).toBe('organizationPicker');
     expect(findRouteTrail('/hermes/chat')?.at(-1)?.name).toBe('hermes.chat');
+    expect(findRouteTrail('/hermes/chat/770e8400-e29b-41d4-a716-446655440000')?.at(-1)?.name).toBe('hermes.chat.session');
     expect(findRouteTrail('/hermes/agents')?.at(-1)?.name).toBe('hermes.agents');
   });
 

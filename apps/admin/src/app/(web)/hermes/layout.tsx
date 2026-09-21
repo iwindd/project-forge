@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
 import { AdminShell } from '@/components/admin-shell';
+import { HermesChatTitleProvider } from '@/components/hermes-chat-title-context';
 import { AppProvider } from '@/components/providers/app-provider';
 import { createPreloadedState } from '@/lib/store';
 import type { ReactNode } from 'react';
@@ -22,9 +23,11 @@ export default async function HermesLayout({ children }: HermesLayoutProps) {
 
   return (
     <AppProvider preloadedState={preloadedState}>
-      <AdminShell user={session.user} navigationMode='hermes'>
-        {children}
-      </AdminShell>
+      <HermesChatTitleProvider>
+        <AdminShell user={session.user} navigationMode='hermes'>
+          {children}
+        </AdminShell>
+      </HermesChatTitleProvider>
     </AppProvider>
   );
 }

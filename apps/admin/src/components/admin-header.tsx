@@ -3,27 +3,45 @@
 import { ActionIcon, Box, Burger, Group, Text, Tooltip } from '@mantine/core';
 import { IconSettings } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { useActiveRouteTrail } from '@/hooks';
+import { useGetHermesSessionsQuery } from '@/lib/features/hermes-sessions/hermes-sessions-api';
+import { useHermesChatTitles } from './hermes-chat-title-context';
+import type { SidebarNavigationMode } from './navigation/navigation-utils';
+import { getHermesSessionDisplayTitle } from './hermes-session-title';
 import { AdminBrand } from './admin-brand';
 import classes from './admin-header.module.css';
 
 export function AdminHeader({
+  navigationMode,
   mobileOpened,
   onToggleMobileAction,
   onOpenSettingsAction,
 }: {
+  navigationMode: SidebarNavigationMode;
   mobileOpened: boolean;
   onToggleMobileAction: () => void;
   onOpenSettingsAction: () => void;
 }) {
   const t = useTranslations('Navigation');
   const routeTrail = useActiveRouteTrail();
+  const { optimisticTitles } = useHermesChatTitles();
+  const { sessionId } = useParams<{ sessionId?: string }>();
+  const { data: sessions = [] } = useGetHermesSessionsQuery(undefined, {
+    skip: navigationMode !== 'hermes' || !sessionId,
+  });
   const currentRoute = routeTrail[routeTrail.length - 1];
-  const pageTitle = currentRoute
+  const activeSession = sessionId ? sessions.find((session) => session.id === sessionId) : null;
+  const optimisticTitle = sessionId ? optimisticTitles[sessionId] : undefined;
+  const routeTitle = currentRoute
     ? currentRoute.navigationLabelKey
       ? t(currentRoute.navigationLabelKey)
       : (currentRoute.navigationLabel ?? currentRoute.label)
     : '';
+  const pageTitle =
+    navigationMode === 'hermes' && sessionId
+      ? activeSession?.title.trim() || optimisticTitle || getHermesSessionDisplayTitle(activeSession, routeTitle || t('chat'))
+      : routeTitle;
 
   return (
     <Group className={classes.headerInner} justify='space-between' wrap='nowrap'>

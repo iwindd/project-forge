@@ -113,6 +113,8 @@ const auditRecordsByScenario = new Map();
 let nextProjectId = 22;
 let sharedAgent = null;
 const hermesSessionsByScenario = new Map();
+const hermesCreateAttemptsByScenario = new Map();
+const hermesSendAttemptsByScenario = new Map();
 let nextHermesSessionId = 1;
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) });
 const errorEnvelope = (code, message, requestId) =>
@@ -199,7 +201,36 @@ const send = (req, res, status, body) => {
 };
 
 const hermesSessionsFor = (scenario) => {
-  if (!hermesSessionsByScenario.has(scenario)) hermesSessionsByScenario.set(scenario, []);
+  if (!hermesSessionsByScenario.has(scenario)) {
+    const seededSessions =
+      scenario === 'chat-sidebar'
+        ? [
+            {
+              id: '00000000-0000-4000-8000-000000000101',
+              agentHandle: 'shared-coder',
+              title: 'Coding notes',
+              preview: 'Shared Coder · refactor',
+              messages: [],
+              startedAt: '2026-09-21T10:02:00.000Z',
+              active: false,
+              closedAt: null,
+              inflight: null,
+            },
+            {
+              id: '00000000-0000-4000-8000-000000000102',
+              agentHandle: 'lyla',
+              title: 'Friendly greeting',
+              preview: 'lyla · Hi LYla',
+              messages: [],
+              startedAt: '2026-09-21T10:03:00.000Z',
+              active: true,
+              closedAt: null,
+              inflight: null,
+            },
+          ]
+        : [];
+    hermesSessionsByScenario.set(scenario, seededSessions);
+  }
   return hermesSessionsByScenario.get(scenario);
 };
 const hermesSnapshot = (session) => ({
@@ -291,6 +322,11 @@ const server = http.createServer((req, res) => {
     return send(req, res, 200, envelope({ sessions: hermesSessionsFor(scenario).map(hermesSummary) }));
   }
   if (path === 'hermes/sessions' && req.method === 'POST') {
+    const attempts = (hermesCreateAttemptsByScenario.get(scenario) ?? 0) + 1;
+    hermesCreateAttemptsByScenario.set(scenario, attempts);
+    if (scenario === 'chat-create-retry' && attempts === 1) {
+      return send(req, res, 503, errorEnvelope('SERVICE_UNAVAILABLE', 'Session service unavailable', 'e2e-create-retry'));
+    }
     return readJson(req, (input) => {
       const session = createHermesSession(scenario, input.agentHandle ?? 'shared-coder');
       send(req, res, 200, envelope({ session: hermesSummary(session), snapshot: hermesSnapshot(session) }));
@@ -403,6 +439,23 @@ const server = http.createServer((req, res) => {
             message: 'The configured provider is not available on this local runtime',
             action: 'retry',
           },
+          ...(scenario === 'chat-sidebar'
+            ? [
+                {
+                  handle: 'lyla',
+                  displayName: 'lyla',
+                  description: 'Shared local conversation Agent',
+                  isDefault: false,
+                  model: 'gpt-5.6-luna',
+                  provider: 'openai-codex',
+                  skillCount: 2,
+                  hasAvatar: false,
+                  readiness: 'ready',
+                  message: 'Ready to use',
+                  action: 'use',
+                },
+              ]
+            : []),
           ...(sharedAgent ? [sharedAgent] : []),
         ],
         runtime: { state: 'ready', message: 'Hermes is ready', action: null },
@@ -704,6 +757,15 @@ const handleWebSocketFrame = (client, frame) => {
   const session = client.session;
   const text = String(frame.text ?? '').trim();
   if (!text) return;
+  const sendAttempts = (hermesSendAttemptsByScenario.get(client.scenario) ?? 0) + 1;
+  hermesSendAttemptsByScenario.set(client.scenario, sendAttempts);
+  if (client.scenario === 'chat-send-retry' && sendAttempts === 1) {
+    return sendWebSocketFrame(client.socket, {
+      type: 'error',
+      code: 'MESSAGE_FAILED',
+      sessionId: session.id,
+    });
+  }
   const timestamp = new Date().toISOString();
   session.messages.push({ role: 'user', text, timestamp, rowId: session.messages.length + 1 });
   session.title ||= text.slice(0, 40);

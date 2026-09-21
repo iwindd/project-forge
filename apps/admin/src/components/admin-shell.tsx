@@ -45,6 +45,7 @@ export function AdminShell({
     >
       <AppShell.Header className={classes.header} data-scrolled={scroll.y > 0}>
         <AdminHeader
+          navigationMode={navigationMode}
           mobileOpened={mobileOpened}
           onToggleMobileAction={mobileHandlers.toggle}
           onOpenSettingsAction={settingsHandlers.open}

@@ -1,107 +1,47 @@
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  width: 100%;
   height: min(
     720px,
     calc(100dvh - var(--admin-header-height, 58px) - var(--mantine-spacing-xl) - var(--mantine-spacing-xl))
   );
   min-height: 420px;
   overflow: hidden;
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-lg);
-  background: var(--mantine-color-body);
-}
-
-.workspaceEmpty {
-  height: min(
-    560px,
-    calc(100dvh - var(--admin-header-height, 58px) - var(--mantine-spacing-xl) - var(--mantine-spacing-xl))
-  );
-}
-
-.sessionsPane {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  border-right: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-default) 45%, transparent);
-}
-
-.sessionsHeader {
-  min-height: 54px;
-  padding: 0 0.75rem 0 1rem;
-}
-
-.sessionList {
-  min-height: 0;
-  flex: 1;
-  padding: 0.25rem 0.5rem 0.75rem;
-}
-
-.sessionItem {
-  position: relative;
-  display: flex;
-  min-height: 54px;
-  align-items: center;
-  gap: 0.25rem;
-  border-radius: var(--mantine-radius-md);
-  transition: background-color 120ms ease;
-}
-
-.sessionItem:hover,
-.sessionItemActive {
-  background: var(--mantine-color-default-hover);
-}
-
-.sessionButton {
-  min-width: 0;
-  flex: 1;
-  padding: 0.55rem 0.45rem 0.55rem 0.65rem;
-  border: 0;
-  color: inherit;
-  text-align: left;
-  background: transparent;
-  cursor: pointer;
-}
-
-.sessionText {
-  min-width: 0;
-  flex: 1;
-}
-
-.sessionIcon {
-  flex: 0 0 auto;
-  margin-top: 0.15rem;
-  color: var(--mantine-color-dimmed);
-}
-
-.sessionMenu {
-  flex: 0 0 auto;
-  margin-right: 0.25rem;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
-.sessionItem:hover .sessionMenu,
-.sessionItem:focus-within .sessionMenu,
-.sessionItemActive .sessionMenu {
-  opacity: 1;
 }
 
 .conversation {
   display: flex;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   flex-direction: column;
+}
+
+.newConversation {
+  align-items: center;
+  justify-content: center;
+}
+
+.newChatContent {
+  width: min(780px, 100%);
+  margin: auto;
+  padding: 1rem;
+  transform: translateY(-3%);
+}
+
+.newChatGreeting {
+  color: var(--mantine-color-text);
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+.newAgentSelect {
+  width: min(220px, 100%);
 }
 
 .conversationHeader {
   min-height: 54px;
   padding: 0.5rem 1rem;
-}
-
-.agentSelect {
-  min-width: 150px;
 }
 
 .liveDot {
@@ -171,10 +111,15 @@
   color: var(--mantine-color-dimmed);
 }
 
-.composerWrap {
+.composerWrap,
+.newComposerWrap {
   width: min(760px, 100%);
   margin: 0 auto;
   padding: 0 1rem 1rem;
+}
+
+.newComposerWrap {
+  padding-bottom: 0;
 }
 
 .composer {
@@ -197,28 +142,24 @@
 
 @media (max-width: 700px) {
   .workspace {
-    grid-template-columns: 1fr;
     height: min(640px, calc(100dvh - var(--admin-header-height, 58px) - 1rem));
-  }
-
-  .workspaceEmpty {
-    height: min(520px, calc(100dvh - var(--admin-header-height, 58px) - 1rem));
-  }
-
-  .sessionsPane {
-    display: none;
   }
 
   .messages {
     padding-inline: 0.75rem;
   }
 
-  .composerWrap {
+  .composerWrap,
+  .newComposerWrap {
     padding-inline: 0.75rem;
   }
 
   .userMessage,
   .assistantMessage {
     max-width: 88%;
+  }
+
+  .newChatContent {
+    padding-inline: 0.75rem;
   }
 }

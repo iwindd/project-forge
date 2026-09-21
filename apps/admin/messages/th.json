@@ -90,6 +90,10 @@
   },
   "Chat": {
     "sessions": "บทสนทนา",
+    "sessionsLoading": "กำลังโหลดบทสนทนา...",
+    "noSessions": "ยังไม่มีบทสนทนา",
+    "newGreeting": "คุณกำลังคิดอะไรอยู่?",
+    "sessionNotFound": "ไม่พบบทสนทนานี้",
     "newChat": "บทสนทนาใหม่",
     "agent": "Agent",
     "chooseAgent": "เลือก Agent",

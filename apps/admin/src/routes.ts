@@ -17,6 +17,14 @@ const organizationAppRoutes = ROUTER({
         label: 'Chat',
         navigationLabelKey: 'chat',
         hiddenBreadcrumb: true,
+        children: {
+          session: {
+            path: '/hermes/chat/:sessionId',
+            label: 'Chat',
+            navigationLabelKey: 'chat',
+            hiddenBreadcrumb: true,
+          },
+        },
       },
       agents: {
         path: '/hermes/agents',

@@ -84,6 +84,10 @@ _Avoid_: Shared Chat Session, Project Forge transcript
 A Hermes Session used by a User for normal conversation with a Shared Local Agent from the Hermes Surface, without an Organization, Feature, Ticket, or Project confirmation gate.
 _Avoid_: Unmanaged Project work
 
+**Hermes Chat Draft**:
+The unsaved new-chat state at `/hermes/chat` before a User submits the first prompt; it is client-side UI state and is not a persisted Hermes Session.
+_Avoid_: Empty Hermes Session
+
 **Registered Workspace**:
 A Project's approved local repository location, resolved server-side from an opaque identifier before Project Work can inspect or mutate files.
 _Avoid_: Browser path, arbitrary workspace

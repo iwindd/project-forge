@@ -8,6 +8,7 @@ import { useRef } from 'react';
 import NavigationScrollControls from './navigation-scroll-controls';
 import type { SidebarNavigationMode } from './navigation-utils';
 import { SidebarBackButton } from './sidebar-back-button';
+import { HermesSidebarSessions } from './hermes-sidebar-sessions';
 import classes from './sidebar-default.module.css';
 import SidebarNavContent from './sidebar-nav-content';
 import { SidebarUserMenu } from './sidebar-user-menu';
@@ -60,6 +61,7 @@ export default function SidebarDefault({
         >
           <Box px='xs'>
             <SidebarNavContent navigationMode={navigationMode} onNavigateAction={onNavigateAction} />
+            {navigationMode === 'hermes' ? <HermesSidebarSessions onNavigateAction={onNavigateAction} /> : null}
           </Box>
         </ScrollArea>
       </NavigationScrollControls>
