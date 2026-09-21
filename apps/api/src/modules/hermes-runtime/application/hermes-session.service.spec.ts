@@ -177,6 +177,35 @@ describe('HermesSessionService', () => {
     expect(JSON.stringify(result)).not.toContain('cwd');
   });
 
+  it('uses Hermes Desktop HTTP session discovery instead of RPC per Agent', async () => {
+    const runtime = makeRuntime();
+    const requestHttp = vi.fn(async (_path: string) => ({
+      sessions: [
+        {
+          id: 'stored-session-1',
+          title: 'จาก Desktop API',
+          preview: 'ผลลัพธ์จาก state.db',
+          started_at: 1_758_347_200,
+          message_count: 4,
+          is_active: true,
+        },
+      ],
+    }));
+    const desktopRuntime = {
+      ...runtime,
+      requestHttp: requestHttp as unknown as <T>(path: string) => Promise<T>,
+    };
+    const service = new HermesSessionService(desktopRuntime, makeRepository(), readyAgents);
+
+    const result = await service.list(userId);
+
+    expect(requestHttp).toHaveBeenCalledWith(expect.stringContaining('/api/profiles/sessions?'));
+    expect(requestHttp).toHaveBeenCalledTimes(1);
+    expect(runtime.request.mock.calls.filter(([method]) => method === 'session.list')).toHaveLength(0);
+    expect(runtime.request.mock.calls.filter(([method]) => method === 'session.active_list')).toHaveLength(0);
+    expect(result[0]).toMatchObject({ title: 'จาก Desktop API', preview: 'ผลลัพธ์จาก state.db', messageCount: 4, active: true });
+  });
+
   it('batches Session summaries per Agent instead of repeating full runtime lists per Session', async () => {
     const runtime = makeRuntime();
     const secondRecord: HermesSessionRecord = {

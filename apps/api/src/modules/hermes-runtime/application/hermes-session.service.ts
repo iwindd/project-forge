@@ -33,6 +33,11 @@ const activeSessionListResponseSchema = z.object({
   sessions: z.array(z.record(z.string(), z.unknown())),
 });
 
+const desktopSessionListResponseSchema = z.object({
+  sessions: z.array(z.record(z.string(), z.unknown())),
+  errors: z.array(z.unknown()).optional(),
+});
+
 const agentRosterSchema = z.object({
   agents: z.array(
     z.object({
@@ -44,6 +49,7 @@ const agentRosterSchema = z.object({
 
 type HermesRuntimeReader = {
   request(method: string, params?: unknown): Promise<unknown>;
+  requestHttp?: <T>(path: string) => Promise<T>;
 };
 type SharedAgentReader = Pick<ListSharedAgentsUseCase, 'execute'>;
 
@@ -101,6 +107,17 @@ export class HermesSessionService {
 
   async list(userId: string): Promise<HermesSessionSummary[]> {
     const records = await this.sessions.listForUser(userId);
+    if (records.length === 0) return [];
+
+    if (this.runtime.requestHttp) {
+      try {
+        return await this.readDesktopSummaries(records);
+      } catch {
+        // Older Hermes runtimes may expose the gateway without the Desktop HTTP read API.
+        // Keep the native RPC fallback for compatibility, but do not make the browser know about it.
+      }
+    }
+
     const recordsByAgent = new Map<string, HermesSessionRecord[]>();
     for (const record of records) {
       const agentRecords = recordsByAgent.get(record.agentHandle) ?? [];
@@ -221,6 +238,29 @@ export class HermesSessionService {
 
   private isRecoverableEmptyDraft(record: HermesSessionRecord, error: unknown): boolean {
     return record.createdAt.getTime() === record.updatedAt.getTime() && isRecord(error) && error.rpcCode === 4007;
+  }
+
+  private async readDesktopSummaries(records: HermesSessionRecord[]): Promise<HermesSessionSummary[]> {
+    const raw = await this.runtime.requestHttp?.(
+      '/api/profiles/sessions?limit=500&offset=0&min_messages=0&archived=exclude&order=recent&profile=all',
+    );
+    const parsed = desktopSessionListResponseSchema.safeParse(raw);
+    if (!parsed.success || parsed.data.errors?.length) {
+      throw new ExternalServiceError('Hermes Desktop Session list was not compatible');
+    }
+
+    const rows = new Map(
+      parsed.data.sessions
+        .filter((row) => typeof row.id === 'string')
+        .map((row) => [row.id as string, row]),
+    );
+    return records
+      .map((record) => projectSummary(record, rows.get(record.hermesSessionId)))
+      .sort((left, right) => {
+        const leftTime = left.startedAt ? Date.parse(left.startedAt) : 0;
+        const rightTime = right.startedAt ? Date.parse(right.startedAt) : 0;
+        return rightTime - leftTime;
+      });
   }
 
   private async readSummaries(
