@@ -1,12 +1,14 @@
 'use client';
 
 import { OrganizationSwitcher } from '@/lib/features/organization/organization-switcher';
+import { getPath } from '@/routes';
 import type { AdminUser } from '@/session';
 import { Box, ScrollArea } from '@mantine/core';
 import { useRef } from 'react';
 import NavigationScrollControls from './navigation-scroll-controls';
 import type { SidebarNavigationMode } from './navigation-utils';
 import { SidebarBackButton } from './sidebar-back-button';
+import { HermesSidebarSessions } from './hermes-sidebar-sessions';
 import classes from './sidebar-default.module.css';
 import SidebarNavContent from './sidebar-nav-content';
 import { SidebarUserMenu } from './sidebar-user-menu';
@@ -23,7 +25,7 @@ export default function SidebarDefault({
   navigationMode?: SidebarNavigationMode;
   onNavigateAction?: () => void;
 }) {
-  const showBackButton = navigationMode === 'account';
+  const showBackButton = navigationMode === 'account' || navigationMode === 'hermes';
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollbar = useScrollbarVisibility();
   const scrollbarClassName = `${classes.navigationScrollbar} ${scrollbar.visible ? classes.navigationScrollbarVisible : ''}`;
@@ -31,7 +33,14 @@ export default function SidebarDefault({
   return (
     <aside className={classes.sidebar}>
       <div className={classes.sidebarHeader}>
-        {showBackButton ? <SidebarBackButton organizationSlug={organizationSlug} /> : <OrganizationSwitcher />}
+        {showBackButton ? (
+          <SidebarBackButton
+            organizationSlug={organizationSlug}
+            href={navigationMode === 'hermes' ? getPath('organizationPicker') : undefined}
+          />
+        ) : (
+          <OrganizationSwitcher />
+        )}
       </div>
 
       <NavigationScrollControls orientation='vertical' viewportRef={viewportRef}>
@@ -52,6 +61,7 @@ export default function SidebarDefault({
         >
           <Box px='xs'>
             <SidebarNavContent navigationMode={navigationMode} onNavigateAction={onNavigateAction} />
+            {navigationMode === 'hermes' ? <HermesSidebarSessions onNavigateAction={onNavigateAction} /> : null}
           </Box>
         </ScrollArea>
       </NavigationScrollControls>

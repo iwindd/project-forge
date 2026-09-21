@@ -138,7 +138,7 @@ test('organization navigation preserves the current section when switching organ
   await expect(page.getByText('Beta Organization').first()).toBeVisible();
 });
 
-test('shared Agent roster is available across Organizations without exposing server-only metadata', async ({
+test('shared Agent roster is available on the global Hermes surface without exposing server-only metadata', async ({
   page,
 }) => {
   await signedIn(page);
@@ -158,11 +158,8 @@ test('shared Agent roster is available across Organizations without exposing ser
     }
   });
 
-  await page.goto('/acme');
-  const agentsNavLink = page.getByRole('link', { name: 'Agents', exact: true });
-  await expect(agentsNavLink).toBeVisible();
-  await agentsNavLink.click();
-  await expect(page).toHaveURL(/\/acme\/agents$/);
+  await page.goto('/hermes/agents');
+  await expect(page).toHaveURL(/\/hermes\/agents$/);
   await expect(page.getByRole('heading', { name: 'Shared Local Agents' })).toBeVisible();
   await expect(page.getByText('Shared Coder')).toBeVisible();
   await expect(page.getByText('Offline Agent')).toBeVisible();
@@ -172,7 +169,7 @@ test('shared Agent roster is available across Organizations without exposing ser
   await page.getByRole('button', { name: 'เลือกใช้ Agent' }).click();
   await expect(page.getByText('เลือก Shared Coder สำหรับการใช้งานในขั้นตอนถัดไป')).toBeVisible();
 
-  await page.goto('/beta/agents');
+  await page.goto('/hermes/agents');
   await expect(page.getByText('Shared Coder')).toBeVisible();
   await expect.poll(() => rosterRequests.length).toBe(2);
   expect(rosterRequests).toEqual(['/api/v1/hermes/agents', '/api/v1/hermes/agents']);
@@ -182,7 +179,7 @@ test('shared Agent roster is available across Organizations without exposing ser
 
 test('Platform Admin can create a shared Agent through the validated Hermes configuration flow', async ({ page }) => {
   await signedIn(page);
-  await page.goto('/acme/agents');
+  await page.goto('/hermes/agents');
   await expect(page.getByRole('heading', { name: 'Shared Local Agents' })).toBeVisible();
 
   await page.getByRole('button', { name: 'สร้าง Agent' }).click();
@@ -225,7 +222,7 @@ test('Platform Admin can create a shared Agent through the validated Hermes conf
 
 test('regular authenticated Users can discover shared Agents without configuration controls', async ({ page }) => {
   await signedIn(page, 'regular-user');
-  await page.goto('/acme/agents');
+  await page.goto('/hermes/agents');
   await expect(page.getByText('Shared Coder')).toBeVisible();
   await expect(page.getByRole('button', { name: 'สร้าง Agent' })).toHaveCount(0);
   await expect(page.getByText(/การตั้งค่าจำกัดเฉพาะ Platform Admin/)).toBeVisible();

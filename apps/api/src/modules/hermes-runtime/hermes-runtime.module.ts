@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuditModule } from '../../common/audit/audit.module.js';
+import { DatabaseModule } from '../../common/database/database.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { HermesRuntimeService } from './application/hermes-runtime.service.js';
 import {
@@ -17,6 +18,9 @@ import { HermesRuntimeController } from './presentation/hermes-runtime.controlle
 import { ListSharedAgentsUseCase } from './application/use-cases/list-shared-agents-use-case.js';
 import { GetSharedAgentOptionsUseCase } from './application/use-cases/get-shared-agent-options-use-case.js';
 import { CreateSharedAgentUseCase } from './application/use-cases/create-shared-agent-use-case.js';
+import { HermesSessionService } from './application/hermes-session.service.js';
+import { HermesSessionsController } from './presentation/hermes-sessions.controller.js';
+import { HermesChatGateway } from './presentation/hermes-chat.gateway.js';
 
 export function buildHermesRuntimeConfig(config: ConfigService): HermesRuntimeConfig {
   const configuredEndpoint = config.get<string>('HERMES_GATEWAY_URL')?.trim() || undefined;
@@ -47,8 +51,8 @@ const gatewayFactory: HermesGatewayFactory = ({ endpoint, token, connectTimeoutM
   new HermesGatewayClient(endpoint, token, connectTimeoutMs);
 
 @Module({
-  imports: [ConfigModule, AuthModule, AuditModule],
-  controllers: [HermesRuntimeController, HermesAgentsController],
+  imports: [ConfigModule, AuthModule, AuditModule, DatabaseModule],
+  controllers: [HermesRuntimeController, HermesAgentsController, HermesSessionsController],
   providers: [
     {
       provide: HERMES_RUNTIME_CONFIG,
@@ -68,6 +72,8 @@ const gatewayFactory: HermesGatewayFactory = ({ endpoint, token, connectTimeoutM
     ListSharedAgentsUseCase,
     GetSharedAgentOptionsUseCase,
     CreateSharedAgentUseCase,
+    HermesSessionService,
+    HermesChatGateway,
   ],
   exports: [HermesRuntimeService],
 })

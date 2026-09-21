@@ -1,7 +1,7 @@
 import {
   IconFolders,
   IconHistory,
-  IconLayoutDashboard,
+  IconMessageCircle2,
   IconRobot,
   IconUser,
   IconUsers,
@@ -65,18 +65,6 @@ function routeItem(routeName: string, options: RouteItemOptions = {}): AdminNavi
 
 export const organizationNavigation: AdminNavigationGroup[] = [
   {
-    id: 'overview',
-    label: 'ภาพรวม',
-    labelKey: 'overview',
-    hideHeading: true,
-    items: [
-      routeItem('overview', {
-        icon: IconLayoutDashboard,
-        labelKey: 'overview',
-      }),
-    ],
-  },
-  {
     id: 'projects',
     label: 'โปรเจกต์',
     labelKey: 'projects',
@@ -88,35 +76,23 @@ export const organizationNavigation: AdminNavigationGroup[] = [
     ],
   },
   {
-    id: 'agents',
-    label: 'Agents',
-    labelKey: 'agents',
-    hideHeading: true,
-    items: [
-      routeItem('agents', {
-        icon: IconRobot,
-        labelKey: 'agents',
-      }),
-    ],
-  },
-  {
     id: 'audit',
-    label: 'ประวัติการทำรายการ',
-    labelKey: 'auditLogs',
+    label: 'Activity',
+    labelKey: 'activity',
     hideHeading: true,
     permissionKey: 'manageOrganization',
     items: [
       routeItem('auditLogs', {
         icon: IconHistory,
-        labelKey: 'auditLogs',
+        labelKey: 'activity',
         permissionKey: 'manageOrganization',
       }),
     ],
   },
   {
     id: 'settings',
-    label: 'ตั้งค่า',
-    labelKey: 'settings',
+    label: 'Administration',
+    labelKey: 'administration',
     permissionKey: 'manageOrganization',
     items: [
       routeItem('settings.members', {
@@ -128,6 +104,25 @@ export const organizationNavigation: AdminNavigationGroup[] = [
         icon: IconUsers,
         labelKey: 'roles',
         permissionKey: 'manageOrganization',
+      }),
+    ],
+  },
+];
+
+export const hermesNavigation: AdminNavigationGroup[] = [
+  {
+    id: 'hermes',
+    label: 'Hermes',
+    labelKey: 'hermes',
+    hideHeading: true,
+    items: [
+      routeItem('hermes.chat', {
+        icon: IconMessageCircle2,
+        labelKey: 'chat',
+      }),
+      routeItem('hermes.agents', {
+        icon: IconRobot,
+        labelKey: 'agents',
       }),
     ],
   },

@@ -4,7 +4,7 @@ import {
   HermesGatewayRpcError as HermesGatewayRpcErrorClass,
 } from '../../infrastructure/hermes-gateway.client.js';
 import type { HermesRuntimeAction, HermesRuntimeState } from '../../domain/hermes-runtime.types.js';
-import { HermesRuntimeService } from '../hermes-runtime.service.js';
+import { HermesRuntimeService, HermesHttpReadError } from '../hermes-runtime.service.js';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -16,6 +16,7 @@ const profileSchema = z.object({
   display_name: z.string().optional().default(''),
   skill_count: z.number().int().nonnegative().optional().default(0),
   has_avatar: z.boolean().optional().default(false),
+  gateway_running: z.boolean().optional().default(false),
 });
 
 const profileListResponseSchema = z.object({
@@ -57,7 +58,9 @@ export type SharedAgentRoster = {
   refreshedAt: string;
 };
 
-type HermesRuntimeReader = Pick<HermesRuntimeService, 'getStatus' | 'request'>;
+type HermesRuntimeReader = Pick<HermesRuntimeService, 'getStatus' | 'request'> & {
+  requestHttp?: <T>(path: string) => Promise<T>;
+};
 
 type Profile = z.infer<typeof profileSchema>;
 
@@ -92,7 +95,20 @@ export class ListSharedAgentsUseCase {
     };
 
     try {
-      const rawProfiles = await this.runtime.request<unknown>('profiles.list', { include_sessions: false });
+      let rawProfiles: unknown;
+      let usedHttpReadApi = false;
+      if (this.runtime.requestHttp) {
+        try {
+          rawProfiles = await this.runtime.requestHttp<unknown>('/api/profiles');
+          usedHttpReadApi = true;
+        } catch (error) {
+          if (!(error instanceof HermesHttpReadError) || error.httpStatus !== 404) throw error;
+          // Match Desktop's runtime-version fallback only when the REST route is absent.
+          rawProfiles = await this.runtime.request<unknown>('profiles.list', { include_sessions: false });
+        }
+      } else {
+        rawProfiles = await this.runtime.request<unknown>('profiles.list', { include_sessions: false });
+      }
       const parsed = profileListResponseSchema.safeParse(rawProfiles);
       if (!parsed.success) {
         return {
@@ -107,7 +123,7 @@ export class ListSharedAgentsUseCase {
         agents: await Promise.all(
           parsed.data.profiles
             .filter((profile) => isSafeProfileHandle(profile.name))
-            .map((profile) => this.inspectProfile(profile)),
+            .map((profile) => this.inspectProfile(profile, usedHttpReadApi)),
         ),
         runtime: this.runtimeSummary(this.runtime.getStatus().state),
       };
@@ -120,13 +136,17 @@ export class ListSharedAgentsUseCase {
     }
   }
 
-  private async inspectProfile(profile: Profile): Promise<SharedLocalAgent> {
+  private async inspectProfile(profile: Profile, useHttpReadApi: boolean): Promise<SharedLocalAgent> {
     const model = safeConfigurationLabel(profile.model);
     const provider = safeConfigurationLabel(profile.provider);
     const displayName = safeDisplayText(profile.display_name, profile.name);
     const description = safeDisplayText(profile.description, '');
-
-    const readiness = !model || !provider ? this.incompleteConfiguration() : await this.checkRuntime(profile.name);
+    const readiness =
+      !model || !provider
+        ? this.incompleteConfiguration()
+        : useHttpReadApi
+          ? this.ready()
+          : await this.checkRuntime(profile.name);
 
     return {
       handle: profile.name,

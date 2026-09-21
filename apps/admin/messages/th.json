@@ -41,6 +41,9 @@
     "enterPassword": "กรอกรหัสผ่าน"
   },
   "Navigation": {
+    "chat": "Chat",
+    "hermes": "Hermes",
+    "organizationPicker": "เลือก Organization",
     "overview": "ภาพรวม",
     "projects": "โปรเจกต์",
     "agents": "Agents",
@@ -56,13 +59,62 @@
     "myAccount": "บัญชีของฉัน",
     "logout": "ออกจากระบบ",
     "settings": "การตั้งค่า",
+    "administration": "Administration",
     "openSettings": "เปิดการตั้งค่า",
     "openMenu": "เปิดเมนูหลัก",
     "closeMenu": "ปิดเมนูหลัก"
   },
+  "OrganizationPicker": {
+    "title": "เลือก Organization",
+    "description": "เลือก Organization ที่ต้องการใช้งาน",
+    "personal": "ส่วนตัว",
+    "shared": "ทีม",
+    "emptyTitle": "ยังไม่มี Organization",
+    "emptyDescription": "บัญชีนี้ยังไม่มี Organization ที่พร้อมใช้งาน"
+  },
+  "OrganizationOverview": {
+    "personal": "Organization ส่วนตัว",
+    "shared": "Organization สำหรับทีม",
+    "personalSummary": "พื้นที่ส่วนตัวสำหรับจัดการโปรเจกต์และงานของคุณ",
+    "sharedSummary": "ภาพรวมพื้นที่ทำงานร่วมกันสำหรับทีมของคุณ",
+    "projects": "โปรเจกต์",
+    "projectsDescription": "ดูและจัดการโปรเจกต์ภายใน Organization",
+    "members": "สมาชิก",
+    "membersDescription": "จัดการสมาชิกและสิทธิ์การเข้าถึง",
+    "roles": "บทบาท",
+    "rolesDescription": "กำหนดบทบาทและ permission ของ Organization"
+  },
   "Home": {
     "greeting": "สวัสดี!",
     "welcome": "ยินดีต้อนรับกลับเข้าสู่ระบบจัดการเว็บไซต์"
+  },
+  "Chat": {
+    "sessions": "บทสนทนา",
+    "sessionsLoading": "กำลังโหลดบทสนทนา...",
+    "noSessions": "ยังไม่มีบทสนทนา",
+    "newGreeting": "คุณกำลังคิดอะไรอยู่?",
+    "sessionNotFound": "ไม่พบบทสนทนานี้",
+    "newChat": "บทสนทนาใหม่",
+    "agent": "Agent",
+    "chooseAgent": "เลือก Agent",
+    "untitled": "บทสนทนาใหม่",
+    "rename": "เปลี่ยนชื่อ",
+    "close": "ปิดบทสนทนา",
+    "sessionActions": "ตัวเลือกบทสนทนา",
+    "composer": "ข้อความ",
+    "composerPlaceholder": "พิมพ์ข้อความ...",
+    "send": "ส่ง",
+    "dismiss": "ปิด",
+    "retry": "ลองใหม่",
+    "loadFailed": "ยังโหลดบทสนทนาไม่ได้",
+    "startFailed": "เริ่มบทสนทนาไม่ได้",
+    "sendFailed": "ส่งข้อความไม่ได้",
+    "renameFailed": "เปลี่ยนชื่อไม่ได้",
+    "closeFailed": "ปิดบทสนทนาไม่ได้",
+    "reconnectRequired": "กำลังเชื่อมต่อใหม่ ลองอีกครั้ง",
+    "runtimeNotReady": "กำลังเตรียม Hermes ให้พร้อมใช้งาน",
+    "empty": "เริ่มการสนทนาได้เลย",
+    "noAgent": "ยังไม่มี Agent ที่พร้อมใช้งาน"
   },
   "HermesRuntime": {
     "title": "Hermes Runtime",

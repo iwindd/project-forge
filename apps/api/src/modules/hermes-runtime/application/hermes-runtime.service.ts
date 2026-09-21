@@ -20,6 +20,12 @@ import { HermesGatewayConnectionError, HermesGatewayRpcError } from '../infrastr
 import { HermesNotInstalledError } from '../infrastructure/hermes-process.manager.js';
 import { isPortReachable } from '../infrastructure/port-probe.js';
 
+export class HermesHttpReadError extends ExternalServiceError {
+  constructor(readonly httpStatus: number) {
+    super(`Hermes HTTP request failed (${httpStatus})`);
+  }
+}
+
 @Injectable()
 export class HermesRuntimeService implements OnModuleDestroy {
   private client: HermesGatewayClientPort | null = null;
@@ -67,6 +73,24 @@ export class HermesRuntimeService implements OnModuleDestroy {
     await this.connect();
     if (!this.client) throw new ExternalServiceError('Hermes gateway is not ready', { state: this.statusValue.state });
     return this.client.request<T>(method, params);
+  }
+
+  async requestHttp<T>(path: string): Promise<T> {
+    await this.connect();
+    const protocol = this.config.endpoint.startsWith('wss:') ? 'https:' : 'http:';
+    const url = new URL(path, `${protocol}//${this.config.host}:${this.config.port}`);
+    const token = this.config.endpointConfigured ? this.config.token : await this.processManager.resolveToken();
+    const headers = new Headers();
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+
+    const response = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!response.ok) {
+      throw new HermesHttpReadError(response.status);
+    }
+    return (await response.json()) as T;
   }
 
   onEvent(listener: (event: HermesGatewayEvent) => void): () => void {

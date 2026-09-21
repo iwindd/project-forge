@@ -1,6 +1,7 @@
 import { useActiveRouteTrail, useNotifications, usePermissions } from '@/hooks';
 import {
   accountNavigation,
+  hermesNavigation,
   organizationNavigation,
   type AdminNavigationGroup,
   type AdminNavigationItem,
@@ -12,7 +13,7 @@ import type { RouteParams } from '@/lib/routing';
 export type NavItem = AdminNavigationItem;
 export type NavGroup = AdminNavigationGroup;
 export type NavLinkHref = string;
-export type SidebarNavigationMode = 'app' | 'account';
+export type SidebarNavigationMode = 'app' | 'account' | 'hermes';
 
 type PermissionCheck = (keys: PermissionKey | readonly PermissionKey[], mode?: PermissionMode) => boolean;
 
@@ -55,6 +56,10 @@ export function useNavigationGroups(mode: SidebarNavigationMode = 'app'): NavGro
 
   if (mode === 'account') {
     return accountNavigation;
+  }
+
+  if (mode === 'hermes') {
+    return hermesNavigation;
   }
 
   return adminGroups;

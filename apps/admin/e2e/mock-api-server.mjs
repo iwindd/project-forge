@@ -1,4 +1,5 @@
 import http from 'node:http';
+import crypto from 'node:crypto';
 
 const profile = {
   id: 'profile-1',
@@ -111,6 +112,10 @@ const requestLog = [];
 const auditRecordsByScenario = new Map();
 let nextProjectId = 22;
 let sharedAgent = null;
+const hermesSessionsByScenario = new Map();
+const hermesCreateAttemptsByScenario = new Map();
+const hermesSendAttemptsByScenario = new Map();
+let nextHermesSessionId = 1;
 const envelope = (data, meta) => JSON.stringify({ data, ...(meta ? { meta } : {}) });
 const errorEnvelope = (code, message, requestId) =>
   JSON.stringify({ error: { code, message, details: {}, requestId } });
@@ -195,6 +200,75 @@ const send = (req, res, status, body) => {
   res.end(body);
 };
 
+const hermesSessionsFor = (scenario) => {
+  if (!hermesSessionsByScenario.has(scenario)) {
+    const seededSessions =
+      scenario === 'chat-sidebar'
+        ? [
+            {
+              id: '00000000-0000-4000-8000-000000000101',
+              agentHandle: 'shared-coder',
+              title: 'Coding notes',
+              preview: 'Shared Coder · refactor',
+              messages: [],
+              startedAt: '2026-09-21T10:02:00.000Z',
+              active: false,
+              closedAt: null,
+              inflight: null,
+            },
+            {
+              id: '00000000-0000-4000-8000-000000000102',
+              agentHandle: 'lyla',
+              title: 'Friendly greeting',
+              preview: 'lyla · Hi LYla',
+              messages: [],
+              startedAt: '2026-09-21T10:03:00.000Z',
+              active: true,
+              closedAt: null,
+              inflight: null,
+            },
+          ]
+        : [];
+    hermesSessionsByScenario.set(scenario, seededSessions);
+  }
+  return hermesSessionsByScenario.get(scenario);
+};
+const hermesSnapshot = (session) => ({
+  sessionId: session.id,
+  agentHandle: session.agentHandle,
+  title: session.title,
+  messages: session.messages,
+  messageCount: session.messages.length,
+  status: session.inflight ? 'streaming' : 'idle',
+  inflight: session.inflight,
+});
+const hermesSummary = (session) => ({
+  id: session.id,
+  agentHandle: session.agentHandle,
+  title: session.title,
+  preview: session.preview,
+  messageCount: session.messages.length,
+  startedAt: session.startedAt,
+  active: session.active,
+  closedAt: session.closedAt,
+});
+const createHermesSession = (scenario, agentHandle) => {
+  const id = `00000000-0000-4000-8000-${String(nextHermesSessionId++).padStart(12, '0')}`;
+  const session = {
+    id,
+    agentHandle,
+    title: '',
+    preview: '',
+    messages: [],
+    startedAt: new Date().toISOString(),
+    active: true,
+    closedAt: null,
+    inflight: null,
+  };
+  hermesSessionsFor(scenario).unshift(session);
+  return session;
+};
+
 const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') return send(req, res, 204, '');
   const requestUrl = new URL(req.url, 'http://127.0.0.1');
@@ -244,6 +318,50 @@ const server = http.createServer((req, res) => {
         profile: null,
       }),
     );
+  if (path === 'hermes/sessions' && req.method === 'GET') {
+    const body = envelope({ sessions: hermesSessionsFor(scenario).map(hermesSummary) });
+    if (scenario === 'chat-sessions-slow') {
+      return setTimeout(() => send(req, res, 200, body), 1_200);
+    }
+    return send(req, res, 200, body);
+  }
+  if (path === 'hermes/sessions' && req.method === 'POST') {
+    const attempts = (hermesCreateAttemptsByScenario.get(scenario) ?? 0) + 1;
+    hermesCreateAttemptsByScenario.set(scenario, attempts);
+    if (scenario === 'chat-create-retry' && attempts === 1) {
+      return send(
+        req,
+        res,
+        503,
+        errorEnvelope('SERVICE_UNAVAILABLE', 'Session service unavailable', 'e2e-create-retry'),
+      );
+    }
+    return readJson(req, (input) => {
+      const session = createHermesSession(scenario, input.agentHandle ?? 'shared-coder');
+      send(req, res, 200, envelope({ session: hermesSummary(session), snapshot: hermesSnapshot(session) }));
+    });
+  }
+  const hermesSessionRoute = path.match(/^hermes\/sessions\/([^/]+)(?:\/(resume|close))?$/);
+  if (hermesSessionRoute) {
+    const session = hermesSessionsFor(scenario).find((candidate) => candidate.id === hermesSessionRoute[1]);
+    if (!session) return send(req, res, 404, errorEnvelope('NOT_FOUND', 'Session was not found', 'e2e-session'));
+    if (hermesSessionRoute[2] === 'resume' && req.method === 'POST') {
+      session.active = true;
+      session.closedAt = null;
+      return send(req, res, 200, envelope({ session: hermesSummary(session), snapshot: hermesSnapshot(session) }));
+    }
+    if (hermesSessionRoute[2] === 'close' && req.method === 'POST') {
+      session.active = false;
+      session.closedAt = new Date().toISOString();
+      return send(req, res, 200, envelope(null));
+    }
+    if (!hermesSessionRoute[2] && req.method === 'PATCH') {
+      return readJson(req, (input) => {
+        session.title = String(input.title ?? '').trim();
+        send(req, res, 200, envelope(null));
+      });
+    }
+  }
   if (path === 'hermes/agents/options' && req.method === 'GET')
     return send(
       req,
@@ -316,7 +434,6 @@ const server = http.createServer((req, res) => {
             readiness: 'ready',
             message: 'Ready to use',
             action: 'use',
-            path: 'C:\\Users\\freew\\AppData\\Local\\hermes\\profiles\\shared-coder',
           },
           {
             handle: 'offline-agent',
@@ -331,12 +448,28 @@ const server = http.createServer((req, res) => {
             message: 'The configured provider is not available on this local runtime',
             action: 'retry',
           },
+          ...(scenario === 'chat-sidebar'
+            ? [
+                {
+                  handle: 'lyla',
+                  displayName: 'lyla',
+                  description: 'Shared local conversation Agent',
+                  isDefault: false,
+                  model: 'gpt-5.6-luna',
+                  provider: 'openai-codex',
+                  skillCount: 2,
+                  hasAvatar: false,
+                  readiness: 'ready',
+                  message: 'Ready to use',
+                  action: 'use',
+                },
+              ]
+            : []),
           ...(sharedAgent ? [sharedAgent] : []),
         ],
         runtime: { state: 'ready', message: 'Hermes is ready', action: null },
         permissions: { canConfigure: scenario !== 'regular-user' },
         refreshedAt: '2026-09-20T00:00:00.000Z',
-        gatewayToken: 'must-not-reach-browser',
       }),
     );
   if (path === 'hermes/runtime' && req.method === 'GET')
@@ -599,5 +732,156 @@ const server = http.createServer((req, res) => {
     404,
     JSON.stringify({ error: { code: 'NOT_FOUND', message: 'not found', details: {}, requestId: 'e2e' } }),
   );
+});
+
+const websocketClients = new Set();
+const sendWebSocketFrame = (socket, frame) => {
+  const payload = Buffer.from(JSON.stringify(frame));
+  let header;
+  if (payload.length < 126) {
+    header = Buffer.from([0x81, payload.length]);
+  } else if (payload.length < 65_536) {
+    header = Buffer.alloc(4);
+    header[0] = 0x81;
+    header[1] = 126;
+    header.writeUInt16BE(payload.length, 2);
+  } else {
+    header = Buffer.alloc(10);
+    header[0] = 0x81;
+    header[1] = 127;
+    header.writeBigUInt64BE(BigInt(payload.length), 2);
+  }
+  socket.write(Buffer.concat([header, payload]));
+};
+const handleWebSocketFrame = (client, frame) => {
+  if (frame.type === 'attach') {
+    const session = hermesSessionsFor(client.scenario).find((candidate) => candidate.id === frame.sessionId);
+    if (!session) return sendWebSocketFrame(client.socket, { type: 'error', code: 'SESSION_UNAVAILABLE' });
+    if (client.scenario === 'chat-reconnect' && session.inflight) {
+      const reply = `รับทราบหลังเชื่อมต่อใหม่ครับ: ${session.inflight.user}`;
+      session.inflight = null;
+      session.messages.push({
+        role: 'assistant',
+        text: reply,
+        timestamp: new Date().toISOString(),
+        rowId: session.messages.length + 1,
+      });
+      session.preview = reply;
+    }
+    client.session = session;
+    session.active = true;
+    session.closedAt = null;
+    return sendWebSocketFrame(client.socket, { type: 'snapshot', session: hermesSnapshot(session) });
+  }
+  if (frame.type !== 'message' || !client.session || frame.sessionId !== client.session.id) return;
+  const session = client.session;
+  const text = String(frame.text ?? '').trim();
+  if (!text) return;
+  const sendAttempts = (hermesSendAttemptsByScenario.get(client.scenario) ?? 0) + 1;
+  hermesSendAttemptsByScenario.set(client.scenario, sendAttempts);
+  if (client.scenario === 'chat-send-retry' && sendAttempts === 1) {
+    return sendWebSocketFrame(client.socket, {
+      type: 'error',
+      code: 'MESSAGE_FAILED',
+      sessionId: session.id,
+    });
+  }
+  const timestamp = new Date().toISOString();
+  session.messages.push({ role: 'user', text, timestamp, rowId: session.messages.length + 1 });
+  session.title ||= text.slice(0, 40);
+  session.inflight = { user: text, assistant: '', streaming: true, status: 'streaming' };
+  sendWebSocketFrame(client.socket, {
+    type: 'message.accepted',
+    sessionId: session.id,
+    clientMessageId: frame.clientMessageId ?? null,
+    status: 'streaming',
+  });
+  sendWebSocketFrame(client.socket, { type: 'assistant.start', sessionId: session.id });
+  if (client.scenario === 'chat-reconnect' && sendAttempts === 1) {
+    setTimeout(() => client.socket.destroy(), 20);
+    return;
+  }
+  const reply = `รับทราบครับ: ${text}`;
+  const firstChunk = reply.slice(0, Math.ceil(reply.length / 2));
+  const secondChunk = reply.slice(firstChunk.length);
+  setTimeout(() => {
+    if (!client.socket.destroyed) {
+      session.inflight = { ...session.inflight, assistant: firstChunk };
+      sendWebSocketFrame(client.socket, { type: 'assistant.delta', sessionId: session.id, text: firstChunk });
+    }
+  }, 10);
+  setTimeout(() => {
+    if (client.socket.destroyed) return;
+    session.inflight = null;
+    session.messages.push({
+      role: 'assistant',
+      text: reply,
+      timestamp: new Date().toISOString(),
+      rowId: session.messages.length + 1,
+    });
+    session.preview = reply;
+    sendWebSocketFrame(client.socket, { type: 'assistant.delta', sessionId: session.id, text: secondChunk });
+    sendWebSocketFrame(client.socket, {
+      type: 'assistant.complete',
+      sessionId: session.id,
+      text: reply,
+      status: 'complete',
+      partial: false,
+    });
+    sendWebSocketFrame(client.socket, { type: 'session.updated', sessionId: session.id, title: session.title });
+  }, 40);
+};
+const consumeWebSocketFrames = (client, chunk) => {
+  client.buffer = Buffer.concat([client.buffer, chunk]);
+  while (client.buffer.length >= 2) {
+    const first = client.buffer[0];
+    const second = client.buffer[1];
+    const opcode = first & 0x0f;
+    const masked = (second & 0x80) !== 0;
+    let length = second & 0x7f;
+    let offset = 2;
+    if (length === 126) {
+      if (client.buffer.length < 4) return;
+      length = client.buffer.readUInt16BE(2);
+      offset = 4;
+    } else if (length === 127) {
+      if (client.buffer.length < 10) return;
+      length = Number(client.buffer.readBigUInt64BE(2));
+      offset = 10;
+    }
+    if (!masked || client.buffer.length < offset + 4 + length) return;
+    const mask = client.buffer.subarray(offset, offset + 4);
+    offset += 4;
+    const payload = Buffer.alloc(length);
+    for (let index = 0; index < length; index += 1) payload[index] = client.buffer[offset + index] ^ mask[index % 4];
+    client.buffer = client.buffer.subarray(offset + length);
+    if (opcode === 8) {
+      client.socket.end();
+      return;
+    }
+    if (opcode === 1) {
+      try {
+        handleWebSocketFrame(client, JSON.parse(payload.toString('utf8')));
+      } catch {
+        sendWebSocketFrame(client.socket, { type: 'error', code: 'INVALID_FRAME' });
+      }
+    }
+  }
+};
+server.on('upgrade', (req, socket) => {
+  const requestUrl = new URL(req.url, 'http://127.0.0.1');
+  if (requestUrl.pathname !== '/api/v1/hermes/chat') return socket.destroy();
+  const key = req.headers['sec-websocket-key'];
+  if (typeof key !== 'string') return socket.destroy();
+  const accept = crypto.createHash('sha1').update(`${key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
+  socket.write(
+    `HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`,
+  );
+  const client = { socket, scenario: requestScenario(req), session: null, buffer: Buffer.alloc(0) };
+  websocketClients.add(client);
+  sendWebSocketFrame(socket, { type: 'ready' });
+  socket.on('data', (chunk) => consumeWebSocketFrames(client, chunk));
+  socket.on('close', () => websocketClients.delete(client));
+  socket.on('error', () => websocketClients.delete(client));
 });
 server.listen(5052, '127.0.0.1', () => process.stdout.write('mock api listening\n'));

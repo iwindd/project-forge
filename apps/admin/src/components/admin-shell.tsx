@@ -45,6 +45,7 @@ export function AdminShell({
     >
       <AppShell.Header className={classes.header} data-scrolled={scroll.y > 0}>
         <AdminHeader
+          navigationMode={navigationMode}
           mobileOpened={mobileOpened}
           onToggleMobileAction={mobileHandlers.toggle}
           onOpenSettingsAction={settingsHandlers.open}
@@ -81,12 +82,12 @@ export function AdminShell({
     </AppShell>
   );
 
-  if (navigationMode === 'account') {
+  if (navigationMode === 'account' || navigationMode === 'hermes') {
     return shell;
   }
 
   if (!organizationSlug || !organizationId) {
-    throw new Error('AdminShell requires organization scope outside account navigation mode');
+    throw new Error('AdminShell requires organization scope outside account or Hermes navigation mode');
   }
 
   return (

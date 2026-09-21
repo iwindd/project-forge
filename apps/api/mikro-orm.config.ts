@@ -17,6 +17,7 @@ import { OrganizationMemberOrmEntity } from './src/modules/organizations/infrast
 import { OrganizationOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization.orm-entity.js';
 import { OrganizationRoleOrmEntity } from './src/modules/organizations/infrastructure/persistence/organization-role.orm-entity.js';
 import { UserSecurityLogOrmEntity } from './src/common/security/user-security-log.orm-entity.js';
+import { HermesSessionOrmEntity } from './src/modules/hermes-runtime/infrastructure/persistence/hermes-session.orm-entity.js';
 
 export default defineConfig({
   clientUrl: process.env.DATABASE_URL,
@@ -33,6 +34,7 @@ export default defineConfig({
     SessionOrmEntity,
     AuditLogOrmEntity,
     ProjectOrmEntity,
+    HermesSessionOrmEntity,
   ],
   extensions: [Migrator],
   migrations: {

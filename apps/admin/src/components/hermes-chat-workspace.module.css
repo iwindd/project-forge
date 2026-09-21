@@ -1,0 +1,153 @@
+.workspace {
+  width: 100%;
+  height: min(
+    720px,
+    calc(100dvh - var(--admin-header-height, 58px) - var(--mantine-spacing-xl) - var(--mantine-spacing-xl))
+  );
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.conversation {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+}
+
+.newConversation {
+  align-items: center;
+  justify-content: center;
+}
+
+.newChatContent {
+  width: min(780px, 100%);
+  margin: auto;
+  padding: 1rem;
+  transform: translateY(-3%);
+}
+
+.newChatGreeting {
+  color: var(--mantine-color-text);
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+.newAgentSelect {
+  width: min(220px, 100%);
+}
+
+.messages {
+  min-height: 0;
+  flex: 1;
+  padding: 1.25rem clamp(1rem, 5vw, 5rem);
+}
+
+.messageStack {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.userMessageRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.assistantMessageRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.userMessage,
+.assistantMessage {
+  max-width: min(78%, 640px);
+}
+
+.userMessage {
+  color: var(--mantine-color-white);
+  background: var(--mantine-color-indigo-6);
+}
+
+.assistantMessage {
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
+}
+
+.messageText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.45rem;
+  height: 1rem;
+  margin-left: 0.2rem;
+  vertical-align: -0.15rem;
+  border-radius: 0.2rem;
+  background: currentColor;
+  animation: blink 900ms steps(2, start) infinite;
+}
+
+.emptyConversation,
+.emptyState,
+.loading {
+  height: 100%;
+  min-height: 240px;
+  color: var(--mantine-color-dimmed);
+}
+
+.composerWrap,
+.newComposerWrap {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 0 1rem 1rem;
+}
+
+.newComposerWrap {
+  padding-bottom: 0;
+}
+
+.composer {
+  padding: 0.65rem 0.75rem 0.5rem;
+}
+
+.composer :global(textarea) {
+  padding: 0;
+}
+
+.inlineError {
+  padding: 0 0.25rem;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .workspace {
+    height: min(640px, calc(100dvh - var(--admin-header-height, 58px) - 1rem));
+  }
+
+  .messages {
+    padding-inline: 0.75rem;
+  }
+
+  .composerWrap,
+  .newComposerWrap {
+    padding-inline: 0.75rem;
+  }
+
+  .userMessage,
+  .assistantMessage {
+    max-width: 88%;
+  }
+
+  .newChatContent {
+    padding-inline: 0.75rem;
+  }
+}

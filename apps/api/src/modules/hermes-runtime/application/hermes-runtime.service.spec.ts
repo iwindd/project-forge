@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ExternalServiceError } from '../../../common/errors/application-error.js';
 import type {
   HermesGatewayClientPort,
@@ -75,6 +75,10 @@ function manager(overrides: Partial<HermesProcessManagerPort> = {}): HermesProce
 }
 
 describe('HermesRuntimeService', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('reports a ready state only after the gateway handshake and capability read-back', async () => {
     const process = manager();
     const factory: HermesGatewayFactory = vi.fn(() => new FakeClient());
@@ -95,6 +99,30 @@ describe('HermesRuntimeService', () => {
       token: undefined,
       connectTimeoutMs: 500,
     });
+  });
+
+  it('reads the Hermes Desktop HTTP API through the server-side session token', async () => {
+    const process = manager();
+    const factory: HermesGatewayFactory = vi.fn(() => new FakeClient());
+    const service = new HermesRuntimeService(
+      { ...config, endpointConfigured: true, token: '[REDACTED]' },
+      process,
+      factory,
+    );
+    const response = {
+      ok: true,
+      json: vi.fn(async () => ({ profiles: [] })),
+    };
+    const fetchMock = vi.fn(async (input: URL, init?: RequestInit) => {
+      expect(input.toString()).toBe('http://127.0.0.1:9119/api/profiles');
+      expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer [REDACTED]');
+      return response;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(service.requestHttp('/api/profiles')).resolves.toEqual({ profiles: [] });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(process.resolveToken).not.toHaveBeenCalled();
   });
 
   it('starts a managed backend after an initial connection failure', async () => {
