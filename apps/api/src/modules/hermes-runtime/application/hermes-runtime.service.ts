@@ -20,6 +20,12 @@ import { HermesGatewayConnectionError, HermesGatewayRpcError } from '../infrastr
 import { HermesNotInstalledError } from '../infrastructure/hermes-process.manager.js';
 import { isPortReachable } from '../infrastructure/port-probe.js';
 
+export class HermesHttpReadError extends ExternalServiceError {
+  constructor(readonly httpStatus: number) {
+    super(`Hermes HTTP request failed (${httpStatus})`);
+  }
+}
+
 @Injectable()
 export class HermesRuntimeService implements OnModuleDestroy {
   private client: HermesGatewayClientPort | null = null;
@@ -82,7 +88,7 @@ export class HermesRuntimeService implements OnModuleDestroy {
       signal: AbortSignal.timeout(60_000),
     });
     if (!response.ok) {
-      throw new ExternalServiceError(`Hermes HTTP request failed (${response.status})`);
+      throw new HermesHttpReadError(response.status);
     }
     return (await response.json()) as T;
   }

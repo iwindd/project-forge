@@ -9,7 +9,7 @@ import {
   type HermesSessionSummary,
   HERMES_SESSION_REPOSITORY,
 } from '../domain/hermes-session.types.js';
-import { HermesRuntimeService } from './hermes-runtime.service.js';
+import { HermesRuntimeService, HermesHttpReadError } from './hermes-runtime.service.js';
 import type { HermesSessionRepositoryPort } from './ports/hermes-session.repository.js';
 import { ListSharedAgentsUseCase } from './use-cases/list-shared-agents-use-case.js';
 
@@ -112,9 +112,10 @@ export class HermesSessionService {
     if (this.runtime.requestHttp) {
       try {
         return await this.readDesktopSummaries(records);
-      } catch {
+      } catch (error) {
+        if (!(error instanceof HermesHttpReadError) || error.httpStatus !== 404) throw error;
         // Older Hermes runtimes may expose the gateway without the Desktop HTTP read API.
-        // Keep the native RPC fallback for compatibility, but do not make the browser know about it.
+        // Keep the native RPC fallback only for a missing REST route.
       }
     }
 

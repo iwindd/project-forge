@@ -4,7 +4,7 @@ import {
   HermesGatewayRpcError as HermesGatewayRpcErrorClass,
 } from '../../infrastructure/hermes-gateway.client.js';
 import type { HermesRuntimeAction, HermesRuntimeState } from '../../domain/hermes-runtime.types.js';
-import { HermesRuntimeService } from '../hermes-runtime.service.js';
+import { HermesRuntimeService, HermesHttpReadError } from '../hermes-runtime.service.js';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -101,8 +101,9 @@ export class ListSharedAgentsUseCase {
         try {
           rawProfiles = await this.runtime.requestHttp<unknown>('/api/profiles');
           usedHttpReadApi = true;
-        } catch {
-          // Match Desktop's runtime-version fallback: old gateways may not expose REST discovery.
+        } catch (error) {
+          if (!(error instanceof HermesHttpReadError) || error.httpStatus !== 404) throw error;
+          // Match Desktop's runtime-version fallback only when the REST route is absent.
           rawProfiles = await this.runtime.request<unknown>('profiles.list', { include_sessions: false });
         }
       } else {
